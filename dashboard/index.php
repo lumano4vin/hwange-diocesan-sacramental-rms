@@ -15,6 +15,12 @@ $stats_filter = get_parish_filter($params_stats);
 // For these specific queries, we need to handle the WHERE clause carefully
 $where_stats = !empty($stats_filter) ? " WHERE " . ltrim($stats_filter, ' AND ') : "";
 
+$cache_file = sys_get_temp_dir() . '/dash_cache_' . md5($_SESSION['user_id'] . '_' . $_SESSION['role'] . '_' . ($_SESSION['parish_id']??'')) . '.json';
+$cache_ttl = 60; // 60 seconds
+if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_ttl) {
+    extract(json_decode(file_get_contents($cache_file), true));
+} else {
+
 $sql = "SELECT 
     (SELECT COUNT(*) FROM parishioners WHERE status IN ('Active', 'Transferred In') $stats_filter) as parishioners,
     (SELECT COUNT(*) FROM baptisms $where_stats) as baptisms,
@@ -337,6 +343,15 @@ $mission_feed = db_fetchAll("
 ", $params_feed_full);
 
 $feed_title = $is_admin ? "Global Mission Feed" : "Local Mission Activity";
+
+    $cache_data = compact(
+        'totals', 'reports_count', 'total_parish_count', 'missing_reports', 
+        'p_events', 'd_events', 'total_parishes', 'parish_count', 'last_backup_audit', 
+        'today_count', 'pending_count', 'pending_queue', 'recent_logs', 
+        'last_user_activity', 'results', 'mission_feed', 'feed_title'
+    );
+    @file_put_contents($cache_file, json_encode($cache_data));
+}
 
 $user_full_name = $_SESSION['full_name'] ?? 'User';
 $user_role = ucfirst($_SESSION['role']);

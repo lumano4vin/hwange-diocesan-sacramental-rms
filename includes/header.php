@@ -4,8 +4,13 @@
  * Unified Command Header Component
  */
 
-// Helper: Calculate Global Pending Verifications for the Notification Bell
 function get_global_pending_count() {
+    $cache_file = sys_get_temp_dir() . '/header_cache_' . md5($_SESSION['user_id'] . '_' . $_SESSION['role'] . '_' . ($_SESSION['parish_id']??'')) . '.json';
+    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < 60) {
+        $data = json_decode(file_get_contents($cache_file), true);
+        return $data['count'] ?? 0;
+    }
+
     $count = 0;
     if (in_array($_SESSION['role'], ['admin', 'chancellor', 'priest', 'deacon'])) {
         $params = [];
@@ -33,6 +38,7 @@ function get_global_pending_count() {
         $count += db_fetch("SELECT COUNT(*) as count FROM communications WHERE (parish_id = ? AND admin_response IS NOT NULL AND is_read = 0) OR (recipient_parish_id = ? AND is_read = 0)", [$_SESSION['parish_id'], $_SESSION['parish_id']])['count'] ?? 0;
     }
 
+    @file_put_contents($cache_file, json_encode(['count' => $count]));
     return $count;
 }
 
