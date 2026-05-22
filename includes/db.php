@@ -240,6 +240,12 @@ function run_schema_migrations($pdo) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
+        session_id VARCHAR(128) PRIMARY KEY,
+        session_data TEXT,
+        expires_at INTEGER
+    )");
 }
 
 /**
@@ -279,4 +285,77 @@ function db_year_sql($column) {
     } else {
         return "strftime('%Y', $column)";
     }
+}
+
+// ---------------------------------------------------------
+// CUSTOM DATABASE SESSION HANDLER (Fixes Vercel Logouts)
+// ---------------------------------------------------------
+class DatabaseSessionHandler implements SessionHandlerInterface {
+    private $pdo;
+
+    public function __construct($pdo) {
+        $this->pdo = $pdo;
+    }
+
+    public function open($path, $name): bool {
+        return true;
+    }
+
+    public function close(): bool {
+        return true;
+    }
+
+    #[\ReturnTypeWillChange]
+    public function read($id) {
+        try {
+            $stmt = $this->pdo->prepare("SELECT session_data FROM sessions WHERE session_id = ? AND expires_at > ?");
+            $stmt->execute([$id, time()]);
+            if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                return $row['session_data'];
+            }
+        } catch (Exception $e) {}
+        return '';
+    }
+
+    public function write($id, $data): bool {
+        try {
+            $expires = time() + (86400 * 2); // 2 days expiration
+            $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            if ($driver === 'mysql') {
+                $stmt = $this->pdo->prepare("INSERT INTO sessions (session_id, session_data, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE session_data = VALUES(session_data), expires_at = VALUES(expires_at)");
+            } else {
+                $stmt = $this->pdo->prepare("REPLACE INTO sessions (session_id, session_data, expires_at) VALUES (?, ?, ?)");
+            }
+            $stmt->execute([$id, $data, $expires]);
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    public function destroy($id): bool {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM sessions WHERE session_id = ?");
+            $stmt->execute([$id]);
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    #[\ReturnTypeWillChange]
+    public function gc($max_lifetime) {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM sessions WHERE expires_at < ?");
+            $stmt->execute([time()]);
+            return $stmt->rowCount();
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+}
+
+// Register the Database Session Handler if PDO exists
+if (isset($pdo) && session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    session_set_save_handler(new DatabaseSessionHandler($pdo), true);
 }
