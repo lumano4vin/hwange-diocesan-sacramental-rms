@@ -26,6 +26,13 @@ if (file_exists($env_file)) {
 }
 
 $host = getenv('DB_HOST') ?: '127.0.0.1';
+$ip = $host;
+if ($host !== 'localhost' && $host !== '127.0.0.1') {
+    $resolved = gethostbyname($host);
+    if ($resolved !== $host) {
+        $ip = $resolved;
+    }
+}
 $port = getenv('DB_PORT') ?: '3306';
 $db   = getenv('DB_NAME') ?: 'hwange_diocesan_records';
 $user = getenv('DB_USER') ?: 'root';
@@ -33,7 +40,7 @@ $pass = getenv('DB_PASSWORD') ?: '';
 $charset = 'utf8mb4';
 
 $sqlite_file = dirname(__DIR__) . "/database.sqlite";
-$dsn_mysql = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+$dsn_mysql = "mysql:host=$ip;port=$port;dbname=$db;charset=$charset";
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,

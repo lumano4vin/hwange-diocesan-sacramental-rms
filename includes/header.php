@@ -8,11 +8,21 @@
 function get_global_pending_count() {
     $count = 0;
     if (in_array($_SESSION['role'], ['admin', 'chancellor', 'priest', 'deacon'])) {
-        $tables = ['baptisms', 'marriages', 'confirmations', 'deaths', 'ordinations_professions'];
-        foreach ($tables as $table) {
-            $params = [];
-            $filter = get_parish_filter($params);
-            $count += db_fetch("SELECT COUNT(*) as count FROM $table WHERE status = 'Draft' $filter", $params)['count'] ?? 0;
+        $params = [];
+        $filter = get_parish_filter($params);
+        $where = "WHERE status = 'Draft' " . $filter;
+        
+        $sql = "SELECT 
+            (SELECT COUNT(*) FROM baptisms $where) as c1,
+            (SELECT COUNT(*) FROM marriages $where) as c2,
+            (SELECT COUNT(*) FROM confirmations $where) as c3,
+            (SELECT COUNT(*) FROM deaths $where) as c4,
+            (SELECT COUNT(*) FROM ordinations_professions $where) as c5
+        ";
+        $p_full = array_merge($params, $params, $params, $params, $params);
+        $res = db_fetch($sql, $p_full);
+        if ($res) {
+            $count += array_sum($res);
         }
     }
     

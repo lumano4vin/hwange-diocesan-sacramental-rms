@@ -15,15 +15,28 @@ $stats_filter = get_parish_filter($params_stats);
 // For these specific queries, we need to handle the WHERE clause carefully
 $where_stats = !empty($stats_filter) ? " WHERE " . ltrim($stats_filter, ' AND ') : "";
 
+$sql = "SELECT 
+    (SELECT COUNT(*) FROM parishioners WHERE status IN ('Active', 'Transferred In') $stats_filter) as parishioners,
+    (SELECT COUNT(*) FROM baptisms $where_stats) as baptisms,
+    (SELECT COUNT(*) FROM confirmations $where_stats) as confirmations,
+    (SELECT COUNT(*) FROM marriages $where_stats) as marriages,
+    (SELECT COUNT(*) FROM ordinations_professions $where_stats) as ordinations,
+    (SELECT COUNT(*) FROM deaths $where_stats) as deaths,
+    (SELECT COUNT(*) FROM parishioners WHERE status = 'Transferred In' $stats_filter) as transfers_in,
+    (SELECT COUNT(*) FROM parishioners WHERE status IN ('Transferred Out', 'Moved') $stats_filter) as transfers_out
+";
+$p_full = array_merge($params_stats, $params_stats, $params_stats, $params_stats, $params_stats, $params_stats, $params_stats, $params_stats);
+$res = db_fetch($sql, $p_full);
+
 $totals = [
-    'parishioners' => db_fetch("SELECT COUNT(*) as count FROM parishioners WHERE status IN ('Active', 'Transferred In') " . $stats_filter, $params_stats)['count'] ?? 0,
-    'baptisms'     => db_fetch("SELECT COUNT(*) as count FROM baptisms " . $where_stats, $params_stats)['count'] ?? 0,
-    'confirmations'=> db_fetch("SELECT COUNT(*) as count FROM confirmations " . $where_stats, $params_stats)['count'] ?? 0,
-    'marriages'    => db_fetch("SELECT COUNT(*) as count FROM marriages " . $where_stats, $params_stats)['count'] ?? 0,
-    'ordinations'  => db_fetch("SELECT COUNT(*) as count FROM ordinations_professions " . $where_stats, $params_stats)['count'] ?? 0,
-    'deaths'       => db_fetch("SELECT COUNT(*) as count FROM deaths " . $where_stats, $params_stats)['count'] ?? 0,
-    'transfers_in' => db_fetch("SELECT COUNT(*) as count FROM parishioners WHERE status = 'Transferred In' " . $stats_filter, $params_stats)['count'] ?? 0,
-    'transfers_out'=> db_fetch("SELECT COUNT(*) as count FROM parishioners WHERE status IN ('Transferred Out', 'Moved') " . $stats_filter, $params_stats)['count'] ?? 0,
+    'parishioners' => $res['parishioners'] ?? 0,
+    'baptisms'     => $res['baptisms'] ?? 0,
+    'confirmations'=> $res['confirmations'] ?? 0,
+    'marriages'    => $res['marriages'] ?? 0,
+    'ordinations'  => $res['ordinations'] ?? 0,
+    'deaths'       => $res['deaths'] ?? 0,
+    'transfers_in' => $res['transfers_in'] ?? 0,
+    'transfers_out'=> $res['transfers_out'] ?? 0,
 ];
 
 // 2. Fetch Monthly Trends (Canonical Event Dates, Parish-Aware Benchmark)
