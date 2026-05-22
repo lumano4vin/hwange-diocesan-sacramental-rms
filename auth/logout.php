@@ -4,6 +4,7 @@
  * Session Termination
  */
 
+require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
 if (session_status() === PHP_SESSION_NONE) {

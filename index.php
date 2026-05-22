@@ -8,10 +8,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// 2. Core Security & Utilities
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Include unified DB and Functions
 
 // Include unified DB and Functions
 require_once __DIR__ . '/includes/db.php';
@@ -49,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 logAction("User Logged In");
                 
+                session_write_close();
                 if ($user['must_change_password']) {
                     header("Location: profile/password_change.php");
                 } else {
