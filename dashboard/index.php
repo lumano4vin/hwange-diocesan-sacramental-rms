@@ -193,20 +193,22 @@ $can_verify_global = ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'ch
 $pending_queue = [];
 
 if ($can_verify_global) {
-    // Exact same unified logic as Sacramental Hub
-    $pending_bap = db_fetch("SELECT COUNT(*) as count FROM baptisms WHERE status = 'Draft'")['count'];
-    $pending_mar = db_fetch("SELECT COUNT(*) as count FROM marriages WHERE status = 'Draft'")['count'];
-    $pending_cnf = db_fetch("SELECT COUNT(*) as count FROM confirmations WHERE status = 'Draft'")['count'];
-    $pending_dth = db_fetch("SELECT COUNT(*) as count FROM deaths WHERE status = 'Draft'")['count'];
-    $pending_ord = db_fetch("SELECT COUNT(*) as count FROM ordinations_professions WHERE status = 'Draft'")['count'];
-    $pending_rec = db_fetch("SELECT COUNT(*) as count FROM receptions WHERE status = 'Draft'")['count'];
+    $sql_drafts = "
+        SELECT SUM(c) as total FROM (
+            SELECT COUNT(*) as c FROM baptisms WHERE status = 'Draft' UNION ALL
+            SELECT COUNT(*) as c FROM marriages WHERE status = 'Draft' UNION ALL
+            SELECT COUNT(*) as c FROM confirmations WHERE status = 'Draft' UNION ALL
+            SELECT COUNT(*) as c FROM deaths WHERE status = 'Draft' UNION ALL
+            SELECT COUNT(*) as c FROM ordinations_professions WHERE status = 'Draft' UNION ALL
+            SELECT COUNT(*) as c FROM receptions WHERE status = 'Draft'
+        ) t
+    ";
+    $pending_count = db_fetch($sql_drafts)['total'] ?? 0;
     
-    $pending_comm = 0;
     if ($_SESSION['role'] === 'admin') {
-        $pending_comm = db_fetch("SELECT COUNT(*) as count FROM communications WHERE status = 'Pending'")['count'];
+        $pending_count += db_fetch("SELECT COUNT(*) as count FROM communications WHERE status = 'Pending'")['count'] ?? 0;
     }
 
-    $pending_count = $pending_bap + $pending_mar + $pending_cnf + $pending_dth + $pending_ord + $pending_rec + $pending_comm;
 
     if ($pending_count > 0) {
         $sql_queue = "
@@ -282,24 +284,24 @@ if ($base_url !== '#') {
 }
 
 // 5. Fetch Deanery Heatmap Data
-$deaneries_raw = db_fetchAll("SELECT DISTINCT deanery FROM parishes WHERE deanery IS NOT NULL ORDER BY deanery");
 $heatmap_data = [];
 $max_activity = 1;
-foreach ($deaneries_raw as $d) {
-    $d_name = $d['deanery'];
-    $sql = "
-        SELECT COUNT(*) as count FROM (
-            SELECT b.parish_id FROM baptisms b JOIN parishes p ON b.parish_id = p.parish_id WHERE p.deanery = ?
-            UNION ALL
-            SELECT m.parish_id FROM marriages m JOIN parishes p ON m.parish_id = p.parish_id WHERE p.deanery = ?
-            UNION ALL
-            SELECT c.parish_id FROM confirmations c JOIN parishes p ON c.parish_id = p.parish_id WHERE p.deanery = ?
-        ) t
-    ";
-    $count = db_fetch($sql, [$d_name, $d_name, $d_name])['count'] ?? 0;
-    $heatmap_data[$d_name] = $count;
-    if ($count > $max_activity) $max_activity = $count;
-}
+$deanery_sql = "
+    SELECT p.deanery, COUNT(*) as count FROM (
+        SELECT parish_id FROM baptisms 
+        UNION ALL SELECT parish_id FROM marriages 
+        UNION ALL SELECT parish_id FROM confirmations
+    ) t JOIN parishes p ON t.parish_id = p.parish_id 
+    WHERE p.deanery IS NOT NULL 
+    GROUP BY p.deanery
+";
+try {
+    $results = db_fetchAll($deanery_sql);
+    foreach ($results as $row) {
+        $heatmap_data[$row['deanery']] = $row['count'];
+        if ($row['count'] > $max_activity) $max_activity = $row['count'];
+    }
+} catch (Exception $e) {}
 
 // 6. Fetch Mission Feed (Recent Sacramental Events - Parish Aware)
 $params_feed = [];
