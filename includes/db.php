@@ -28,9 +28,15 @@ if (file_exists($env_file)) {
 $host = getenv('DB_HOST') ?: '127.0.0.1';
 $ip = $host;
 if ($host !== 'localhost' && $host !== '127.0.0.1') {
-    $resolved = gethostbyname($host);
-    if ($resolved !== $host) {
-        $ip = $resolved;
+    $cache_file = sys_get_temp_dir() . '/db_ip.txt';
+    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < 3600) {
+        $ip = trim(file_get_contents($cache_file));
+    } else {
+        $resolved = gethostbyname($host);
+        if ($resolved !== $host) {
+            $ip = $resolved;
+            @file_put_contents($cache_file, $ip);
+        }
     }
 }
 $port = getenv('DB_PORT') ?: '3306';

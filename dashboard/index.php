@@ -75,7 +75,7 @@ try {
             SELECT date_of_reception as event_date, 'r' as type, parish_id, status, NULL as dob FROM receptions
             UNION ALL
             SELECT date_of_death as event_date, 'd' as type, parish_id, status, NULL as dob FROM deaths
-        ) t WHERE status != 'Draft' $filter
+        ) t WHERE status != 'Draft' AND event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH) $filter
     ";
     $p_events = db_fetchAll($parish_query, $params);
     
@@ -93,12 +93,12 @@ try {
             SELECT date_of_reception as event_date, 'r' as type, status FROM receptions
             UNION ALL
             SELECT date_of_death as event_date, 'd' as type, status FROM deaths
-        ) t WHERE status != 'Draft'
+        ) t WHERE status != 'Draft' AND event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
     ";
     $d_events = db_fetchAll($diocese_query);
     
-    // Check for total parishes to calculate average
-    $total_parishes = db_fetch("SELECT COUNT(*) as count FROM parishes")['count'] ?: 1;
+    // Check total parishes
+    $total_parishes = $total_parish_count;
 
     $all_stats = [];
     // Process Parish Events
@@ -168,7 +168,7 @@ try {
 }
 
 // Check for empty parishes (System Initialization Status)
-$parish_count = db_fetch("SELECT COUNT(*) as count FROM parishes")['count'] ?? 0;
+        $parish_count = $total_parish_count;
 
 // Automated Backup Checking Logic (Integrated with Audit Logs)
 $last_backup_audit = db_fetch("SELECT created_at FROM audit_logs WHERE action_type = 'BACKUP' ORDER BY created_at DESC LIMIT 1");
