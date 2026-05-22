@@ -1,0 +1,82 @@
+/* 
+   Hwange Diocese Records Management System
+   Mobile Responsiveness Audit Layer 
+*/
+
+@media (max-width: 1024px) {
+    .dashboard-layout {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        z-index: 10000;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 280px;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+    }
+    
+    .sidebar.mobile-active {
+        left: 0;
+    }
+    
+    /* Ensure the existing toggle button in the header is used for mobile */
+    #sidebar-toggle {
+        display: flex !important;
+        position: relative;
+        z-index: 10001;
+    }
+
+    .main-content {
+        padding: 1rem !important;
+        width: 100%;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid, .finance-grid, .clergy-grid, .dashboard-top-row, .activity-section {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .stat-card {
+        padding: 1.5rem !important;
+    }
+    
+    .header-content {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    .btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 1rem !important;
+    }
+    
+    .data-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+    
+    .card {
+        border-radius: 1.25rem !important;
+        padding: 1.25rem !important;
+    }
+    
+    /* Touch Optimizations */
+    .input-field {
+        font-size: 16px !important; /* Prevents zoom */
+        padding: 1rem !important;
+    }
+    
+    .mission-creed, .sidebar-footer {
+        display: none !important;
+    }
+}

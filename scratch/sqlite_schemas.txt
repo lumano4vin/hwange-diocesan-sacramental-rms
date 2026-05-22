@@ -1,0 +1,324 @@
+=== Table: sqlite_sequence ===
+CREATE TABLE sqlite_sequence(name,seq)
+
+=== Table: parishes ===
+CREATE TABLE parishes (
+    parish_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    parish_name VARCHAR(100) NOT NULL,
+    location VARCHAR(255),
+    deanery VARCHAR(50), -- e.g., Hwange Urban, Victoria Falls, etc.
+    priest_in_charge_id INT, -- Link back to users table
+    contact_number VARCHAR(20)
+, diocese_id INTEGER)
+
+=== Table: parishioners ===
+CREATE TABLE parishioners (
+    person_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    other_names VARCHAR(100),
+    gender TEXT NOT NULL,
+    dob DATE NOT NULL,
+    place_of_birth VARCHAR(255),
+    father_name VARCHAR(100),
+    mother_name VARCHAR(100),
+    mother_maiden_name VARCHAR(100), -- Required by Canon 877
+    current_parish_id INT,
+    title VARCHAR(50), -- e.g., Rev. Fr., Sr., Br.
+    status TEXT DEFAULT 'Active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, diocese_id INTEGER, scc_name TEXT, address TEXT, guid TEXT, place_of_residence TEXT, place_of_baptism VARCHAR(255), sync_status VARCHAR(20) DEFAULT 'Pending', last_synced_at TIMESTAMP NULL,
+    FOREIGN KEY (current_parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: baptisms ===
+CREATE TABLE baptisms (
+    baptism_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INT NOT NULL,
+    parish_id INT NOT NULL,
+    date_of_baptism DATE NOT NULL,
+    minister VARCHAR(100) NOT NULL, -- Priest/Deacon who conferred it
+    godparents VARCHAR(255),
+    witnesses VARCHAR(255),
+    register_book_number VARCHAR(50),
+    page_number VARCHAR(50),
+    entry_number VARCHAR(50),
+    verification_hash VARCHAR(64) UNIQUE,
+    status TEXT DEFAULT 'Valid', guid VARCHAR(36), diocese_id INTEGER DEFAULT 1, place_of_baptism VARCHAR(255), sync_status VARCHAR(20) DEFAULT 'Pending', last_synced_at TIMESTAMP NULL,
+    FOREIGN KEY (person_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: confirmations ===
+CREATE TABLE confirmations (
+    confirmation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INT NOT NULL,
+    parish_id INT NOT NULL,
+    date_of_confirmation DATE NOT NULL,
+    minister VARCHAR(100),
+    sponsor VARCHAR(100),
+    register_book_number VARCHAR(50),
+    page_number VARCHAR(50),
+    entry_number VARCHAR(50),
+    verification_hash VARCHAR(64) UNIQUE, status VARCHAR(20) DEFAULT 'Active', guid VARCHAR(36), diocese_id INTEGER DEFAULT 1, sync_status VARCHAR(20) DEFAULT 'Pending', last_synced_at TIMESTAMP NULL,
+    FOREIGN KEY (person_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: marriages ===
+CREATE TABLE marriages (
+    marriage_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    groom_person_id INT NOT NULL,
+    bride_person_id INT NOT NULL,
+    parish_id INT NOT NULL,
+    date_of_marriage DATE NOT NULL,
+    officiant VARCHAR(100),
+    witnesses_names TEXT,
+    convalidation_date DATE NULL,
+    register_book_number VARCHAR(50),
+    page_number VARCHAR(50),
+    entry_number VARCHAR(50),
+    verification_hash VARCHAR(64) UNIQUE, status VARCHAR(20) DEFAULT 'Active', guid VARCHAR(36), diocese_id INTEGER DEFAULT 1, sync_status VARCHAR(20) DEFAULT 'Pending', last_synced_at TIMESTAMP NULL, pni_id INTEGER DEFAULT NULL,
+    FOREIGN KEY (groom_person_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (bride_person_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: sacraments_notations ===
+CREATE TABLE sacraments_notations (
+    notation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    baptism_id INT NOT NULL,
+    sacrament_type TEXT NOT NULL,
+    event_date DATE NOT NULL,
+    parish_name VARCHAR(100), -- Where the sacrament occurred
+    details TEXT, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (baptism_id) REFERENCES baptisms(baptism_id)
+)
+
+=== Table: audit_logs ===
+CREATE TABLE audit_logs (
+    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INT NOT NULL,
+    action_type VARCHAR(50) NOT NULL, -- CREATE, UPDATE, DELETE, LOGIN
+    table_name VARCHAR(50),
+    record_id INT,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, old_data TEXT DEFAULT NULL, new_data TEXT DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+)
+
+=== Table: deaths ===
+CREATE TABLE deaths (
+    death_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INT NOT NULL,
+    parish_id INT NOT NULL,
+    date_of_death DATE NOT NULL,
+    date_of_burial DATE,
+    place_of_burial VARCHAR(255),
+    minister VARCHAR(255),
+    register_book_number VARCHAR(50),
+    page_number VARCHAR(50),
+    entry_number VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, verification_hash VARCHAR(64) DEFAULT NULL, status VARCHAR(20) DEFAULT 'Active', guid VARCHAR(36), diocese_id INTEGER DEFAULT 1, sync_status VARCHAR(20) DEFAULT 'Pending', last_synced_at TIMESTAMP NULL, baptism_notified INTEGER DEFAULT 0,
+    FOREIGN KEY (person_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: ordinations_professions ===
+CREATE TABLE ordinations_professions (
+    record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id INT NOT NULL,
+    parish_id INT NOT NULL, -- Parish of celebration
+    record_type TEXT NOT NULL,
+    congregation VARCHAR(255), -- For religious brothers/sisters
+    event_date DATE NOT NULL,
+    celebrant_superior VARCHAR(255),
+    place VARCHAR(255),
+    register_book_number VARCHAR(50),
+    page_number VARCHAR(50),
+    entry_number VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, verification_hash VARCHAR(64) DEFAULT NULL, status VARCHAR(20) DEFAULT 'Active', sync_status VARCHAR(20) DEFAULT 'Pending', last_synced_at TIMESTAMP NULL,
+    FOREIGN KEY (person_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: users ===
+CREATE TABLE "users" (
+                user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NOT NULL,
+                full_name VARCHAR(100) NOT NULL,
+                email VARCHAR(100),
+                role TEXT NOT NULL,
+                parish_id INTEGER DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_login TIMESTAMP NULL,
+                reset_token VARCHAR(64),
+                reset_token_expiry DATETIME
+            , two_factor_secret VARCHAR(32) DEFAULT NULL, two_factor_enabled BOOLEAN DEFAULT 0, status VARCHAR(20) DEFAULT 'active', diocese_id INTEGER, must_change_password BOOLEAN DEFAULT 0, deanery_id INTEGER DEFAULT NULL)
+
+=== Table: first_holy_communions ===
+CREATE TABLE first_holy_communions (
+        communion_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        person_id INTEGER NOT NULL,
+        parish_id INTEGER NOT NULL,
+        date_of_communion DATE NOT NULL,
+        minister_name VARCHAR(255),
+        register_book_number VARCHAR(50),
+        page_number VARCHAR(50),
+        entry_number VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        verification_hash VARCHAR(64) UNIQUE,
+        status VARCHAR(20) DEFAULT 'Valid', guid VARCHAR(36), diocese_id INTEGER DEFAULT 1,
+        FOREIGN KEY (person_id) REFERENCES parishioners(person_id),
+        FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+    )
+
+=== Table: dioceses ===
+CREATE TABLE dioceses (
+            diocese_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            diocese_name VARCHAR(100) NOT NULL,
+            bishop_name VARCHAR(100),
+            location VARCHAR(255),
+            logo_path VARCHAR(255),
+            api_key VARCHAR(64) UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+
+=== Table: receptions ===
+CREATE TABLE receptions (reception_id INTEGER PRIMARY KEY, person_id INT NOT NULL, parish_id INT NOT NULL, date_of_reception DATE NOT NULL, minister VARCHAR(255), previous_denomination VARCHAR(255), godparents_sponsors TEXT, register_book_number VARCHAR(50), page_number VARCHAR(50), entry_number VARCHAR(50), status VARCHAR(20) DEFAULT 'Draft', verification_hash VARCHAR(64), guid VARCHAR(36), diocese_id INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, previous_baptism_church VARCHAR(255), previous_baptism_date DATE, previous_baptism_place VARCHAR(255), FOREIGN KEY (person_id) REFERENCES parishioners(person_id), FOREIGN KEY (parish_id) REFERENCES parishes(parish_id))
+
+=== Table: parish_assignments ===
+CREATE TABLE parish_assignments (assignment_id INTEGER PRIMARY KEY, parish_id INTEGER NOT NULL, user_id INTEGER, priest_name_manual VARCHAR(255), start_date DATE NOT NULL, end_date DATE, role VARCHAR(50) DEFAULT 'Parish Priest', status VARCHAR(20) DEFAULT 'Active', notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (parish_id) REFERENCES parishes(parish_id), FOREIGN KEY (user_id) REFERENCES users(user_id))
+
+=== Table: communications ===
+CREATE TABLE communications (
+    comm_id INTEGER PRIMARY KEY, 
+    sender_id INTEGER NOT NULL, 
+    parish_id INTEGER NOT NULL, 
+    subject VARCHAR(255) NOT NULL, 
+    message TEXT NOT NULL, 
+    type VARCHAR(50) DEFAULT 'Query', 
+    status VARCHAR(20) DEFAULT 'Pending', 
+    is_read INTEGER DEFAULT 0, 
+    admin_response TEXT, 
+    replied_at DATETIME, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, recipient_parish_id INTEGER DEFAULT NULL, 
+    FOREIGN KEY (sender_id) REFERENCES users(user_id), 
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: parish_handovers ===
+CREATE TABLE parish_handovers (
+    handover_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    parish_id INTEGER NOT NULL,
+    outgoing_priest_id INTEGER,
+    incoming_priest_id INTEGER,
+    assignment_id INTEGER,
+    status TEXT DEFAULT 'Pending', -- Pending, Signed_Off, Accepted, Completed
+    registry_status_notes TEXT,
+    outgoing_sign_date DATETIME,
+    incoming_accept_date DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id),
+    FOREIGN KEY (outgoing_priest_id) REFERENCES users(user_id),
+    FOREIGN KEY (incoming_priest_id) REFERENCES users(user_id)
+)
+
+=== Table: annual_reports ===
+CREATE TABLE annual_reports (
+    report_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    parish_id INTEGER NOT NULL,
+    report_year INTEGER NOT NULL,
+    report_data TEXT NOT NULL, -- JSON formatted metrics
+    submitted_by INTEGER,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'Final',
+    UNIQUE(parish_id, report_year)
+)
+
+=== Table: prenuptial_investigations ===
+CREATE TABLE prenuptial_investigations (
+    pni_id INTEGER PRIMARY KEY,
+    groom_id INTEGER NOT NULL,
+    bride_id INTEGER NOT NULL,
+    parish_id INTEGER NOT NULL,
+    priest_user_id INTEGER,
+    investigation_date DATE NOT NULL,
+    
+    -- Freedom to Marry
+    groom_free_to_marry INTEGER DEFAULT 0,
+    bride_free_to_marry INTEGER DEFAULT 0,
+    groom_previous_marriage INTEGER DEFAULT 0,
+    bride_previous_marriage INTEGER DEFAULT 0,
+    
+    -- Consent & Intentions
+    consent_unity INTEGER DEFAULT 0,
+    consent_indissolubility INTEGER DEFAULT 0,
+    consent_procreation INTEGER DEFAULT 0,
+    
+    -- Impediments & Dispensations
+    impediments_noted TEXT,
+    dispensations_required TEXT,
+    
+    -- Administrative
+    status VARCHAR(20) DEFAULT 'Draft',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (groom_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (bride_id) REFERENCES parishioners(person_id),
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+
+=== Table: clergy_profiles ===
+CREATE TABLE clergy_profiles (
+    cleric_id INTEGER PRIMARY KEY,
+    user_id INTEGER UNIQUE, -- Link to system user
+    title VARCHAR(50), -- Rev. Fr., Msgr., etc.
+    full_canonical_name VARCHAR(255),
+    date_of_birth DATE,
+    date_of_ordination DATE,
+    place_of_ordination VARCHAR(255),
+    ordaining_bishop VARCHAR(255),
+    incardination_status VARCHAR(50) DEFAULT 'Incardinated', -- Incardinated, Religious, Extern
+    religious_congregation VARCHAR(255), -- If religious
+    faculties_status VARCHAR(50) DEFAULT 'Active', -- Active, Restricted, Retired
+    faculties_expiry DATE,
+    special_faculties TEXT, -- e.g., Exorcism, Canonical Judge
+    health_notes TEXT,
+    emergency_contact TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+)
+
+=== Table: parish_financial_submissions ===
+CREATE TABLE parish_financial_submissions (
+    submission_id INTEGER PRIMARY KEY,
+    parish_id INTEGER NOT NULL,
+    fiscal_year INTEGER NOT NULL,
+    fiscal_month INTEGER NOT NULL,
+    total_collections DECIMAL(10,2) DEFAULT 0, -- Sunday collections
+    sacramental_offerings DECIMAL(10,2) DEFAULT 0, -- Stole fees
+    other_income DECIMAL(10,2) DEFAULT 0,
+    assessment_rate DECIMAL(5,2) DEFAULT 10.00, -- Percentage owed to Diocese
+    calculated_levy DECIMAL(10,2),
+    status VARCHAR(50) DEFAULT 'Draft', -- Draft, Submitted, Approved, Rejected
+    submitted_by INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id),
+    FOREIGN KEY (submitted_by) REFERENCES users(user_id)
+)
+
+=== Table: financial_payments ===
+CREATE TABLE financial_payments (
+    payment_id INTEGER PRIMARY KEY,
+    parish_id INTEGER NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_date DATE NOT NULL,
+    payment_method VARCHAR(50),
+    reference_number VARCHAR(100), -- Receipt # or Bank Ref
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+)
+

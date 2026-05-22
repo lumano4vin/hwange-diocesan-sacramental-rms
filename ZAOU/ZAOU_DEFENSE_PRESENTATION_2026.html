@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZAOU Defense Presentation - Hwange Diocesan RMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --accent: #d4af37;
+            --bg: #0f172a;
+            --slide-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .presentation-container {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            background: var(--slide-bg);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 4rem;
+            display: none;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide.active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Slide Styles */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary) 0%, #1e1b4b 100%);
+            color: white;
+        }
+
+        .title-slide h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            line-height: 1.1;
+        }
+
+        .title-slide .accent-line {
+            width: 100px;
+            height: 4px;
+            background: var(--accent);
+            margin-bottom: 2rem;
+        }
+
+        .slide-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 1rem;
+        }
+
+        .slide-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .slide-content {
+            flex-grow: 1;
+            display: flex;
+            gap: 3rem;
+        }
+
+        .content-text { flex: 1; }
+        .content-visual { flex: 1; display: flex; justify-content: center; align-items: center; }
+
+        ul { margin-left: 1.5rem; margin-top: 1rem; }
+        li { margin-bottom: 1rem; font-size: 1.3rem; line-height: 1.4; }
+
+        .visual-img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            border: 1px solid var(--accent);
+        }
+
+        .btn:hover { background: #1e1b4b; }
+
+        .slide-number {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        /* Tables in slides */
+        .slide-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.1rem;
+        }
+        .slide-table th { background: var(--primary); color: white; padding: 15px; text-align: left; }
+        .slide-table td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" id="slide1">
+            <div style="font-size: 1.5rem; letter-spacing: 5px; margin-bottom: 1rem; font-family: 'Outfit', sans-serif;">ZAMBIAN OPEN UNIVERSITY</div>
+            <div class="accent-line"></div>
+            <h1>Design & Implementation of an Integrated Sacramental RMS</h1>
+            <div style="font-size: 1.5rem; margin-bottom: 3rem;">A Case Study of the Catholic Diocese of Hwange</div>
+            <div style="font-size: 1.2rem;">Presented by: <strong>VINCENT [SURNAME]</strong></div>
+            <div style="font-size: 1rem; margin-top: 1rem;">BSc in Information Technology | May 2026</div>
+            <div class="slide-number">1 / 10</div>
+        </div>
+
+        <!-- Slide 2: The Problem -->
+        <div class="slide" id="slide2">
+            <div class="slide-header">
+                <h2>The Archival Crisis</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <ul>
+                        <li><strong>Physical Degradation</strong>: Ledgers dating back to 1960s are crumbling.</li>
+                        <li><strong>Synchronization Failure</strong>: Parish-to-parish notifications are often lost or broken.</li>
+                        <li><strong>Administrative Friction</strong>: Average historical search takes ~25 minutes.</li>
+                        <li><strong>Archival Risk</strong>: Vulnerability to fire, theft, and unauthorized access.</li>
+                    </ul>
+                </div>
+                <div class="content-visual">
+                    <img src="manual_register_1967.png" class="visual-img" alt="Manual Register">
+                </div>
+            </div>
+            <div class="slide-number">2 / 10</div>
+        </div>
+
+        <!-- Slide 3: Research Objectives -->
+        <div class="slide" id="slide3">
+            <div class="slide-header">
+                <h2>Research Objectives</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <ul>
+                        <li><strong>Objective 1</strong>: Analyze manual registry gaps and archival risks.</li>
+                        <li><strong>Objective 2</strong>: Design a <strong>Portable, Offline-First</strong> digital architecture.</li>
+                        <li><strong>Objective 3</strong>: Automate <strong>Canon Law 535</strong> compliance via database triggers.</li>
+                        <li><strong>Objective 4</strong>: Build a high-fidelity <strong>OMEGA Reporting</strong> engine for the Chancery.</li>
+                    </ul>
+                </div>
+                <div class="content-visual">
+                    <div style="background: var(--primary); color: white; padding: 2rem; border-radius: 12px; text-align: center;">
+                        <h3 style="color: var(--accent); margin-bottom: 1rem; font-family: 'Outfit', sans-serif;">Core Goal</h3>
+                        <p style="font-size: 1.5rem;">To preserve the "Database of Souls" with modern technical resilience.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">3 / 10</div>
+        </div>
+
+        <!-- Slide 4: Theoretical Framework -->
+        <div class="slide" id="slide4">
+            <div class="slide-header">
+                <h2>Why Offline-First? (TAM Framework)</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <ul>
+                        <li><strong>Technology Acceptance Model (TAM)</strong>: Perceived Ease of Use is critical.</li>
+                        <li><strong>Infrastructural Gap</strong>: Cloud-only systems fail during Zimbabwe's frequent power/internet outages.</li>
+                        <li><strong>Strategic Pivot</strong>: Architecture designed to work 100% locally on mission station PCs.</li>
+                    </ul>
+                </div>
+                <div class="content-visual">
+                    <img src="tam_model_diagram.png" class="visual-img" alt="TAM Model">
+                </div>
+            </div>
+            <div class="slide-number">4 / 10</div>
+        </div>
+
+        <!-- Slide 5: Philosophy -->
+        <div class="slide" id="slide5">
+            <div class="slide-header">
+                <h2>"Database of Souls" Philosophy</h2>
+            </div>
+            <div class="slide-content" style="flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                <p style="font-size: 2rem; color: var(--primary); font-family: 'Outfit', sans-serif; margin-bottom: 2rem;">
+                    "Sacramental data represents living spiritual identities, not merely administrative statistics."
+                </p>
+                <div style="display: flex; gap: 2rem; justify-content: center;">
+                    <div style="padding: 1.5rem; background: #f8fafc; border-radius: 8px; border-top: 4px solid var(--accent); width: 300px;">
+                        <strong>Canonical Continuity</strong>
+                        <p>Baptism linked to all subsequent sacraments.</p>
+                    </div>
+                    <div style="padding: 1.5rem; background: #f8fafc; border-radius: 8px; border-top: 4px solid var(--accent); width: 300px;">
+                        <strong>Digital Custodians</strong>
+                        <p>Empowering Priests and Secretaries with smart tools.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">5 / 10</div>
+        </div>
+
+        <!-- Slide 6: Architecture -->
+        <div class="slide" id="slide6">
+            <div class="slide-header">
+                <h2>The Zero-Install Architecture</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <ul>
+                        <li><strong>Portable Web Stack</strong>: Bundled PHP 8.2 and SQLite engine.</li>
+                        <li><strong>Single-Click Launch</strong>: Custom PowerShell automation (RUN_PORTABLE.ps1).</li>
+                        <li><strong>Local Encryption</strong>: Sensitive canonical data remains within the parish safe's digital vault.</li>
+                    </ul>
+                </div>
+                <div class="content-visual">
+                    <img src="system_architecture_diagram.png" class="visual-img" alt="Architecture Diagram">
+                </div>
+            </div>
+            <div class="slide-number">6 / 10</div>
+        </div>
+
+        <!-- Slide 7: Technical Features -->
+        <div class="slide" id="slide7">
+            <div class="slide-header">
+                <h2>Key Technical Modules</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <ul>
+                        <li><strong>Baptismal Root</strong>: Master record hierarchy enforcing referential integrity.</li>
+                        <li><strong>RBAC</strong>: Separate permissions for Secretaries, Priests, and the Chancellor.</li>
+                        <li><strong>Handover Module</strong>: Cryptographic report for clergy reassignments.</li>
+                    </ul>
+                </div>
+                <div class="content-visual">
+                    <img src="premium_dashboard_mockup.png" class="visual-img" alt="Dashboard">
+                </div>
+            </div>
+            <div class="slide-number">7 / 10</div>
+        </div>
+
+        <!-- Slide 8: Testing Results -->
+        <div class="slide" id="slide8">
+            <div class="slide-header">
+                <h2>Impact & Evaluation</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <table class="slide-table">
+                        <tr><th>Metric</th><th>Manual</th><th>Digital (RMS)</th></tr>
+                        <tr><td>Search Time</td><td>25 Min</td><td style="color: green; font-weight: bold;">< 3 Sec</td></tr>
+                        <tr><td>Archival Access</td><td>Safe Only</td><td>Portable/Local</td></tr>
+                        <tr><td>Integrity</td><td>Fragile</td><td>Automated</td></tr>
+                    </table>
+                    <p style="margin-top: 1rem; font-weight: 700; color: var(--primary);">99.8% Efficiency Gain in Historical Retrieval.</p>
+                </div>
+                <div class="content-visual">
+                    <img src="heirloom_certificate.png" class="visual-img" alt="Certificate">
+                </div>
+            </div>
+            <div class="slide-number">8 / 10</div>
+        </div>
+
+        <!-- Slide 9: Future Recommendations -->
+        <div class="slide" id="slide9">
+            <div class="slide-header">
+                <h2>Strategic Recommendations</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <ul>
+                        <li><strong>National Rollout</strong>: Scaling the ZCBC Asynchronous Cloud Sync.</li>
+                        <li><strong>OCR Integration</strong>: Automating the digitization of handwritten 20th-century ledgers.</li>
+                        <li><strong>Biometrics</strong>: USB Fingerprint verification for non-repudiable canonical handovers.</li>
+                    </ul>
+                </div>
+                <div class="content-visual">
+                    <img src="omega_report.png" class="visual-img" alt="OMEGA Report">
+                </div>
+            </div>
+            <div class="slide-number">9 / 10</div>
+        </div>
+
+        <!-- Slide 10: Demographic Growth Trajectories -->
+        <div class="slide" id="slide10">
+            <div class="slide-header">
+                <h2>Canonical Growth Trajectories</h2>
+            </div>
+            <div class="slide-content">
+                <div class="content-text">
+                    <ul>
+                        <li><strong>Demographic Segregation</strong>: Real-time tracking of Infants, Children, Youth, and Adults.</li>
+                        <li><strong>Mission Vitality</strong>: Identifying growth hotspots across the 24 parishes and mission stations.</li>
+                        <li><strong>Defense-Ready Analytics</strong>: High-fidelity visualization for Chancery-level strategic planning.</li>
+                    </ul>
+                </div>
+                <div class="content-visual">
+                    <img src="premium_dashboard_mockup.png" class="visual-img" alt="Growth Analytics">
+                </div>
+            </div>
+            <div class="slide-number">10 / 11</div>
+        </div>
+
+        <!-- Slide 11: Conclusion -->
+        <div class="slide title-slide" id="slide11">
+            <h1>Thank You</h1>
+            <div class="accent-line" style="margin: 0 auto 2rem;"></div>
+            <div style="font-size: 1.8rem; margin-bottom: 2rem; font-family: 'Outfit', sans-serif;">"Safeguarding the sacred ledgers for generations to come."</div>
+            <div style="font-size: 1.5rem;">Questions & Answers</div>
+            <div class="slide-number">11 / 11</div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="prevBtn">Previous</button>
+        <button class="btn" id="nextBtn">Next</button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 11;
+
+        function showSlide(n) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.getElementById('slide' + n).classList.add('active');
+            currentSlide = n;
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentSlide < totalSlides) showSlide(currentSlide + 1);
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentSlide > 1) showSlide(currentSlide - 1);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlide < totalSlides) showSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 1) showSlide(currentSlide - 1);
+            }
+        });
+    </script>
+
+</body>
+</html>
