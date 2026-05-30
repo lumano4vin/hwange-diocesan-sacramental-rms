@@ -540,8 +540,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <div class="footer-note">
-            <p>&copy; 2026 Hwange Diocesan Sacramental Database System. <br> All rights reserved.</p>
+        <div class="footer-note" style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1.5rem; margin-top: 2rem;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem;">
+                <div style="width: 10px; height: 10px; border: 2px solid var(--accent); transform: rotate(45deg);"></div>
+                <span style="font-family: 'Outfit', sans-serif; font-weight: 900; letter-spacing: 2px; color: #ffffff; font-size: 0.85rem;">LUMSYSTEMS</span>
+            </div>
+            <p style="font-size: 0.65rem; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.75rem; font-weight: 600;">
+                Honoring Legacy, Illuminating Excellence, Engineering the Future
+            </p>
+            <p style="opacity: 0.7; font-size: 0.7rem; line-height: 1.4;">
+                &copy; 2026 Catholic Diocese of Hwange. Powered by LumSystems. <br> All rights reserved.
+            </p>
         </div>
     </div>
 
@@ -585,7 +594,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             about: { 
                 title: "About the System", 
                 icon: "information-circle-outline", 
-                body: "The <strong>Hwange Diocesan Sacramental Database System</strong> is a secure digital vault for all canonical records. It ensures that the sacramental history of every parishioner is preserved with modern encryption and digital stewardship." 
+                body: "The <strong>Hwange Diocesan Sacramental Database System</strong> is a secure digital vault for all canonical records. It ensures that the sacramental history of every parishioner is preserved with modern encryption and digital stewardship.<br><br>Developed and maintained by <strong>LumSystems</strong>." 
             },
             guide: { 
                 title: "How to Sign In", 

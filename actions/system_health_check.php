@@ -4,6 +4,8 @@
  * System Integrity & Health Check Utility
  */
 
+require_once 'includes/functions.php';
+
 echo "===========================================\n";
 echo " HWANGE DIOCESAN SYSTEM - HEALTH CHECK\n";
 echo "===========================================\n\n";
@@ -59,9 +61,8 @@ try {
 
 // 4. Branding & Language Check
 echo "[4/4] Testing Multi-Language Engine... ";
-require_once 'includes/functions.php';
 $test_nb = get_certificate_text('nb');
-if ($test_nb['cert_baptism'] === 'Cisumbya ceLulubatizo') {
+if ($test_nb['cert_baptism'] === 'Chitupa chombhabhatiso') {
     echo "OK (Authentic Nambya active)\n";
 } else {
     echo "WARNING: Nambya translations might be outdated.\n";

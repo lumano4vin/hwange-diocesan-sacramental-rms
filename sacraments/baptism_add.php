@@ -141,10 +141,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; color: #38bdf8; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
                                 <ion-icon name="person-outline"></ion-icon> Primary Subject Information
                             </h3>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                <div class="form-group">
-                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Faithful Subject *</label>
-                                    <select name="person_id" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+
+                            <!-- Toggle registration type for Baptism Candidate -->
+                            <div class="form-group" style="margin-bottom: 1.5rem;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Candidate Registration Status *</label>
+                                <div style="display: flex; gap: 1.5rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); width: max-content;">
+                                    <label style="display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;" id="lbl-registered">
+                                        <input type="radio" name="registration_type" value="registered" checked style="accent-color: #38bdf8;"> Registered Parishioner
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;" id="lbl-unregistered">
+                                        <input type="radio" name="registration_type" value="unregistered" style="accent-color: #38bdf8;"> Unregistered Candidate / Infant
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start;">
+                                <!-- Registered Subject Selector -->
+                                <div class="form-group" id="registered-group">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Select Parishioner *</label>
+                                    <select name="person_id" id="person_id" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
                                         <option value="">-- Select Parishioner --</option>
                                         <?php foreach ($parishioners as $p): ?>
                                             <option value="<?php echo $p['person_id']; ?>" <?php echo $preselected_id == $p['person_id'] ? 'selected' : ''; ?>>
@@ -152,8 +167,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Subject not listed? <a href="../parishioners/add.php" style="color: var(--accent); text-decoration: none; font-weight: 700;">Add to Registry First</a></p>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Subject not listed? Select "Unregistered Candidate / Infant" above to enter details directly.</p>
                                 </div>
+
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Parish of Celebration *</label>
                                     <select name="parish_id" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
@@ -162,6 +178,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <option value="<?php echo $pa['parish_id']; ?>" <?php echo (isset($_SESSION['parish_id']) && $_SESSION['parish_id'] == $pa['parish_id']) ? 'selected' : ''; ?>><?php echo h($pa['parish_name']); ?></option>
                                         <?php endforeach; ?>
                                     </select>
+                                </div>
+                            </div>
+
+                            <!-- Unregistered Subject Details -->
+                            <div id="unregistered-group" style="display: none; flex-direction: column; gap: 1.5rem; border: 1px dashed rgba(56, 189, 248, 0.3); padding: 2rem; border-radius: 1.5rem; background: rgba(56, 189, 248, 0.02); margin-top: 1.5rem;">
+                                <h4 style="font-family: 'Outfit', sans-serif; font-size: 1rem; color: #38bdf8; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                                    <ion-icon name="information-circle-outline"></ion-icon> Unregistered Candidate Details
+                                </h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">First Name *</label>
+                                        <input type="text" name="unregistered_first_name" class="force-caps" placeholder="e.g. JOHN" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Other Names</label>
+                                        <input type="text" name="unregistered_other_names" class="force-caps" placeholder="e.g. SIBANDA" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Last Name *</label>
+                                        <input type="text" name="unregistered_last_name" class="force-caps" placeholder="e.g. MOYO" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Gender *</label>
+                                        <select name="unregistered_gender" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                            <option value="">-- Select Gender --</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Date of Birth *</label>
+                                        <input type="date" name="unregistered_dob" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Place of Birth</label>
+                                        <input type="text" name="unregistered_place_of_birth" class="force-caps" placeholder="e.g. HWANGE HOSPITAL" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Father's Full Name</label>
+                                        <input type="text" name="unregistered_father_name" class="force-caps" placeholder="Father's name" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Mother's Full Name</label>
+                                        <input type="text" name="unregistered_mother_name" class="force-caps" placeholder="Mother's name" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Mother's Maiden Name</label>
+                                        <input type="text" name="unregistered_mother_maiden_name" class="force-caps" placeholder="Maiden name (Canon 877)" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -243,5 +314,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="../assets/js/main.js?v=1.6.2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const radioRegistered = document.querySelector('input[name="registration_type"][value="registered"]');
+            const radioUnregistered = document.querySelector('input[name="registration_type"][value="unregistered"]');
+            const registeredGroup = document.getElementById('registered-group');
+            const unregisteredGroup = document.getElementById('unregistered-group');
+            const selectPerson = document.getElementById('person_id');
+            
+            const inputFirst = document.querySelector('input[name="unregistered_first_name"]');
+            const inputLast = document.querySelector('input[name="unregistered_last_name"]');
+            const selectGender = document.querySelector('select[name="unregistered_gender"]');
+            const inputDob = document.querySelector('input[name="unregistered_dob"]');
+
+            function toggleRegistrationType() {
+                if (radioRegistered.checked) {
+                    registeredGroup.style.display = 'block';
+                    unregisteredGroup.style.display = 'none';
+                    
+                    selectPerson.setAttribute('required', '');
+                    inputFirst.removeAttribute('required');
+                    inputLast.removeAttribute('required');
+                    selectGender.removeAttribute('required');
+                    inputDob.removeAttribute('required');
+                    
+                    document.getElementById('lbl-registered').style.background = 'rgba(56, 189, 248, 0.15)';
+                    document.getElementById('lbl-registered').style.border = '1px solid rgba(56, 189, 248, 0.3)';
+                    document.getElementById('lbl-unregistered').style.background = 'transparent';
+                    document.getElementById('lbl-unregistered').style.border = 'none';
+                } else {
+                    registeredGroup.style.display = 'none';
+                    unregisteredGroup.style.display = 'flex';
+                    
+                    selectPerson.removeAttribute('required');
+                    inputFirst.setAttribute('required', '');
+                    inputLast.setAttribute('required', '');
+                    selectGender.setAttribute('required', '');
+                    inputDob.setAttribute('required', '');
+                    
+                    document.getElementById('lbl-unregistered').style.background = 'rgba(56, 189, 248, 0.15)';
+                    document.getElementById('lbl-unregistered').style.border = '1px solid rgba(56, 189, 248, 0.3)';
+                    document.getElementById('lbl-registered').style.background = 'transparent';
+                    document.getElementById('lbl-registered').style.border = 'none';
+                }
+            }
+
+            radioRegistered.addEventListener('change', toggleRegistrationType);
+            radioUnregistered.addEventListener('change', toggleRegistrationType);
+
+            // Initial execution
+            toggleRegistrationType();
+        });
+    </script>
 </body>
 </html>

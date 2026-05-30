@@ -30,3 +30,4 @@ restore_designation_passwords.php
 sync_canonical_data.php
 unify_mission_passwords.php
 migrate_*.php
+releases/

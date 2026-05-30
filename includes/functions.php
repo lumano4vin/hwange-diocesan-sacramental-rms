@@ -800,6 +800,11 @@ function get_user_greeting_name($full_name) {
     $full_name = trim((string)$full_name);
     if (empty($full_name)) return 'Minister';
     
+    // Specially handle the Bishop of Hwange
+    if (strpos(strtolower($full_name), 'mabuza') !== false || strpos(strtolower($full_name), 'bishop') !== false) {
+        return 'Rt. Rev. Raphael Mabuza Ncube';
+    }
+    
     // Specially handle Diocesan Administrator role/name
     if (strtolower($full_name) === 'diocesan' || strtolower($full_name) === 'diocesan admin' || strtolower($full_name) === 'diocesan administrator' || strtolower($full_name) === 'admin') {
         return 'Diocesan Administrator';

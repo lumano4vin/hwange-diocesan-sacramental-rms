@@ -62,13 +62,17 @@ $header_subtitle = "A complete guide to using the Hwange Diocesan Sacramental Da
                         <h4 style="color: white; margin-bottom: 0.75rem; font-size: 0.95rem;">How to Sign In</h4>
                         <ol style="color: var(--text-muted); padding-left: 1.5rem; line-height: 2;">
                             <li>Open your browser and navigate to <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: #38bdf8; font-size: 0.85rem;">http://localhost:8000</code></li>
-                            <li>On the <strong style="color: white;">Login</strong> page, enter your assigned <strong style="color: white;">Username</strong> and <strong style="color: white;">Password</strong>.</li>
+                            <li>On the <strong style="color: white;">Login</strong> page, enter your assigned <strong style="color: white;">Username</strong> (e.g., your surname, parish identifier, or <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: var(--accent);">bishop_hwange</code> for the Bishop).</li>
+                            <li>Enter your secure <strong style="color: white;">Password</strong> (default temporary password for accounts is <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: var(--accent);">Hwange2026!</code>).</li>
                             <li>Click <strong style="color: white;">Login</strong>.</li>
                         </ol>
                         <!-- Note callout -->
                         <div style="margin-top: 1.25rem; background: rgba(56, 189, 248, 0.07); border-left: 4px solid #38bdf8; border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
                             <ion-icon name="information-circle-outline" style="color: #38bdf8; font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;"></ion-icon>
-                            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">If it is your first time logging in, you may be prompted to change your temporary password for security reasons.</p>
+                            <div style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+                                <p style="margin: 0 0 6px 0;"><strong style="color: white;">Episcopal Access:</strong> The Bishop of Hwange (<strong style="color: white;">Rt. Rev. Raphael Mabuza Ncube</strong>) is dynamically recognized and greeted by name upon entering and leaving the system.</p>
+                                <p style="margin: 0;">If it is your first time logging in, you will be prompted to change your temporary password for security reasons.</p>
+                            </div>
                         </div>
                     </div>
                 </div>

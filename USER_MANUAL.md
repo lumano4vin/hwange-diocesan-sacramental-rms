@@ -11,9 +11,12 @@ Before you can sign in, ensure the system is running by following the steps in t
 ### How to Sign In
 1.  Open your web browser and navigate to `http://localhost:8000`.
 2.  On the **Login** page:
-    *   **Username**: Enter your assigned username (e.g., your surname or parish identifier).
-    *   **Password**: Enter your secure password.
+    *   **Username**: Enter your assigned username (e.g., your surname, parish identifier, or `bishop_hwange` for the Bishop).
+    *   **Password**: Enter your secure password (default temporary password: `Hwange2026!`).
 3.  Click **Login**.
+
+> [!NOTE]
+> **Episcopal Access**: The Bishop of Hwange (**Rt. Rev. Raphael Mabuza Ncube**) is greeted dynamically by name upon logging in and signing out, accessing the system under the dedicated username `bishop_hwange`.
 
 > [!IMPORTANT]
 > If it is your first time logging in, the system will prompt you to change your temporary password for security reasons.

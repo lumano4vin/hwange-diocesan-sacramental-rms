@@ -192,6 +192,20 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
 
+    // Column migration for PNI Banns (Self-Healing)
+    try {
+        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_date_1 DATE");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_date_2 DATE");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_date_3 DATE");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_parish_id INTEGER");
+    } catch (Exception $e) {}
+
     // Link marriages to PNI
     try {
         $pdo->exec("ALTER TABLE marriages ADD COLUMN pni_id INTEGER DEFAULT NULL");
@@ -365,6 +379,15 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
         } catch (Exception $e) {
             return false;
         }
+    }
+}
+
+// Call run_schema_migrations on local SQLite databases to ensure they are self-healing
+if (isset($pdo) && file_exists($sqlite_file) && !$use_cloud) {
+    try {
+        run_schema_migrations($pdo);
+    } catch (Exception $e) {
+        // Silently log or ignore if DB is locked
     }
 }
 
