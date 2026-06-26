@@ -141,6 +141,12 @@ function run_schema_migrations($pdo) {
         $pdo->exec("ALTER TABLE communications ADD COLUMN recipient_parish_id INTEGER DEFAULT NULL");
     } catch (Exception $e) {}
 
+    // Column migration for Users (2FA)
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(64) DEFAULT NULL");
+        $pdo->exec("ALTER TABLE users ADD COLUMN two_factor_enabled TINYINT(1) DEFAULT 0");
+    } catch (Exception $e) {}
+
     // Column migration for Parishioners
     try {
         $pdo->exec("ALTER TABLE parishioners ADD COLUMN place_of_residence TEXT");
@@ -273,6 +279,22 @@ function run_schema_migrations($pdo) {
         session_data TEXT,
         expires_at INTEGER
     )");
+
+    // 14. RCIA / Catechumens Tracking
+    $pdo->exec("CREATE TABLE IF NOT EXISTS catechumens (
+        catechumen_id INTEGER PRIMARY KEY,
+        parish_id INTEGER NOT NULL,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        dob DATE,
+        sponsor_name VARCHAR(255),
+        enrollment_date DATE,
+        expected_baptism_date DATE,
+        status VARCHAR(50) DEFAULT 'Inquirer',
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+    )");
 }
 
 /**
@@ -299,6 +321,11 @@ function db_fetch($sql, $params = []) {
 
 function db_fetchAll($sql, $params = []) {
     return db_query($sql, $params)->fetchAll();
+}
+
+function db_lastInsertId() {
+    global $pdo;
+    return $pdo->lastInsertId();
 }
 
 /**
