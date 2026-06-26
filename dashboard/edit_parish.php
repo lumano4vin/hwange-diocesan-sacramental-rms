@@ -79,6 +79,7 @@ $priests = db_fetchAll("SELECT user_id, full_name FROM users WHERE role IN ('adm
                                     <option value="Binga" <?php if ($parish['deanery'] == 'Binga') echo 'selected'; ?>>Binga</option>
                                     <option value="Dete" <?php if ($parish['deanery'] == 'Dete') echo 'selected'; ?>>Dete</option>
                                     <option value="Hwange Urban" <?php if ($parish['deanery'] == 'Hwange Urban') echo 'selected'; ?>>Hwange Urban</option>
+                                    <option value="Empumalanga" <?php if ($parish['deanery'] == 'Empumalanga') echo 'selected'; ?>>Empumalanga</option>
                                     <option value="Lupane" <?php if ($parish['deanery'] == 'Lupane') echo 'selected'; ?>>Lupane</option>
                                     <option value="Jambezi" <?php if ($parish['deanery'] == 'Jambezi') echo 'selected'; ?>>Jambezi</option>
                                     <option value="Makwa" <?php if ($parish['deanery'] == 'Makwa') echo 'selected'; ?>>Makwa</option>

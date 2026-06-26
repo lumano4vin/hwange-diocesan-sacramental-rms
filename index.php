@@ -32,6 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
             
             if ($user && password_verify($password, $user['password_hash'])) {
+                // Intercept for 2FA
+                if (!empty($user['two_factor_enabled'])) {
+                    $_SESSION['2fa_pending_user_id'] = $user['user_id'];
+                    $_SESSION['2fa_pending_username'] = $user['username'];
+                    session_write_close();
+                    header("Location: auth/2fa_verify.php");
+                    exit;
+                }
+
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['full_name'] = $user['full_name'];
@@ -48,9 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 session_write_close();
                 if ($user['must_change_password']) {
-                    header("Location: profile/password_change.php");
+                    header("Location: /profile/password_change.php");
                 } else {
-                    header("Location: dashboard/index.php");
+                    header("Location: /dashboard/index.php");
                 }
                 exit;
             } else {
@@ -604,7 +613,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             support: { 
                 title: "Support", 
                 icon: "help-buoy-outline", 
-                body: "If you have forgotten your password or are locked out, please contact the <strong>Diocesan IT Department</strong> or your Parish Administrator for a reset." 
+                body: "If you have forgotten your password, please click the <strong>'Forgot?'</strong> link above the password field to reset it yourself. For other issues, contact the <strong>Diocesan IT Department</strong>." 
             },
             sso: { 
                 title: "About Single Sign-On", 
@@ -630,7 +639,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             icon.name = (input.type === 'password') ? 'eye-outline' : 'eye-off-outline';
         }
 
-        document.querySelector('.btn-sso').addEventListener('click', () => showInfo('sso'));
+        document.querySelector('.btn-sso').addEventListener('click', () => {
+            window.location.href = 'auth/sso_login.php';
+        });
 
         // 4. Keyboard Shortcuts
         document.addEventListener('keydown', (e) => {

@@ -15,7 +15,6 @@ package-lock.json
 *.sql
 *.md
 ZAOU/
-docs/
 tmp/
 php/
 migrate_to_mysql.php

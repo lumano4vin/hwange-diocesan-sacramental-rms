@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // 2FA Security Engine
-require_once 'totp_helper.php';
+require_once __DIR__ . '/totp_helper.php';
 require_once __DIR__ . '/config_diocese.php';
 
 /**
@@ -100,8 +100,11 @@ function format_certificate_date($date_string) {
  * Calculate the relative path to the root directory
  */
 function get_base_url() {
-    $script_path = $_SERVER['PHP_SELF'];
-    $folders = ['/sacraments/', '/dashboard/', '/admin/', '/parishioners/', '/actions/', '/profile/', '/auth/'];
+    $script_path = $_SERVER['REQUEST_URI'];
+    if (($pos = strpos($script_path, '?')) !== false) {
+        $script_path = substr($script_path, 0, $pos);
+    }
+    $folders = ['/sacraments/', '/dashboard/', '/admin/', '/parishioners/', '/actions/', '/profile/', '/auth/', '/docs/'];
     foreach ($folders as $folder) {
         if (strpos($script_path, $folder) !== false) {
             return '../';
