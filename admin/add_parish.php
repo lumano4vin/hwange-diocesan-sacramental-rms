@@ -26,9 +26,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $parish_id = db_fetch("SELECT parish_id FROM parishes WHERE parish_name = ? AND location = ?", [$name, $location])['parish_id'];
             
             if ($priest_id) {
-                $priest = db_fetch("SELECT full_name FROM users WHERE user_id = ?", [$priest_id]);
-                db_query("INSERT INTO parish_assignments (parish_id, user_id, priest_name_manual, start_date, status, notes) VALUES (?, ?, ?, ?, 'Active', ?)", 
-                    [$parish_id, $priest_id, $priest['full_name'], date('Y-m-d'), "Initial assignment at parish registration"]);
+                $today = date('Y-m-d');
+                $priest = db_fetch("SELECT full_name, role FROM users WHERE user_id = ?", [$priest_id]);
+                $priest_role = $priest ? strtolower($priest['role']) : 'priest';
+                $assign_role = ($priest_role === 'mission_admin') ? 'Mission Administrator' : 'Parish Priest';
+                $priest_name = $priest ? $priest['full_name'] : 'Unknown Priest';
+
+                // A. Update the priest's users.parish_id
+                db_query("UPDATE users SET parish_id = ? WHERE user_id = ?", [$parish_id, $priest_id]);
+                
+                // B. Deactivate any other active assignments for this priest
+                db_query("UPDATE parish_assignments SET status = 'Completed', end_date = ? WHERE user_id = ? AND status = 'Active'", [$today, $priest_id]);
+                
+                // C. Clear their ID from any other parish's priest_in_charge_id
+                db_query("UPDATE parishes SET priest_in_charge_id = NULL WHERE priest_in_charge_id = ? AND parish_id != ?", [$priest_id, $parish_id]);
+                
+                // D. Insert new active assignment
+                db_query("INSERT INTO parish_assignments (parish_id, user_id, priest_name_manual, start_date, status, role, notes) VALUES (?, ?, ?, ?, 'Active', ?, ?)", 
+                    [$parish_id, $priest_id, $priest_name, $today, $assign_role, "Initial assignment at parish registration"]);
             }
 
             $success = "Parish '$name' has been successfully registered.";
@@ -89,10 +104,15 @@ $priests = db_fetchAll("SELECT user_id, full_name FROM users WHERE role = 'pries
                             <div class="form-group">
                                 <label style="display: block; color: var(--text-muted); margin-bottom: 8px;">Deanery</label>
                                 <select name="deanery" required style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
-                                    <option value="Hwange">Hwange Deanery</option>
+                                    <option value="">Select Deanery...</option>
+                                    <option value="Hwange Urban">Hwange Urban Deanery</option>
                                     <option value="Victoria Falls">Victoria Falls Deanery</option>
                                     <option value="Binga">Binga Deanery</option>
                                     <option value="Empumalanga">Empumalanga Deanery</option>
+                                    <option value="Dete">Dete Deanery</option>
+                                    <option value="Lupane">Lupane Deanery</option>
+                                    <option value="Jambezi">Jambezi Deanery</option>
+                                    <option value="Makwa">Makwa Deanery</option>
                                 </select>
                             </div>
                         </div>
