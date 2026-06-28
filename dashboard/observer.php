@@ -53,7 +53,7 @@ foreach ($deaneries_raw as $d) {
 
 // --- 3. Recent Canonical Events ---
 $mission_feed = db_fetchAll("
-    SELECT 'Baptism' as type, p.first_name || ' ' || p.last_name as name, b.date_of_baptism as date, pr.parish_name, 'water-outline' as icon, '#38bdf8' as color
+    SELECT 'Baptism' as type, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'water-outline' as icon, '#38bdf8' as color
     FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id
     UNION ALL
     SELECT 'Marriage' as type, p1.first_name || ' & ' || p2.first_name as name, m.date_of_marriage as date, pr.parish_name, 'heart-outline' as icon, '#f472b6' as color

@@ -35,12 +35,12 @@ if ($search) {
         if (empty($term)) continue;
         
         // 1. Standard precise match across the concatenated full name
-        $cond = "(first_name || ' ' || IFNULL(other_names, '') || ' ' || last_name) LIKE ?";
+        $cond = "CONCAT(first_name, ' ', IFNULL(other_names, ''), ' ', last_name) LIKE ?";
         $params[] = "%$term%";
         
         // 2. Fuzzy wildcard match for typos (only applied to words >= 4 chars to prevent overly broad results)
         if (strlen($term) >= 4) {
-            $cond .= " OR (first_name || ' ' || IFNULL(other_names, '') || ' ' || last_name) LIKE ?";
+            $cond .= " OR CONCAT(first_name, ' ', IFNULL(other_names, ''), ' ', last_name) LIKE ?";
             // Converts "Moyo" into "%M%o%y%o%"
             $fuzzy_pattern = "%" . implode("%", str_split($term)) . "%";
             $params[] = $fuzzy_pattern;
@@ -174,7 +174,7 @@ $parishioners = db_fetchAll("
                                             </td>
                                             <td style="padding: 1.25rem 2rem;">
                                                 <div style="display: flex; gap: 0.75rem;">
-                                                    <a href="parishioners/profile.php?id=<?php echo $p['person_id']; ?>" title="View Faithful Profile" style="color: var(--accent); font-size: 1.25rem;"><ion-icon name="person-circle-outline"></ion-icon></a>
+                                                    <a href="parishioners/view.php?id=<?php echo $p['person_id']; ?>" title="View Faithful Profile" style="color: var(--accent); font-size: 1.25rem;"><ion-icon name="person-circle-outline"></ion-icon></a>
                                                     <?php if (can_edit()): ?>
                                                         <a href="parishioners/edit.php?id=<?php echo $p['person_id']; ?>" title="Edit Record" style="color: white; font-size: 1.25rem;"><ion-icon name="create-outline"></ion-icon></a>
                                                     <?php endif; ?>

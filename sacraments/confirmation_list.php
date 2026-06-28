@@ -25,7 +25,7 @@ if ($search) {
     foreach ($terms as $term) {
         $term = trim($term);
         if (empty($term)) continue;
-        $term_conditions[] = "(p.first_name || ' ' || IFNULL(p.other_names, '') || ' ' || p.last_name) LIKE ?";
+        $term_conditions[] = "CONCAT(p.first_name, ' ', IFNULL(p.other_names, ''), ' ', p.last_name) LIKE ?";
         $params[] = "%$term%";
     }
     if (!empty($term_conditions)) {

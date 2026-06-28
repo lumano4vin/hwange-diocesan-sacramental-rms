@@ -23,7 +23,7 @@ if (strlen($q) < 2) {
 $sql = "SELECT p.person_id, p.first_name, p.last_name, p.dob,
                (SELECT COUNT(*) FROM baptisms b WHERE b.person_id = p.person_id) AS has_baptism
         FROM parishioners p
-        WHERE p.first_name LIKE ? OR p.last_name LIKE ? OR (p.first_name || ' ' || p.last_name) LIKE ?
+        WHERE p.first_name LIKE ? OR p.last_name LIKE ? OR (CONCAT(p.first_name, ' ', p.last_name)) LIKE ?
         ORDER BY p.last_name, p.first_name
         LIMIT 10";
 

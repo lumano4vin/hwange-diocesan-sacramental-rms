@@ -231,13 +231,13 @@ if ($can_verify_global) {
 
     if ($pending_count > 0) {
         $sql_queue = "
-            SELECT 'Baptism' as type, b.baptism_id as id, p.first_name || ' ' || p.last_name as name, b.date_of_baptism as date, pr.parish_name, 'view_baptism.php' as link
+            SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'view_baptism.php' as link
             FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id WHERE b.status = 'Draft'
             UNION ALL
             SELECT 'Marriage' as type, m.marriage_id as id, p1.first_name || ' & ' || p2.first_name as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
             FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id WHERE m.status = 'Draft'
             UNION ALL
-            SELECT 'Profession of Faith' as type, r.reception_id as id, p.first_name || ' ' || p.last_name as name, r.date_of_reception as date, pr.parish_name, 'view_reception.php' as link
+            SELECT 'Profession of Faith' as type, r.reception_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, r.date_of_reception as date, pr.parish_name, 'view_reception.php' as link
             FROM receptions r JOIN parishioners p ON r.person_id = p.person_id JOIN parishes pr ON r.parish_id = pr.parish_id WHERE r.status = 'Draft'
             " . (($_SESSION['role'] === 'admin') ? "
             UNION ALL
@@ -331,13 +331,13 @@ $feed_where = !empty($feed_filter) ? " WHERE " . ltrim($feed_filter, ' AND ') : 
 $params_feed_full = array_merge($params_feed, $params_feed, $params_feed);
 
 $mission_feed = db_fetchAll("
-    SELECT 'Baptism' as type, b.baptism_id as id, p.first_name || ' ' || p.last_name as name, b.date_of_baptism as date, pr.parish_name, 'water-outline' as icon, '#38bdf8' as color
+    SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'water-outline' as icon, '#38bdf8' as color
     FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id $feed_where
     UNION ALL
     SELECT 'Marriage' as type, m.marriage_id as id, p1.first_name || ' & ' || p2.first_name as name, m.date_of_marriage as date, pr.parish_name, 'heart-outline' as icon, '#f472b6' as color
     FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id $feed_where
     UNION ALL
-    SELECT 'Confirmation' as type, c.confirmation_id as id, p.first_name || ' ' || p.last_name as name, c.date_of_confirmation as date, pr.parish_name, 'flame-outline' as icon, '#fbbf24' as color
+    SELECT 'Confirmation' as type, c.confirmation_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, c.date_of_confirmation as date, pr.parish_name, 'flame-outline' as icon, '#fbbf24' as color
     FROM confirmations c JOIN parishioners p ON c.person_id = p.person_id JOIN parishes pr ON c.parish_id = pr.parish_id $feed_where
     ORDER BY date DESC LIMIT 5
 ", $params_feed_full);

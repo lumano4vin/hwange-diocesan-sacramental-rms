@@ -31,7 +31,7 @@ if (strlen($q) >= 2) {
         $conds = [];
         $p_params = [];
         foreach ($terms as $term) {
-            $conds[] = "(p.first_name || ' ' || IFNULL(p.other_names, '') || ' ' || p.last_name) LIKE ?";
+            $conds[] = "CONCAT(p.first_name, ' ', IFNULL(p.other_names, ''), ' ', p.last_name) LIKE ?";
             $p_params[] = "%$term%";
         }
         if (!empty($conds)) {
@@ -76,7 +76,7 @@ if (strlen($q) >= 2) {
         $conds = [];
         $b_params = [];
         foreach ($terms as $term) {
-            $conds[] = "(p.first_name || ' ' || IFNULL(p.other_names, '') || ' ' || p.last_name) LIKE ?";
+            $conds[] = "CONCAT(p.first_name, ' ', IFNULL(p.other_names, ''), ' ', p.last_name) LIKE ?";
             $b_params[] = "%$term%";
         }
         if (!empty($conds)) {
@@ -109,8 +109,8 @@ if (strlen($q) >= 2) {
         $bride_conds = [];
         $m_params = [];
         foreach ($terms as $term) {
-            $groom_conds[] = "(gp.first_name || ' ' || IFNULL(gp.other_names, '') || ' ' || gp.last_name) LIKE ?";
-            $bride_conds[] = "(bp.first_name || ' ' || IFNULL(bp.other_names, '') || ' ' || bp.last_name) LIKE ?";
+            $groom_conds[] = "CONCAT(gp.first_name, ' ', IFNULL(gp.other_names, ''), ' ', gp.last_name) LIKE ?";
+            $bride_conds[] = "CONCAT(bp.first_name, ' ', IFNULL(bp.other_names, ''), ' ', bp.last_name) LIKE ?";
             $m_params[] = "%$term%";
         }
         if (!empty($groom_conds)) {
