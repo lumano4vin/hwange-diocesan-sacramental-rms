@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?, ?)";
                 db_query($sql_p, [$first_name, $other_names, $last_name, $gender, $dob, $place_of_birth, $father_name, $mother_name, $mother_maiden_name, $parish_id, $guid, $diocese_id]);
                 
-                $person_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
+                $person_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
                 log_audit($_SESSION['user_id'], 'CREATE', 'parishioners', $person_id, "Automatically registered new candidate/person for baptism record: $first_name $last_name");
             } catch (Exception $e) {
                 $error = "Failed to create parishioner record: " . $e->getMessage();
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 db_query($sql, [$person_id, $parish_id, $date_of_baptism, $minister, $godparents, $witnesses, $register_book, $page_number, $entry_number, $verification_hash, $status, $guid, $diocese_id, $pobap]);
                 
-                $new_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
+                $new_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
                 log_audit($_SESSION['user_id'], 'CREATE', 'baptisms', $new_id, "Registered baptism for person_id: $person_id");
                 
                 set_flash("Baptism record has been successfully registered in the canonical archives.");

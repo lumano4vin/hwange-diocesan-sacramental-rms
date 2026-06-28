@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           VALUES (?, ?, ?, 'Male', ?, ?, ?, ?, ?, 'Active', ?, ?, ?)";
                 db_query($sql_p, [$g_first, $g_other, $g_last, $g_dob, $g_pob, $g_father, $g_mother, $parish_id, $guid, $diocese_id, $g_baptism]);
                 
-                $groom_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
+                $groom_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
                 log_audit($_SESSION['user_id'], 'CREATE', 'parishioners', $groom_id, "Automatically registered unregistered groom for marriage: $g_first $g_last");
             } catch (Exception $e) {
                 $error = "Failed to register Groom: " . $e->getMessage();
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           VALUES (?, ?, ?, 'Female', ?, ?, ?, ?, ?, 'Active', ?, ?, ?)";
                 db_query($sql_p, [$b_first, $b_other, $b_last, $b_dob, $b_pob, $b_father, $b_mother, $parish_id, $guid, $diocese_id, $b_baptism]);
                 
-                $bride_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
+                $bride_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
                 log_audit($_SESSION['user_id'], 'CREATE', 'parishioners', $bride_id, "Automatically registered unregistered bride for marriage: $b_first $b_last");
             } catch (Exception $e) {
                 $error = "Failed to register Bride: " . $e->getMessage();
@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 db_query($sql, [$groom_id, $bride_id, $parish_id, $pni_id, $date_of_marriage, $officiant, $witnesses, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id]);
                 
-                $new_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
+                $new_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
                 log_audit($_SESSION['user_id'], 'CREATE', 'marriages', $new_id, "Registered marriage for groom_id: $groom_id, bride_id: $bride_id");
                 
                 set_flash("Matrimonial record has been successfully registered.");
