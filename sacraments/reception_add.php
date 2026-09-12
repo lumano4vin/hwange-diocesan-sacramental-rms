@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             db_query($sql, [$person_id, $parish_id, $date_of_reception, $minister, $previous_denomination, $godparents_sponsors, $register_book, $page_number, $entry_number, $prev_baptism_church, $prev_baptism_date, $prev_baptism_place, $verification_hash, $status, $guid, $diocese_id]);
             
-            $new_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
+            $new_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
             log_audit($_SESSION['user_id'], 'CREATE', 'receptions', $new_id, "Registered profession of faith for person_id: $person_id");
             
             set_flash("Profession of Faith has been successfully registered.");

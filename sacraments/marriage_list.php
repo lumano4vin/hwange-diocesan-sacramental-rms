@@ -28,8 +28,8 @@ if ($search) {
         $term = trim($term);
         if (empty($term)) continue;
         
-        $groom_term_conds[] = "(p1.first_name || ' ' || IFNULL(p1.other_names, '') || ' ' || p1.last_name) LIKE ?";
-        $bride_term_conds[] = "(p2.first_name || ' ' || IFNULL(p2.other_names, '') || ' ' || p2.last_name) LIKE ?";
+        $groom_term_conds[] = "CONCAT(p1.first_name, ' ', IFNULL(p1.other_names, ''), ' ', p1.last_name) LIKE ?";
+        $bride_term_conds[] = "CONCAT(p2.first_name, ' ', IFNULL(p2.other_names, ''), ' ', p2.last_name) LIKE ?";
         
         $params[] = "%$term%";
     }

@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             db_query($sql, [$person_id, $parish_id, $date_of_confirmation, $minister, $sponsor, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id]);
             
-            $new_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
+            $new_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
             log_audit($_SESSION['user_id'], 'CREATE', 'confirmations', $new_id, "Registered confirmation for person_id: $person_id");
             
             set_flash("Confirmation record has been successfully registered.");

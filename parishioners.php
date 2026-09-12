@@ -35,12 +35,12 @@ if ($search) {
         if (empty($term)) continue;
         
         // 1. Standard precise match across the concatenated full name
-        $cond = "(first_name || ' ' || IFNULL(other_names, '') || ' ' || last_name) LIKE ?";
+        $cond = "CONCAT(first_name, ' ', IFNULL(other_names, ''), ' ', last_name) LIKE ?";
         $params[] = "%$term%";
         
         // 2. Fuzzy wildcard match for typos (only applied to words >= 4 chars to prevent overly broad results)
         if (strlen($term) >= 4) {
-            $cond .= " OR (first_name || ' ' || IFNULL(other_names, '') || ' ' || last_name) LIKE ?";
+            $cond .= " OR CONCAT(first_name, ' ', IFNULL(other_names, ''), ' ', last_name) LIKE ?";
             // Converts "Moyo" into "%M%o%y%o%"
             $fuzzy_pattern = "%" . implode("%", str_split($term)) . "%";
             $params[] = $fuzzy_pattern;
