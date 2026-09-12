@@ -1,61 +1,59 @@
 import sqlite3
-
-parishes_data = [
-    ('St. Ignatius Cathedral', 'Hwange', 'Hwange Urban'),
-    ('Holy Family', 'Hwange', 'Hwange Urban'),
-    ('Our Lady of Peace', 'Hwange', 'Hwange Urban'),
-    ('Mary Help of Christians', 'Don Bosco, Hwange', 'Hwange Urban'),
-    ('Ss. Peter and Paul', 'Hwange', 'Hwange Urban'),
-    ('St. Charles Lwanga', 'Hwange', 'Hwange Urban'),
-    ('St. Francis Xavier', 'Dete', 'Dete'),
-    ('St. Francis of Assisi', 'Cross Dete', 'Dete'),
-    ('St. George', 'Hwange', 'Hwange Urban'),
-    ('St. Joachim', 'Hwange', 'Hwange Urban'),
-    ('St. Joseph', 'Hwange', 'Hwange Urban'),
-    ('St. Josephine Bakhita', 'Victoria Falls', 'Victoria Falls'),
-    ('St. Kizito', 'Hwange', 'Hwange Urban'),
-    ('St. Monica', 'Hwange', 'Hwange Urban'),
-    ('St. Teresa', 'Hwange', 'Hwange Urban'),
-    ('All Souls', 'Binga', 'Binga'),
-    ('Divine Mercy', 'Lubimbi', 'Binga'),
-    ('Holy Cross', 'Lusulu', 'Binga'),
-    ('Mary Immaculate', 'Gomoza', 'Lupane'),
-    ('Our Lady of Fatima', 'Fatima', 'Lupane'),
-    ('Sacred Heart', 'Jambezi', 'Jambezi'),
-    ('St. Augustine', 'Mzola', 'Lupane'),
-    ('St. Cecilia', 'Tshongokwe', 'Lupane'),
-    ('St. Faustine', 'Matetsi', 'Victoria Falls'),
-    ('St. John the Baptist (Dandanda)', 'Dandanda', 'Lupane'),
-    ('St. John the Baptist (Makwa)', 'Makwa', 'Makwa'),
-    ('St. John Vianney', 'Kariangwe', 'Binga'),
-    ('St. Luke', 'Chisuma', 'Victoria Falls'),
-    ('St. Mathew', 'Dambwamkulu', 'Binga'),
-    ('St. Mark', 'Nagangala', 'Binga'),
-    ('St. Martin de Porres', 'Jotsholo', 'Lupane'),
-    ('St. Mary', 'Lukosi', 'Hwange Urban'),
-    ('St. Michael', 'Kasibo', 'Hwange Urban'),
-    ('St. Padre Pio', 'Siacilaba', 'Binga'),
-    ('St. Therese', 'Kamativi', 'Dete')
-]
+import json
+import urllib.request
+import urllib.error
+import os
 
 db_file = 'database.sqlite'
+master_sync_url = os.environ.get('MASTER_SYNC_URL', 'http://127.0.0.1:8001/api/sync.php')
+api_key = os.environ.get('SYNC_API_KEY', 'hwange_sync_key_123')
+
+def fetch_drafts(cursor, table):
+    cursor.execute(f"SELECT * FROM {table} WHERE status = 'Draft'")
+    columns = [col[0] for col in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 def sync():
+    print("--- Synchronizing Canonical Data ---")
+    print(f"Target Cloud Master: {master_sync_url}\n")
+    
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
     
     try:
-        # Clear existing
-        cursor.execute("DELETE FROM parishes")
-        cursor.execute("DELETE FROM sqlite_sequence WHERE name='parishes'")
+        print("[SYNC] Gathering pending draft records...")
+        payload = {
+            'baptisms': fetch_drafts(cursor, 'baptisms'),
+            'marriages': fetch_drafts(cursor, 'marriages'),
+            'confirmations': fetch_drafts(cursor, 'confirmations'),
+            'deaths': fetch_drafts(cursor, 'deaths')
+        }
         
-        # Insert
-        cursor.executemany("INSERT INTO parishes (parish_name, location, deanery) VALUES (?, ?, ?)", parishes_data)
+        total_records = sum(len(v) for v in payload.values())
         
-        conn.commit()
-        print(f"Success: Synced {len(parishes_data)} parishes.")
+        if total_records > 0:
+            print(f"Found {total_records} records to push to the central vault.")
+            
+            data = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(master_sync_url, data=data)
+            req.add_header('Content-Type', 'application/json')
+            req.add_header('Authorization', f'Bearer {api_key}')
+            
+            try:
+                response = urllib.request.urlopen(req)
+                if response.getcode() in [200, 201]:
+                    print("[SUCCESS] Records successfully pushed to cloud.")
+                else:
+                    print(f"[ERROR] Cloud server responded with code {response.getcode()}.")
+            except urllib.error.URLError as e:
+                print(f"[ERROR] Failed to reach cloud server: {e.reason}")
+        else:
+            print("[SYNC] No pending records to push. Local node is up to date.")
+            
+        print("\n[SUCCESS] Canonical synchronization cycle complete.")
+        
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"\n[ERROR] Synchronization failed: {e}")
     finally:
         conn.close()
 

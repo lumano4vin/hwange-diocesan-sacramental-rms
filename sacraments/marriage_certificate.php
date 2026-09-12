@@ -292,6 +292,7 @@ $t = get_certificate_text($lang);
 
         .signature-line {
             border-top: 2px solid var(--maroon);
+            margin-top: 40px;
             margin-bottom: 5px;
         }
 
@@ -352,6 +353,19 @@ $t = get_certificate_text($lang);
                 border: 15px solid #1e3a8a !important;
                 outline: 2px solid #d4af37 !important;
                 outline-offset: -10px !important;
+                padding: 5mm 15mm 2mm 15mm !important;
+            }
+            body.theme-heirloom .heirloom-only {
+                margin-top: 2px !important;
+                padding-top: 2px !important;
+            }
+            body.theme-heirloom .certificate-title {
+                margin: 2px 0 !important;
+                font-size: 30px !important;
+            }
+            body.theme-heirloom .sacrament-declaration {
+                margin: 2px 0 !important;
+                font-size: 20px !important;
             }
         }
     </style>
@@ -387,6 +401,9 @@ $t = get_certificate_text($lang);
             </select>
             <button onclick="window.print()" style="background: var(--maroon); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
                 <ion-icon name="print-outline"></ion-icon> Print
+            </button>
+            <button onclick="downloadPDF()" style="background: #0ea5e9; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                <ion-icon name="download-outline"></ion-icon> PDF
             </button>
             <a href="marriage_list.php" style="font-size: 0.8rem; color: #64748b; text-decoration: none; font-weight: 600;">Exit</a>
         </div>
@@ -455,6 +472,9 @@ $t = get_certificate_text($lang);
                 <span style="color: #d4af37; font-weight: 700;"><?php echo strtoupper($t['canonical_ref']); ?>:</span> M-<?php echo h(str_pad($record['marriage_id'], 5, '0', STR_PAD_LEFT)); ?> &nbsp; | &nbsp; 
                 <span style="color: #d4af37; font-weight: 700;">BOOK:</span> <?php echo h($record['register_book_number'] ?: 'I'); ?> &nbsp; | &nbsp; 
                 <span style="color: #d4af37; font-weight: 700;">PAGE:</span> <?php echo h($record['page_number'] ?: '-'); ?>
+                <?php if (!empty($record['civil_record_number'])): ?>
+                 &nbsp; | &nbsp; <span style="color: #d4af37; font-weight: 700;">CIVIL NO:</span> <?php echo h($record['civil_record_number']); ?>
+                <?php endif; ?>
             </div>
 
             <div class="heirloom-only" style="display: none; margin-top: 5px; font-family: 'Cinzel', serif; font-size: 14px; color: var(--navy);">
@@ -512,6 +532,9 @@ $t = get_certificate_text($lang);
         
         <div class="canonical-meta heirloom-hide">
             <?php echo $t['canonical_ref']; ?>: M-<?php echo h(str_pad($record['marriage_id'], 5, '0', STR_PAD_LEFT)); ?> | Book: <?php echo h($record['register_book_number'] ?: 'I'); ?> | Page: <?php echo h($record['page_number'] ?: '-'); ?> <br>
+            <?php if (!empty($record['civil_record_number'])): ?>
+            <strong>Civil Record No:</strong> <span style="font-family: monospace;"><?php echo h($record['civil_record_number']); ?></span> |
+            <?php endif; ?>
             <strong>GUID:</strong> <span style="font-family: monospace;"><?php echo $record['guid']; ?></span> <br>
             © <?php echo get_diocese_branding(); ?> - Zimbabwe Catholic Records Exchange (ZCRE)
         </div>
@@ -526,6 +549,28 @@ $t = get_certificate_text($lang);
     <style>
         body.theme-heirloom .heirloom-only { display: block !important; }
     </style>
+
+    <!-- PDF Generation Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        function downloadPDF() {
+            const element = document.querySelector('.certificate-container');
+            const opt = {
+                margin:       0,
+                filename:     'certificate.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // Add a temporary class to fix any layout issues during PDF generation
+            element.classList.add('pdf-generation');
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.remove('pdf-generation');
+            });
+        }
+    </script>
 </body>
 </html>
 

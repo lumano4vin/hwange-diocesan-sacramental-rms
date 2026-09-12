@@ -270,6 +270,7 @@ $t = get_certificate_text($lang);
 
         .signature-line {
             border-top: 2px solid var(--red);
+            margin-top: 40px;
             margin-bottom: 8px;
         }
 
@@ -330,6 +331,19 @@ $t = get_certificate_text($lang);
                 border: 15px solid #1e3a8a !important;
                 outline: 2px solid #d4af37 !important;
                 outline-offset: -10px !important;
+                padding: 5mm 15mm 2mm 15mm !important;
+            }
+            body.theme-heirloom .heirloom-only {
+                margin-top: 2px !important;
+                padding-top: 2px !important;
+            }
+            body.theme-heirloom .certificate-title {
+                margin: 2px 0 !important;
+                font-size: 30px !important;
+            }
+            body.theme-heirloom .sacrament-declaration {
+                margin: 2px 0 !important;
+                font-size: 20px !important;
             }
         }
     </style>
@@ -365,6 +379,9 @@ $t = get_certificate_text($lang);
             </select>
             <button onclick="window.print()" style="background: var(--red); color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
                 <ion-icon name="print-outline"></ion-icon> Print
+            </button>
+            <button onclick="downloadPDF()" style="background: #0ea5e9; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                <ion-icon name="download-outline"></ion-icon> PDF
             </button>
             <a href="confirmation_list.php" style="font-size: 0.8rem; color: #64748b; text-decoration: none; font-weight: 600;">Exit</a>
         </div>
@@ -483,6 +500,28 @@ $t = get_certificate_text($lang);
     <style>
         body.theme-heirloom .heirloom-only { display: block !important; }
     </style>
+
+    <!-- PDF Generation Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        function downloadPDF() {
+            const element = document.querySelector('.certificate-container');
+            const opt = {
+                margin:       0,
+                filename:     'certificate.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // Add a temporary class to fix any layout issues during PDF generation
+            element.classList.add('pdf-generation');
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.remove('pdf-generation');
+            });
+        }
+    </script>
 </body>
 </html>
 

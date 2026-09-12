@@ -69,6 +69,12 @@ require_once 'version.php';
                     <span>Parishioners</span>
                 </a>
             </li>
+            <li class="<?php echo ($current_page == 'rcia.php' || $current_page == 'add_catechumen.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/rcia.php">
+                    <ion-icon name="book-outline" style="color: #a78bfa;"></ion-icon>
+                    <span>RCIA Tracking</span>
+                </a>
+            </li>
             <li class="<?php echo (strpos($current_page, 'marriage_pni') !== false) ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>sacraments/marriage_pni_list.php">
                     <ion-icon name="document-text-outline" style="color: #fbbf24;"></ion-icon>
@@ -98,6 +104,12 @@ require_once 'version.php';
                             <?php echo $badge_count; ?>
                         </span>
                     <?php endif; ?>
+                </a>
+            </li>
+            <li class="<?php echo ($current_page == 'letters.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/letters.php">
+                    <ion-icon name="mail-unread-outline" style="color: #60a5fa;"></ion-icon>
+                    <span>Letters of Standing</span>
                 </a>
             </li>
             
@@ -147,6 +159,12 @@ require_once 'version.php';
                 <a href="<?php echo $base; ?>admin/finance_overview.php">
                     <ion-icon name="cash-outline" style="color: #10b981;"></ion-icon>
                     <span>Financial Stewardship</span>
+                </a>
+            </li>
+            <li class="<?php echo $current_page == 'backup_vault.php' ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/backup_vault.php">
+                    <ion-icon name="server-outline" style="color: #38bdf8;"></ion-icon>
+                    <span>Data Vault (Backups)</span>
                 </a>
             </li>
             <li class="<?php echo $current_page == 'users.php' ? 'active' : ''; ?>">

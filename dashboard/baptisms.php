@@ -178,10 +178,10 @@ $baptisms = db_fetchAll($sql, $params);
                                         </a>
                                         
                                         <?php if (has_record_permission($row, 'print')): ?>
-                                        <a href="certificate.php?id=<?php echo $row['baptism_id']; ?>" class="action-btn cert" title="Generate Certificate">
+                                        <a href="../sacraments/baptism_certificate.php?id=<?php echo $row['baptism_id']; ?>" class="action-btn cert" title="Generate Certificate">
                                             <ion-icon name="document-text-outline"></ion-icon>
                                         </a>
-                                        <a href="certificate.php?id=<?php echo $row['baptism_id']; ?>&type=baptism" class="action-btn" title="Print Certificate" target="_blank">
+                                        <a href="../sacraments/baptism_certificate.php?id=<?php echo $row['baptism_id']; ?>&type=baptism" class="action-btn" title="Print Certificate" target="_blank">
                                             <ion-icon name="print-outline"></ion-icon>
                                         </a>
                                         <?php endif; ?>

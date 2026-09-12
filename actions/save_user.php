@@ -42,6 +42,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 VALUES (?, ?, ?, ?, ?, ?)";
         db_query($sql, [$username, $password_hash, $full_name, $email, $role, $parish_id]);
 
+        $new_user_id = db_lastInsertId();
+        $new_role_lower = strtolower($role);
+        
+        if (in_array($new_role_lower, ['priest', 'mission_admin']) && $parish_id) {
+            $today = date('Y-m-d');
+            $assign_role = ($new_role_lower === 'priest') ? 'Parish Priest' : 'Mission Administrator';
+            
+            // Get current active priest in charge of the new parish
+            $outgoing_priest_id = db_fetch("SELECT user_id FROM parish_assignments WHERE parish_id = ? AND role IN ('Parish Priest', 'Mission Administrator') AND status = 'Active'", [$parish_id]);
+            $outgoing_priest_id = $outgoing_priest_id ? $outgoing_priest_id['user_id'] : null;
+            
+            if ($outgoing_priest_id) {
+                // Deactivate outgoing priest's assignment
+                db_query("UPDATE parish_assignments SET status = 'Completed', end_date = ? WHERE user_id = ? AND parish_id = ? AND status = 'Active'", [$today, $outgoing_priest_id, $parish_id]);
+                // Set outgoing priest's users.parish_id to NULL
+                db_query("UPDATE users SET parish_id = NULL WHERE user_id = ?", [$outgoing_priest_id]);
+            }
+            
+            // Insert new active assignment
+            db_query("INSERT INTO parish_assignments (user_id, parish_id, role, start_date, status, notes) VALUES (?, ?, ?, ?, 'Active', ?)", [$new_user_id, $parish_id, $assign_role, $today, "Initial assignment at account registration"]);
+            $new_assignment_id = db_lastInsertId();
+            
+            // Create handover protocol
+            db_query("INSERT INTO parish_handovers (parish_id, outgoing_priest_id, incoming_priest_id, assignment_id, status) VALUES (?, ?, ?, ?, 'Pending')", [$parish_id, $outgoing_priest_id, $new_user_id, $new_assignment_id]);
+            
+            // Set the new parish's priest_in_charge_id
+            db_query("UPDATE parishes SET priest_in_charge_id = ? WHERE parish_id = ?", [$new_user_id, $parish_id]);
+        }
+
         set_flash("Staff account for <b>$full_name</b> created successfully.", "success");
         redirect('../admin/users_list.php');
 

@@ -59,7 +59,9 @@ $where = !empty($where_parts) ? implode(" AND ", $where_parts) : "1=1";
 
 // Fetch parishioners with parish details
 $parishioners = db_fetchAll("
-    SELECT p.*, pa.parish_name 
+    SELECT p.*, pa.parish_name,
+           (SELECT COUNT(*) FROM baptisms b WHERE b.person_id = p.person_id) as has_baptism,
+           (SELECT COUNT(*) FROM marriages m WHERE m.groom_person_id = p.person_id OR m.bride_person_id = p.person_id) as has_marriage
     FROM parishioners p 
     LEFT JOIN parishes pa ON p.current_parish_id = pa.parish_id 
     WHERE $where 
@@ -158,6 +160,10 @@ $parishioners = db_fetchAll("
                                                 <?php if($p['other_names']): ?>
                                                     <div style="font-size: 0.75rem; color: var(--accent);"><?php echo h($p['other_names']); ?></div>
                                                 <?php endif; ?>
+                                                <div style="margin-top: 4px; display: flex; gap: 4px;">
+                                                    <?php if($p['has_baptism']): ?><span style="background: rgba(56,189,248,0.1); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800;" title="Has Baptism Record">BAP</span><?php endif; ?>
+                                                    <?php if($p['has_marriage']): ?><span style="background: rgba(244,114,182,0.1); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 800;" title="Has Marriage Record">MAT</span><?php endif; ?>
+                                                </div>
                                             </td>
                                             <td style="padding: 1.25rem 2rem; font-size: 0.9rem; color: var(--text-muted);"><?php echo h($p['parish_name'] ?? 'Diocesan Registry'); ?></td>
                                             <td style="padding: 1.25rem 2rem; font-size: 0.9rem;"><?php echo h($p['gender']); ?></td>
@@ -174,7 +180,7 @@ $parishioners = db_fetchAll("
                                             </td>
                                             <td style="padding: 1.25rem 2rem;">
                                                 <div style="display: flex; gap: 0.75rem;">
-                                                    <a href="parishioners/profile.php?id=<?php echo $p['person_id']; ?>" title="View Faithful Profile" style="color: var(--accent); font-size: 1.25rem;"><ion-icon name="person-circle-outline"></ion-icon></a>
+                                                    <a href="parishioners/view.php?id=<?php echo $p['person_id']; ?>" title="View Faithful Profile" style="color: var(--accent); font-size: 1.25rem;"><ion-icon name="person-circle-outline"></ion-icon></a>
                                                     <?php if (can_edit()): ?>
                                                         <a href="parishioners/edit.php?id=<?php echo $p['person_id']; ?>" title="Edit Record" style="color: white; font-size: 1.25rem;"><ion-icon name="create-outline"></ion-icon></a>
                                                     <?php endif; ?>

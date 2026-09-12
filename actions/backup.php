@@ -25,7 +25,7 @@ if (file_exists($db_file)) {
 
     // 2. Clear ALL buffers to ensure binary integrity
     while (ob_get_level()) {
-        ob_end_clean();
+        if (!@ob_end_clean()) break;
     }
 
     // 3. Set standard download headers

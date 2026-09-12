@@ -107,7 +107,7 @@ $is_verified = ($record['status'] === 'Verified');
                 </div>
                 <div class="header-actions">
                     <?php if ($can_print && $is_verified): ?>
-                    <a href="death_certificate.php?id=<?php echo $id; ?>" class="btn btn-primary" target="_blank">
+                    <a href="../sacraments/burial_certificate.php?id=<?php echo $id; ?>" class="btn btn-primary" target="_blank">
                         <ion-icon name="print-outline"></ion-icon>
                         Print Extract
                     </a>

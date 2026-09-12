@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date_of_marriage = $_POST['date_of_marriage'] ?? '';
     $officiant = upper($_POST['officiant'] ?? '');
     $witnesses = upper($_POST['witnesses_names'] ?? '');
+    $civil_record = upper($_POST['civil_record_number'] ?? '');
     $register_book = upper($_POST['register_book_number'] ?? '');
     $page_number = upper($_POST['page_number'] ?? '');
     $entry_number = upper($_POST['entry_number'] ?? '');
@@ -117,10 +118,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $diocese_id = $primary_diocese['diocese_id'] ?? 1;
             
             try {
-                $sql = "INSERT INTO marriages (groom_person_id, bride_person_id, parish_id, pni_id, date_of_marriage, officiant, witnesses_names, register_book_number, page_number, entry_number, verification_hash, guid, diocese_id) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO marriages (groom_person_id, bride_person_id, parish_id, pni_id, date_of_marriage, officiant, witnesses_names, civil_record_number, register_book_number, page_number, entry_number, verification_hash, guid, diocese_id) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 
-                db_query($sql, [$groom_id, $bride_id, $parish_id, $pni_id, $date_of_marriage, $officiant, $witnesses, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id]);
+                db_query($sql, [$groom_id, $bride_id, $parish_id, $pni_id, $date_of_marriage, $officiant, $witnesses, $civil_record, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id]);
                 
                 $new_id = db_fetch("SELECT last_insert_rowid() as id")['id'];
                 log_audit($_SESSION['user_id'], 'CREATE', 'marriages', $new_id, "Registered marriage for groom_id: $groom_id, bride_id: $bride_id");
@@ -375,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </select>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Officiating Priest</label>
                                     <input type="text" name="officiant" class="force-caps" placeholder="e.g. Fr. J. Moyo" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
@@ -383,6 +384,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Canonical Witnesses</label>
                                     <input type="text" name="witnesses_names" class="force-caps" placeholder="Separated by commas" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Civil Record No. (Optional)</label>
+                                    <input type="text" name="civil_record_number" class="force-caps" placeholder="e.g. MRG/2026/012" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
                                 </div>
                             </div>
                         </div>

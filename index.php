@@ -510,6 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <button type="submit" class="btn-login">Sign In to the Mission</button>
 
+            <!-- SSO Disabled Temporarily (No Central Domain)
             <div class="divider">
                 <div></div>
                 <span>OR</span>
@@ -520,6 +521,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <ion-icon name="key-outline" style="color: var(--accent);"></ion-icon>
                 Log in with Single Sign-On
             </button>
+            -->
         </form>
 
         <div class="portal-utilities">
@@ -639,9 +641,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             icon.name = (input.type === 'password') ? 'eye-outline' : 'eye-off-outline';
         }
 
-        document.querySelector('.btn-sso').addEventListener('click', () => {
-            window.location.href = 'auth/sso_login.php';
-        });
+        const ssoBtn = document.querySelector('.btn-sso');
+        if (ssoBtn) {
+            ssoBtn.addEventListener('click', () => {
+                window.location.href = 'auth/sso_login.php';
+            });
+        }
 
         // 4. Keyboard Shortcuts
         document.addEventListener('keydown', (e) => {

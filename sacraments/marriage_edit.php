@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date_of_marriage = $_POST['date_of_marriage'] ?? '';
     $officiant = $_POST['officiant'] ?? '';
     $witnesses = $_POST['witnesses_names'] ?? '';
+    $civil_record = $_POST['civil_record_number'] ?? '';
     $register_book = $_POST['register_book_number'] ?? '';
     $page_number = $_POST['page_number'] ?? '';
     $entry_number = $_POST['entry_number'] ?? '';
@@ -61,13 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     date_of_marriage = ?, 
                     officiant = ?, 
                     witnesses_names = ?, 
+                    civil_record_number = ?,
                     register_book_number = ?, 
                     page_number = ?, 
                     entry_number = ?,
                     status = ?
                     WHERE marriage_id = ?";
             
-            db_query($sql, [$groom_id, $bride_id, $parish_id, $date_of_marriage, $officiant, $witnesses, $register_book, $page_number, $entry_number, $status, $id]);
+            db_query($sql, [$groom_id, $bride_id, $parish_id, $date_of_marriage, $officiant, $witnesses, $civil_record, $register_book, $page_number, $entry_number, $status, $id]);
             
             log_audit($_SESSION['user_id'], 'UPDATE', 'marriages', $id, "Updated matrimonial record for marriage_id: $id");
             
@@ -179,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </select>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Minister of Sacraments</label>
                                     <input type="text" name="officiant" placeholder="e.g. Fr. J. Moyo" value="<?php echo h($record['officiant']); ?>" class="input-field">
@@ -187,6 +189,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Canonical Witnesses</label>
                                     <input type="text" name="witnesses_names" placeholder="Separated by commas" value="<?php echo h($record['witnesses_names']); ?>" class="input-field">
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Civil Record No.</label>
+                                    <input type="text" name="civil_record_number" placeholder="e.g. MRG/2026/012" value="<?php echo h($record['civil_record_number'] ?? ''); ?>" class="input-field">
                                 </div>
                             </div>
                         </div>

@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) UNIQUE,
     role ENUM('admin', 'chancellor', 'priest', 'deacon', 'secretary') NOT NULL,
     parish_id INT DEFAULT NULL, -- NULL for diocesan-wide admins
+    two_factor_secret VARCHAR(64) DEFAULT NULL,
+    two_factor_enabled TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL
 );
@@ -90,6 +92,7 @@ CREATE TABLE IF NOT EXISTS marriages (
     officiant VARCHAR(100),
     witnesses_names TEXT,
     convalidation_date DATE NULL,
+    civil_record_number VARCHAR(100) DEFAULT NULL,
     register_book_number VARCHAR(50),
     page_number VARCHAR(50),
     entry_number VARCHAR(50),
@@ -216,3 +219,20 @@ INSERT INTO parishes (parish_name, location, deanery) VALUES
 -- In real app, we use password_hash(password, PASSWORD_DEFAULT)
 INSERT INTO users (username, password_hash, full_name, role) VALUES 
 ('admin', '$2y$10$4g.zZSQ9VN/0CI7ZfXgvcu2hcn22nM9bNrZMzxCH5QjK58o6PlAg.', 'Diocesan Administrator', 'admin');
+
+-- 12. RCIA / Catechumen Tracking
+CREATE TABLE IF NOT EXISTS catechumens (
+    catechumen_id INT AUTO_INCREMENT PRIMARY KEY,
+    parish_id INT NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    dob DATE,
+    sponsor_name VARCHAR(255),
+    enrollment_date DATE,
+    expected_baptism_date DATE,
+    status ENUM('Inquirer', 'Catechumen', 'Elect', 'Neophyte', 'Dropped') DEFAULT 'Inquirer',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+);
+

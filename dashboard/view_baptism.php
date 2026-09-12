@@ -106,7 +106,7 @@ $is_verified = ($record['status'] === 'Verified');
                 $additional_header_actions = '
                     <div class="header-actions">
                         ' . ($can_print && $is_verified ? '
-                        <a href="certificate.php?id=' . $id . '" class="btn btn-primary" target="_blank">
+                        <a href="../sacraments/baptism_certificate.php?id=' . $id . '" class="btn btn-primary" target="_blank">
                             <ion-icon name="print-outline"></ion-icon>
                             Print Full Certificate
                         </a>
@@ -196,8 +196,13 @@ $is_verified = ($record['status'] === 'Verified');
 
                 <!-- Notations / Milestones -->
                 <div class="card bg-card">
-                    <div class="card-header">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <h3><ion-icon name="ribbon-outline"></ion-icon> Subsequent Notations (Canon 535)</h3>
+                        <?php if ($can_edit): ?>
+                        <button onclick="document.getElementById('notationModal').classList.add('active')" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                            <ion-icon name="add-outline"></ion-icon> Add Notation
+                        </button>
+                        <?php endif; ?>
                     </div>
                     <div class="card-body">
                         <?php if (empty($notations)): ?>
@@ -241,5 +246,52 @@ $is_verified = ($record['status'] === 'Verified');
         .empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
         .empty-state ion-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
     </style>
+    <!-- Notation Modal -->
+    <div class="modal" id="notationModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Add Canonical Notation</h2>
+                <button class="modal-close" onclick="document.getElementById('notationModal').classList.remove('active')"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+            <form action="../actions/save_notation.php" method="POST">
+                <input type="hidden" name="baptism_id" value="<?php echo $id; ?>">
+                
+                <div class="form-group">
+                    <label>Sacrament / Event Type *</label>
+                    <select name="sacrament_type" class="form-control" required>
+                        <option value="">Select Type...</option>
+                        <option value="Confirmation">Confirmation</option>
+                        <option value="Marriage">Marriage</option>
+                        <option value="Holy Orders">Holy Orders</option>
+                        <option value="Religious Profession">Religious Profession</option>
+                        <option value="Declaration of Nullity">Declaration of Nullity</option>
+                        <option value="Death">Death</option>
+                        <option value="Other">Other Canonical Act</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Date of Event *</label>
+                    <input type="date" name="event_date" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Parish / Place *</label>
+                    <input type="text" name="parish_name" class="form-control" placeholder="e.g. St. Ignatius Cathedral" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Details (e.g. Protocol Number, Minister)</label>
+                    <textarea name="details" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('notationModal').classList.remove('active')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Notation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </body>
 </html>

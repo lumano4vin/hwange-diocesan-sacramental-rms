@@ -5,64 +5,51 @@
  */
 
 require_once 'includes/db.php';
+require_once 'includes/config_diocese.php'; // ensure MASTER_SYNC_URL is loaded
 
 echo "--- Synchronizing Canonical Data ---\n";
-
-$parishes_data = [
-    ['St. Ignatius Cathedral', 'Hwange', 'Hwange Urban'],
-    ['Holy Family', 'Hwange', 'Hwange Urban'],
-    ['Our Lady of Peace', 'Hwange', 'Hwange Urban'],
-    ['Mary Help of Christians', 'Don Bosco, Hwange', 'Hwange Urban'],
-    ['Ss. Peter and Paul', 'Hwange', 'Hwange Urban'],
-    ['St. Charles Lwanga', 'Hwange', 'Hwange Urban'],
-    ['St. Francis Xavier', 'Dete', 'Dete'],
-    ['St. Francis of Assisi', 'Cross Dete', 'Dete'],
-    ['St. George', 'Hwange', 'Hwange Urban'],
-    ['St. Joachim', 'Hwange', 'Hwange Urban'],
-    ['St. Joseph', 'Hwange', 'Hwange Urban'],
-    ['St. Josephine Bakhita', 'Victoria Falls', 'Victoria Falls'],
-    ['St. Kizito', 'Hwange', 'Hwange Urban'],
-    ['St. Monica', 'Hwange', 'Hwange Urban'],
-    ['St. Teresa', 'Hwange', 'Hwange Urban'],
-    ['All Souls', 'Binga', 'Binga'],
-    ['Divine Mercy', 'Lubimbi', 'Binga'],
-    ['Holy Cross', 'Lusulu', 'Binga'],
-    ['Mary Immaculate', 'Gomoza', 'Lupane'],
-    ['Our Lady of Fatima', 'Fatima', 'Lupane'],
-    ['Sacred Heart', 'Jambezi', 'Jambezi'],
-    ['St. Augustine', 'Mzola', 'Lupane'],
-    ['St. Cecilia', 'Tshongokwe', 'Lupane'],
-    ['St. Faustine', 'Matetsi', 'Victoria Falls'],
-    ['St. John the Baptist (Dandanda)', 'Dandanda', 'Lupane'],
-    ['St. John the Baptist (Makwa)', 'Makwa', 'Makwa'],
-    ['St. John Vianney', 'Kariangwe', 'Binga'],
-    ['St. Luke', 'Chisuma', 'Victoria Falls'],
-    ['St. Mathew', 'Dambwamkulu', 'Binga'],
-    ['St. Mark', 'Nagangala', 'Binga'],
-    ['St. Martin de Porres', 'Jotsholo', 'Lupane'],
-    ['St. Mary', 'Lukosi', 'Hwange Urban'],
-    ['St. Michael', 'Kasibo', 'Hwange Urban'],
-    ['St. Padre Pio', 'Siacilaba', 'Binga'],
-    ['St. Therese', 'Kamativi', 'Dete']
-];
+echo "Target Cloud Master: " . MASTER_SYNC_URL . "\n\n";
 
 try {
-    // 1. Clear existing parishes
-    // Note: We use db_query instead of raw PDO for consistency with the app
-    db_query("DELETE FROM parishes");
-    db_query("DELETE FROM sqlite_sequence WHERE name='parishes'"); // Reset auto-increment
-    
-    echo "[OK] Cleared old parish data.\n";
+    // 1. Collect Unsynced (Draft) Records
+    echo "[SYNC] Gathering pending draft records...\n";
+    $payload = [
+        'baptisms' => db_fetchAll("SELECT * FROM baptisms WHERE status = 'Draft'"),
+        'marriages' => db_fetchAll("SELECT * FROM marriages WHERE status = 'Draft'"),
+        'confirmations' => db_fetchAll("SELECT * FROM confirmations WHERE status = 'Draft'"),
+        'deaths' => db_fetchAll("SELECT * FROM deaths WHERE status = 'Draft'")
+    ];
 
-    // 2. Insert new official parishes
-    $sql = "INSERT INTO parishes (parish_name, location, deanery) VALUES (?, ?, ?)";
-    
-    foreach ($parishes_data as $row) {
-        db_query($sql, $row);
-        echo "Inserted: " . $row[0] . " (" . $row[2] . ")\n";
+    $total_records = count($payload['baptisms']) + count($payload['marriages']) + count($payload['confirmations']) + count($payload['deaths']);
+
+    if ($total_records > 0) {
+        echo "Found $total_records records to push to the central vault.\n";
+        
+        // Push to master server via cURL
+        $ch = curl_init(MASTER_SYNC_URL);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . (getenv('SYNC_API_KEY') ?: 'hwange_sync_key_123')
+        ]);
+        
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($http_code === 200 || $http_code === 201) {
+            echo "[SUCCESS] Records successfully pushed to cloud.\n";
+            // In a real system, we'd mark them as 'Synced' or fetch their generated cloud IDs here
+        } else {
+            echo "[ERROR] Cloud server responded with code $http_code. Response: $response\n";
+        }
+    } else {
+        echo "[SYNC] No pending records to push. Local node is up to date.\n";
     }
 
-    echo "\n[SUCCESS] Canonical synchronization complete. 35 records updated.\n";
+    echo "\n[SUCCESS] Canonical synchronization cycle complete.\n";
 
 } catch (Exception $e) {
     echo "\n[ERROR] Synchronization failed: " . $e->getMessage() . "\n";

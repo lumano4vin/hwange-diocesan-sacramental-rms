@@ -121,7 +121,7 @@ $header_subtitle = "Detailed canonical view of the marriage of " . h($record['gr
                                     </div>
                                 </div>
 
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
                                     <div>
                                         <span style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Officiating Priest</span>
                                         <span style="font-size: 1.1rem; color: white;"><?php echo h($record['officiant']); ?></span>
@@ -129,6 +129,10 @@ $header_subtitle = "Detailed canonical view of the marriage of " . h($record['gr
                                     <div>
                                         <span style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Canonical Witnesses</span>
                                         <span style="font-size: 1.1rem; color: white;"><?php echo h($record['witnesses_names'] ?: 'Not recorded'); ?></span>
+                                    </div>
+                                    <div>
+                                        <span style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Civil Record No.</span>
+                                        <span style="font-size: 1.1rem; color: white;"><?php echo h($record['civil_record_number'] ?: 'Not recorded'); ?></span>
                                     </div>
                                 </div>
 

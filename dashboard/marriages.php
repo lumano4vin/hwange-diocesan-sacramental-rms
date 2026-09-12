@@ -183,10 +183,10 @@ $marriages = db_fetchAll($sql, $params);
                                         </a>
 
                                         <?php if (has_record_permission($row, 'print')): ?>
-                                        <a href="marriage_certificate.php?id=<?php echo $row['marriage_id']; ?>" class="action-btn cert" title="View Certificate">
+                                        <a href="../sacraments/marriage_certificate.php?id=<?php echo $row['marriage_id']; ?>" class="action-btn cert" title="View Certificate">
                                             <ion-icon name="document-text-outline"></ion-icon>
                                         </a>
-                                        <a href="marriage_certificate.php?id=<?php echo $row['marriage_id']; ?>&print=true" class="action-btn" title="Print Certificate" target="_blank">
+                                        <a href="../sacraments/marriage_certificate.php?id=<?php echo $row['marriage_id']; ?>&print=true" class="action-btn" title="Print Certificate" target="_blank">
                                             <ion-icon name="print-outline"></ion-icon>
                                         </a>
                                         <?php endif; ?>

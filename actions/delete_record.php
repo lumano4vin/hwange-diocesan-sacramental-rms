@@ -90,6 +90,13 @@ try {
 
     set_flash("Canonical record successfully purged from the archives.", "success");
     redirect($redirect_to);
+} catch (PDOException $e) {
+    if ($e->getCode() == 23000 || strpos($e->getMessage(), '1451') !== false) {
+        set_flash("Deletion blocked! This parishioner has Sacramental records (e.g., Baptism) attached. You likely clicked the 'real' record instead of the empty duplicate. Please delete the empty duplicates instead.", "error");
+    } else {
+        set_flash("Deletion failed: " . $e->getMessage(), "error");
+    }
+    redirect($redirect_to);
 } catch (Exception $e) {
     set_flash("Deletion failed: " . $e->getMessage(), "error");
     redirect($redirect_to);

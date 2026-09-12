@@ -212,11 +212,12 @@ function run_schema_migrations($pdo) {
         $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_parish_id INTEGER");
     } catch (Exception $e) {}
 
-    // Link marriages to PNI
+    // Link marriages to PNI and add Civil Record Number
     try {
         $pdo->exec("ALTER TABLE marriages ADD COLUMN pni_id INTEGER DEFAULT NULL");
         $pdo->exec("ALTER TABLE marriages ADD COLUMN baptism_notified_groom INTEGER DEFAULT 0");
         $pdo->exec("ALTER TABLE marriages ADD COLUMN baptism_notified_bride INTEGER DEFAULT 0");
+        $pdo->exec("ALTER TABLE marriages ADD COLUMN civil_record_number VARCHAR(100) DEFAULT NULL");
     } catch (Exception $e) {}
 
     try {

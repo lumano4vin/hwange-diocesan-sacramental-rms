@@ -154,7 +154,7 @@ $header_subtitle = "Entry of a new member into the " . get_diocese_branding() . 
                                                 ⚠️ Potential Duplicate Record Detected
                                             </h4>
                                             <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 10px 0;">
-                                                A person with the exact same name is already registered in the Diocesan archives. Please review to avoid duplicate canonical listings:
+                                                A person with the exact or a similar name is already registered in the Diocesan archives. Please review to avoid duplicate canonical listings:
                                             </p>
                                             <div id="duplicate-records-list" style="display: flex; flex-direction: column; gap: 8px;">
                                                 <!-- Dynamic entries rendered via JS -->
@@ -339,12 +339,25 @@ $header_subtitle = "Entry of a new member into the " . get_diocese_branding() . 
                         item.style.borderRadius = '0.75rem';
                         item.style.border = '1px solid rgba(255,255,255,0.03)';
                         
+                        const matchType = dup.match_type || 'Exact Match';
+                        const matchColor = matchType === 'Exact Match' ? '#ef4444' : '#f59e0b';
+                        const matchBadge = `<span style="background: ${matchColor}20; color: ${matchColor}; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; margin-left: 6px; border: 1px solid ${matchColor}40;">${matchType}</span>`;
+                        
+                        const isAdmin = <?php echo is_admin() ? 'true' : 'false'; ?>;
+                        let deleteBtn = '';
+                        if (isAdmin) {
+                            deleteBtn = `<a href="../actions/delete_record.php?type=parishioner&id=${dup.person_id}" onclick="return confirm('CRITICAL WARNING: Are you sure you want to delete this duplicate entry?')" style="color: #ef4444; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; padding: 6px; border-radius: 6px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);" title="Delete Duplicate"><ion-icon name="trash-outline"></ion-icon></a>`;
+                        }
+
                         item.innerHTML = `
                             <div>
-                                <span style="font-weight: 700; color: white;">${dup.last_name}, ${dup.first_name}${otherNames}</span>
-                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">DOB: ${dobStr} • Gender: ${dup.gender} • Parish: ${dup.parish_name || 'Diocesan Registry'}</span>
+                                <span style="font-weight: 700; color: white;">${dup.last_name}, ${dup.first_name}${otherNames} ${matchBadge}</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;">DOB: ${dobStr} • Gender: ${dup.gender} • Parish: ${dup.parish_name || 'Diocesan Registry'}</span>
                             </div>
-                            <span style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">${dup.status || 'Active'}</span>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">${dup.status || 'Active'}</span>
+                                ${deleteBtn}
+                            </div>
                         `;
                         duplicatesList.appendChild(item);
                     });
