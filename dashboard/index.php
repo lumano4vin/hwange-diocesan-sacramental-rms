@@ -325,7 +325,7 @@ try {
 
 // 6. Fetch Mission Feed (Recent Sacramental Events - Parish Aware)
 $params_feed = [];
-$feed_filter = get_parish_filter($params_feed);
+$feed_filter = get_parish_filter($params_feed, 'pr');
 $feed_where = !empty($feed_filter) ? " WHERE " . ltrim($feed_filter, ' AND ') : "";
 
 // We need to duplicate params for each UNION part
