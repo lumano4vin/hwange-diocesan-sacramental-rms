@@ -439,12 +439,12 @@ function set_flash($message, $type = 'success') {
  * Get SQL fragment for parish identification (Isolation)
  * Returns AND parish_id = ? if not admin
  */
-function get_parish_filter(&$params, $table_prefix = '') {
+function get_parish_filter(&$params, $table_prefix = '', $column_name = 'parish_id') {
     if (is_admin()) {
         return "";
     }
     $params[] = $_SESSION['parish_id'];
-    $column = !empty($table_prefix) ? "$table_prefix.parish_id" : "parish_id";
+    $column = !empty($table_prefix) ? "$table_prefix.$column_name" : $column_name;
     return " AND $column = ? ";
 }
 

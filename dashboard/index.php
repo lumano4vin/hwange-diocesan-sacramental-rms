@@ -12,6 +12,7 @@ require_login();
 // 1. Fetch Statistical Totals (Parish-Aware)
 $params_stats = [];
 $stats_filter = get_parish_filter($params_stats);
+$parishioners_filter = str_replace('parish_id', 'current_parish_id', $stats_filter);
 // For these specific queries, we need to handle the WHERE clause carefully
 $where_stats = !empty($stats_filter) ? " WHERE " . ltrim($stats_filter, ' AND ') : "";
 
@@ -22,14 +23,14 @@ if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_ttl) 
 } else {
 
 $sql = "SELECT 
-    (SELECT COUNT(*) FROM parishioners WHERE status IN ('Active', 'Transferred In') $stats_filter) as parishioners,
+    (SELECT COUNT(*) FROM parishioners WHERE status IN ('Active', 'Transferred In') $parishioners_filter) as parishioners,
     (SELECT COUNT(*) FROM baptisms $where_stats) as baptisms,
     (SELECT COUNT(*) FROM confirmations $where_stats) as confirmations,
     (SELECT COUNT(*) FROM marriages $where_stats) as marriages,
     (SELECT COUNT(*) FROM ordinations_professions $where_stats) as ordinations,
     (SELECT COUNT(*) FROM deaths $where_stats) as deaths,
-    (SELECT COUNT(*) FROM parishioners WHERE status = 'Transferred In' $stats_filter) as transfers_in,
-    (SELECT COUNT(*) FROM parishioners WHERE status IN ('Transferred Out', 'Moved') $stats_filter) as transfers_out
+    (SELECT COUNT(*) FROM parishioners WHERE status = 'Transferred In' $parishioners_filter) as transfers_in,
+    (SELECT COUNT(*) FROM parishioners WHERE status IN ('Transferred Out', 'Moved') $parishioners_filter) as transfers_out
 ";
 $p_full = array_merge($params_stats, $params_stats, $params_stats, $params_stats, $params_stats, $params_stats, $params_stats, $params_stats);
 $res = db_fetch($sql, $p_full);
