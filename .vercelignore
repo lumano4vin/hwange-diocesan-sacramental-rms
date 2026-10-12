@@ -30,3 +30,14 @@ sync_canonical_data.php
 unify_mission_passwords.php
 migrate_*.php
 releases/
+docs/*.pdf
+docs/pdfs/
+docs/images/
+docs/*.txt
+docs/*.py
+*.pdf
+*.zip
+test_dir/
+scratch*/
+*.txt
+.FullName/

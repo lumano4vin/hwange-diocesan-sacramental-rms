@@ -27,15 +27,21 @@ if (file_exists($env_file)) {
 
 $host = getenv('DB_HOST') ?: '127.0.0.1';
 $ip = $host;
+$dns_resolvable = true;
+
 if ($host !== 'localhost' && $host !== '127.0.0.1') {
-    $cache_file = sys_get_temp_dir() . '/db_ip.txt';
-    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < 3600) {
-        $ip = trim(file_get_contents($cache_file));
+    $fail_cache = sys_get_temp_dir() . '/db_dns_failed.txt';
+    if (file_exists($fail_cache) && (time() - filemtime($fail_cache)) < 300) {
+        $dns_resolvable = false;
     } else {
         $resolved = gethostbyname($host);
-        if ($resolved !== $host) {
+        if ($resolved === $host) {
+            // DNS resolution failed (e.g. expired cloud database domain)
+            @file_put_contents($fail_cache, time());
+            $dns_resolvable = false;
+        } else {
+            @unlink($fail_cache);
             $ip = $resolved;
-            @file_put_contents($cache_file, $ip);
         }
     }
 }
@@ -45,7 +51,27 @@ $user = getenv('DB_USER') ?: 'root';
 $pass = getenv('DB_PASSWORD') ?: ''; 
 $charset = 'utf8mb4';
 
+// Check primary and fallback SQLite file locations
 $sqlite_file = dirname(__DIR__) . "/database.sqlite";
+if (!file_exists($sqlite_file) && file_exists(dirname(__DIR__) . "/data/fallback.sqlite")) {
+    $sqlite_file = dirname(__DIR__) . "/data/fallback.sqlite";
+}
+
+// In serverless / read-only environments (such as Vercel / AWS Lambda), the deployment directory is read-only.
+// Copy the fallback SQLite to the writable /tmp directory so write operations and WAL locking succeed.
+if (file_exists($sqlite_file)) {
+    $is_serverless = getenv('VERCEL') || !is_writable($sqlite_file) || !is_writable(dirname($sqlite_file));
+    if ($is_serverless) {
+        $tmp_sqlite = sys_get_temp_dir() . '/hwange_database.sqlite';
+        if (!file_exists($tmp_sqlite) || filesize($tmp_sqlite) === 0 || filemtime($sqlite_file) > filemtime($tmp_sqlite)) {
+            @copy($sqlite_file, $tmp_sqlite);
+        }
+        if (file_exists($tmp_sqlite) && filesize($tmp_sqlite) > 0) {
+            $sqlite_file = $tmp_sqlite;
+        }
+    }
+}
+
 $dsn_mysql = "mysql:host=$ip;port=$port;dbname=$db;charset=$charset";
 
 $options = [
@@ -55,7 +81,7 @@ $options = [
     PDO::ATTR_TIMEOUT            => 5,
 ];
 
-$use_cloud = getenv('DB_HOST') ? true : false;
+$use_cloud = (getenv('DB_HOST') && $dns_resolvable) ? true : false;
 
 // If we are connecting to a cloud database (Aiven/TiDB), enable SSL
 if ($use_cloud) {
@@ -69,7 +95,7 @@ if ($use_cloud) {
 $connected = false;
 $conn_error = null;
 
-// 1. If cloud/remote DB is configured, try MySQL first
+// 1. If cloud/remote DB is configured and DNS resolves, try MySQL first
 if ($use_cloud) {
     try {
         $pdo = new PDO($dsn_mysql, $user, $pass, $options);
@@ -80,7 +106,7 @@ if ($use_cloud) {
     }
 }
 
-// 2. If not connected yet (or cloud DB not configured), fallback to SQLite if database.sqlite exists
+// 2. Fallback to SQLite if MySQL failed or not configured
 if (!$connected && file_exists($sqlite_file)) {
     try {
         $sqlite_options = [
@@ -90,11 +116,15 @@ if (!$connected && file_exists($sqlite_file)) {
         ];
         $pdo = new PDO("sqlite:" . $sqlite_file, null, null, $sqlite_options);
         $connected = true;
+        if ($use_cloud || getenv('DB_HOST')) {
+            if (!defined('DB_FALLBACK_MODE')) define('DB_FALLBACK_MODE', true);
+        }
     } catch (\PDOException $e) {
         $conn_error = $e->getMessage();
         error_log("SQLite connection failed: " . $conn_error);
     }
 }
+
 
 // 3. If neither connected, display clear error
 if (!$connected || !$pdo) {
