@@ -100,7 +100,7 @@ function format_certificate_date($date_string) {
  * Calculate the relative path to the root directory
  */
 function get_base_url() {
-    $script_path = $_SERVER['REQUEST_URI'];
+    $script_path = $_SERVER['REQUEST_URI'] ?? '';
     if (($pos = strpos($script_path, '?')) !== false) {
         $script_path = substr($script_path, 0, $pos);
     }

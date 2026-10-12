@@ -65,6 +65,14 @@ if ($is_admin) {
     ", [$selected_year]);
 }
 $chart_data = [];
+$p_events = [];
+$d_events = [];
+$total_parishes = $total_parish_count;
+
+$db_driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+$six_months_ago_sql = ($db_driver === 'sqlite') 
+    ? "date('now', '-6 months')" 
+    : "DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)";
 
 try {
     // 2a. Fetch Parish Data (Filtered) - Now with age grouping for baptisms
@@ -82,7 +90,7 @@ try {
             SELECT date_of_reception as event_date, 'r' as type, parish_id, status, NULL as dob FROM receptions
             UNION ALL
             SELECT date_of_death as event_date, 'd' as type, parish_id, status, NULL as dob FROM deaths
-        ) t WHERE status != 'Draft' AND event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH) $filter
+        ) t WHERE status != 'Draft' AND event_date >= $six_months_ago_sql $filter
     ";
     $p_events = db_fetchAll($parish_query, $params);
     
@@ -100,7 +108,7 @@ try {
             SELECT date_of_reception as event_date, 'r' as type, status FROM receptions
             UNION ALL
             SELECT date_of_death as event_date, 'd' as type, status FROM deaths
-        ) t WHERE status != 'Draft' AND event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
+        ) t WHERE status != 'Draft' AND event_date >= $six_months_ago_sql
     ";
     $d_events = db_fetchAll($diocese_query);
     
@@ -235,7 +243,7 @@ if ($can_verify_global) {
             SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'view_baptism.php' as link
             FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id WHERE b.status = 'Draft'
             UNION ALL
-            SELECT 'Marriage' as type, m.marriage_id as id, p1.first_name || ' & ' || p2.first_name as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
+            SELECT 'Marriage' as type, m.marriage_id as id, CONCAT(p1.first_name, ' & ', p2.first_name) as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
             FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id WHERE m.status = 'Draft'
             UNION ALL
             SELECT 'Profession of Faith' as type, r.reception_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, r.date_of_reception as date, pr.parish_name, 'view_reception.php' as link
@@ -335,7 +343,7 @@ $mission_feed = db_fetchAll("
     SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'water-outline' as icon, '#38bdf8' as color
     FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id $feed_where
     UNION ALL
-    SELECT 'Marriage' as type, m.marriage_id as id, p1.first_name || ' & ' || p2.first_name as name, m.date_of_marriage as date, pr.parish_name, 'heart-outline' as icon, '#f472b6' as color
+    SELECT 'Marriage' as type, m.marriage_id as id, CONCAT(p1.first_name, ' & ', p2.first_name) as name, m.date_of_marriage as date, pr.parish_name, 'heart-outline' as icon, '#f472b6' as color
     FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id $feed_where
     UNION ALL
     SELECT 'Confirmation' as type, c.confirmation_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, c.date_of_confirmation as date, pr.parish_name, 'flame-outline' as icon, '#fbbf24' as color
@@ -346,10 +354,12 @@ $mission_feed = db_fetchAll("
 $feed_title = $is_admin ? "Global Mission Feed" : "Local Mission Activity";
 
     $cache_data = compact(
-        'totals', 'reports_count', 'total_parish_count', 'missing_reports', 
+        'totals', 'reports_count', 'total_parish_count', 'missing_reports', 'reporting_percentage',
         'p_events', 'd_events', 'total_parishes', 'parish_count', 'last_backup_audit', 
         'today_count', 'pending_count', 'pending_queue', 'recent_logs', 
-        'last_user_activity', 'results', 'mission_feed', 'feed_title'
+        'last_user_activity', 'results', 'mission_feed', 'feed_title',
+        'chart_data', 'heatmap_data', 'max_activity', 'needs_backup', 
+        'days_since_backup', 'last_backup_date', 'random_tip', 'can_verify_global', 'resume_url'
     );
     @file_put_contents($cache_file, json_encode($cache_data));
 }

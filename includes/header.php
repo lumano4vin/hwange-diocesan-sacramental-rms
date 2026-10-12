@@ -4,6 +4,7 @@
  * Unified Command Header Component
  */
 
+if (!function_exists('get_global_pending_count')) {
 function get_global_pending_count() {
     $cache_file = sys_get_temp_dir() . '/header_cache_' . md5($_SESSION['user_id'] . '_' . $_SESSION['role'] . '_' . ($_SESSION['parish_id']??'')) . '.json';
     if (file_exists($cache_file) && (time() - filemtime($cache_file)) < 60) {
@@ -40,6 +41,7 @@ function get_global_pending_count() {
 
     @file_put_contents($cache_file, json_encode(['count' => $count]));
     return $count;
+}
 }
 
 $global_pending = get_global_pending_count();

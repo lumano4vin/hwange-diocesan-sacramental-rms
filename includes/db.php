@@ -66,20 +66,52 @@ if ($use_cloud) {
     $options[$ssl_ca_key] = '';
 }
 
-try {
-    // FORCE PORTABLE MODE locally, but bypass SQLite if we are targeting a cloud MySQL database
-    if (file_exists($sqlite_file) && !$use_cloud) {
-        $pdo = new PDO("sqlite:" . $sqlite_file, null, null, $options);
-    } else {
+$connected = false;
+$conn_error = null;
+
+// 1. If cloud/remote DB is configured, try MySQL first
+if ($use_cloud) {
+    try {
         $pdo = new PDO($dsn_mysql, $user, $pass, $options);
+        $connected = true;
+    } catch (\PDOException $e) {
+        $conn_error = $e->getMessage();
+        error_log("Remote MySQL connection failed: " . $conn_error);
     }
-} catch (\PDOException $e) {
+}
+
+// 2. If not connected yet (or cloud DB not configured), fallback to SQLite if database.sqlite exists
+if (!$connected && file_exists($sqlite_file)) {
+    try {
+        $sqlite_options = [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ];
+        $pdo = new PDO("sqlite:" . $sqlite_file, null, null, $sqlite_options);
+        $connected = true;
+    } catch (\PDOException $e) {
+        $conn_error = $e->getMessage();
+        error_log("SQLite connection failed: " . $conn_error);
+    }
+}
+
+// 3. If neither connected, display clear error
+if (!$connected || !$pdo) {
+    http_response_code(500);
     echo "<h1>Database Connection Error</h1>";
-    echo "<p>Could not connect to the database. Please ensure your cloud credentials in the '.env' file are correct and SSL connection is allowed.</p>";
-    if (ini_get('display_errors')) {
-        echo "<small>Error: " . $e->getMessage() . "</small>";
+    echo "<p>Could not connect to the primary database or local storage fallback. Please ensure your database service is running or check your connection settings.</p>";
+    if (ini_get('display_errors') && $conn_error) {
+        echo "<small>Error details: " . htmlspecialchars($conn_error) . "</small>";
     }
     exit;
+}
+
+// Register SQLite compatibility helper functions (CONCAT, etc.)
+if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+    $pdo->sqliteCreateFunction('CONCAT', function(...$args) {
+        return implode('', $args);
+    });
 }
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
 // Wrapped in a function to prevent hanging on every page load when using remote DB
@@ -410,10 +442,21 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
     }
 }
 
-// Call run_schema_migrations on local SQLite databases to ensure they are self-healing
-if (isset($pdo) && file_exists($sqlite_file) && !$use_cloud) {
+// Call run_schema_migrations on SQLite databases to ensure they are self-healing
+if (isset($pdo)) {
     try {
-        run_schema_migrations($pdo);
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            run_schema_migrations($pdo);
+        } else {
+            // For MySQL, ensure sessions table exists so session saves never fail
+            $pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
+                session_id VARCHAR(128) PRIMARY KEY,
+                session_data MEDIUMTEXT,
+                expires_at INT,
+                INDEX idx_expires (expires_at)
+            ) ENGINE=InnoDB");
+        }
     } catch (Exception $e) {
         // Silently log or ignore if DB is locked
     }

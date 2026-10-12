@@ -26,7 +26,7 @@ if ($total_pending > 0) {
         SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'view_baptism.php' as link
         FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id WHERE b.status = 'Draft'
         UNION ALL
-        SELECT 'Marriage' as type, m.marriage_id as id, p1.first_name || ' & ' || p2.first_name as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
+        SELECT 'Marriage' as type, m.marriage_id as id, CONCAT(p1.first_name, ' & ', p2.first_name) as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
         FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id WHERE m.status = 'Draft'
         UNION ALL
         SELECT 'Confirmation' as type, c.confirmation_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, c.date_of_confirmation as date, pr.parish_name, 'view_confirmation.php' as link
