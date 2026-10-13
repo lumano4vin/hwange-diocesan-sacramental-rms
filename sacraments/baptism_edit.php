@@ -33,8 +33,13 @@ if (!has_record_permission($record, 'edit')) {
 $header_title = "Edit Baptismal Record";
 $header_subtitle = "Modify canonical baptismal details in the Diocesan archives.";
 
-// Fetch parishioners and parishes for dropdowns
-$parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners ORDER BY last_name, first_name");
+// Fetch parishioners and parishes for dropdowns (Parish-Aware)
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+if (!is_admin() && !empty($user_parish_id)) {
+    $parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE current_parish_id = ? OR person_id = ? ORDER BY last_name, first_name", [$user_parish_id, $record['person_id']]);
+} else {
+    $parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners ORDER BY last_name, first_name");
+}
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $error = '';

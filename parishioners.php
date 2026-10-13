@@ -13,15 +13,27 @@ require_login();
 $header_title = "Parishioners Registry";
 $header_subtitle = "Canonical list of the faithful across the Diocese.";
 
-// Search logic
+// Search and Parish Filter logic
 $search = $_GET['search'] ?? '';
+$selected_parish_id = $_GET['parish_id'] ?? '';
+$all_parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name ASC");
 
 // 1. Mandatory Parish Filter (Isolation)
 $where_parts = [];
 $params = [];
-$parish_filter_sql = get_parish_filter($params, 'p');
-if (!empty($parish_filter_sql)) {
-    $where_parts[] = ltrim($parish_filter_sql, ' AND ');
+
+if (!is_admin()) {
+    // Non-admins are strictly locked to their own parish registry
+    $parish_filter_sql = get_parish_filter($params, 'p', 'current_parish_id');
+    if (!empty($parish_filter_sql)) {
+        $where_parts[] = ltrim($parish_filter_sql, ' AND ');
+    }
+} else {
+    // Admins can filter by specific parish or view diocese-wide
+    if (!empty($selected_parish_id)) {
+        $where_parts[] = "p.current_parish_id = ?";
+        $params[] = $selected_parish_id;
+    }
 }
 
 // 2. Smart Search Engine Upgrade (Multi-term & Fuzzy Wildcard)
@@ -68,6 +80,14 @@ $parishioners = db_fetchAll("
     ORDER BY p.last_name, p.first_name
 ", $params);
 
+// Current Parish Scope Name
+$current_user_parish_name = '';
+if (!is_admin() && !empty($_SESSION['parish_id'])) {
+    $current_user_parish_name = db_fetch("SELECT parish_name FROM parishes WHERE parish_id = ?", [$_SESSION['parish_id']])['parish_name'] ?? 'Your Parish';
+} elseif (is_admin() && !empty($selected_parish_id)) {
+    $current_user_parish_name = db_fetch("SELECT parish_name FROM parishes WHERE parish_id = ?", [$selected_parish_id])['parish_name'] ?? '';
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -99,14 +119,33 @@ $parishioners = db_fetchAll("
                 <!-- Search and Stats Bar -->
                 <div class="stats-search-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
                     <div class="card bg-card" style="padding: 1.5rem; border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
-                        <form method="GET" action="parishioners.php" style="display: flex; gap: 1rem;">
-                            <div style="flex: 1; position: relative;">
+                        <form method="GET" action="parishioners.php" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 2; min-width: 220px; position: relative;">
                                 <ion-icon name="search-outline" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></ion-icon>
-                                <input type="text" name="search" placeholder="Search by name, baptismal name..." value="<?php echo h($search); ?>" style="width: 100%; padding: 1rem 1rem 1rem 3rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; color: white;">
+                                <input type="text" name="search" placeholder="Search by name, baptismal name..." value="<?php echo h($search); ?>" style="width: 100%; padding: 0.85rem 1rem 0.85rem 3rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; color: white;">
                             </div>
-                            <button type="submit" class="btn btn-primary" style="padding: 0 2rem; border-radius: 1rem; font-weight: 800;">Search</button>
-                            <?php if ($search): ?>
-                                <a href="parishioners.php" class="btn" style="display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); color: white; padding: 0 1.5rem; border-radius: 1rem; text-decoration: none;">Clear</a>
+                            
+                            <?php if (is_admin()): ?>
+                            <div style="flex: 1; min-width: 180px;">
+                                <select name="parish_id" onchange="this.form.submit()" style="width: 100%; padding: 0.85rem 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 1rem; color: white; font-weight: 600;">
+                                    <option value="">All Parishes (Diocesan-Wide)</option>
+                                    <?php foreach ($all_parishes as $p_item): ?>
+                                        <option value="<?php echo $p_item['parish_id']; ?>" <?php echo ($selected_parish_id == $p_item['parish_id']) ? 'selected' : ''; ?>>
+                                            <?php echo h($p_item['parish_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <?php elseif (!empty($current_user_parish_name)): ?>
+                            <div style="padding: 0.5rem 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 1rem; color: var(--accent); font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                <ion-icon name="business-outline"></ion-icon>
+                                <span><?php echo h($current_user_parish_name); ?> Registry</span>
+                            </div>
+                            <?php endif; ?>
+
+                            <button type="submit" class="btn btn-primary" style="padding: 0.85rem 1.75rem; border-radius: 1rem; font-weight: 800;">Filter</button>
+                            <?php if ($search || $selected_parish_id): ?>
+                                <a href="parishioners.php" class="btn" style="display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); color: white; padding: 0.85rem 1.25rem; border-radius: 1rem; text-decoration: none;">Reset</a>
                             <?php endif; ?>
                         </form>
                     </div>

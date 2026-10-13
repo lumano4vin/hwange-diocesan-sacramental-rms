@@ -35,10 +35,15 @@ if (strlen($q) >= 2) {
             $p_params[] = "%$term%";
         }
         if (!empty($conds)) {
+            $p_isolation = "";
+            if (!is_admin() && !empty($_SESSION['parish_id'])) {
+                $p_isolation = " AND p.current_parish_id = ? ";
+                $p_params[] = $_SESSION['parish_id'];
+            }
             $sql = "SELECT p.person_id, p.first_name, p.last_name, pr.parish_name 
                     FROM parishioners p
                     LEFT JOIN parishes pr ON p.current_parish_id = pr.parish_id
-                    WHERE " . implode(" AND ", $conds) . "
+                    WHERE (" . implode(" AND ", $conds) . ") $p_isolation
                     LIMIT 5";
             $data = db_fetchAll($sql, $p_params);
             foreach ($data as $r) {

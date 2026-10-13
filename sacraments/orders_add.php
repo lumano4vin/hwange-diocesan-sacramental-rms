@@ -14,8 +14,10 @@ $header_title = "Register Holy Orders";
 $header_subtitle = "Record ordination to the Diaconate, Priesthood, or Episcopate.";
 
 $pdo = getDB();
-// Fetch parishioners and parishes for dropdowns (Ordinands must be Male and Active/Moved but not Deceased)
-$parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE status != 'Deceased' AND gender = 'Male' ORDER BY last_name, first_name");
+// Fetch parishioners and parishes for dropdowns (Parish-Aware, Ordinands must be Male and Active/Moved but not Deceased)
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+$p_filter = (!is_admin() && !empty($user_parish_id)) ? " AND current_parish_id = " . intval($user_parish_id) : "";
+$parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE status != 'Deceased' AND gender = 'Male' $p_filter ORDER BY last_name, first_name");
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $preselected_id = $_GET['person_id'] ?? null;

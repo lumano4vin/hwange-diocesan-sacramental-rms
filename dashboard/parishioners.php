@@ -22,7 +22,10 @@ if (!empty($search)) {
     $params[] = "%$search%";
 }
 
-if (!empty($parish_filter)) {
+if (!is_admin() && !empty($_SESSION['parish_id'])) {
+    $where .= " AND p.current_parish_id = ? ";
+    $params[] = $_SESSION['parish_id'];
+} elseif (!empty($parish_filter)) {
     $where .= " AND p.current_parish_id = ? ";
     $params[] = $parish_filter;
 }

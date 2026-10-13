@@ -37,7 +37,12 @@ if ($has_status && !has_record_permission($record, 'edit')) {
 $header_title = "Edit First Communion";
 $header_subtitle = "Update canonical first holy communion details.";
 
-$parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners ORDER BY last_name, first_name");
+$user_parish_id = !is_admin() ? ($_SESSION['parish_id'] ?? null) : null;
+if ($user_parish_id) {
+    $parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE current_parish_id = ? OR person_id = ? ORDER BY last_name, first_name", [$user_parish_id, $record['person_id']]);
+} else {
+    $parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners ORDER BY last_name, first_name");
+}
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $error = '';

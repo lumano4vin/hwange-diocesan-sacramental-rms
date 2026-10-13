@@ -13,8 +13,13 @@ require_login();
 $header_title = "Profession of Faith";
 $header_subtitle = "Register reception into full communion with the Catholic Church.";
 
-// Fetch parishioners and parishes for dropdowns
-$parishioners = db_fetchAll("SELECT person_id, first_name, last_name, other_names FROM parishioners ORDER BY last_name, first_name");
+// Fetch parishioners and parishes for dropdowns (Parish-Aware)
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+if (!is_admin() && !empty($user_parish_id)) {
+    $parishioners = db_fetchAll("SELECT person_id, first_name, last_name, other_names FROM parishioners WHERE current_parish_id = ? ORDER BY last_name, first_name", [$user_parish_id]);
+} else {
+    $parishioners = db_fetchAll("SELECT p.person_id, p.first_name, p.last_name, p.other_names, pa.parish_name FROM parishioners p LEFT JOIN parishes pa ON p.current_parish_id = pa.parish_id ORDER BY last_name, first_name");
+}
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $preselected_id = $_GET['person_id'] ?? null;

@@ -13,9 +13,11 @@ require_login();
 $header_title = "Register Holy Matrimony";
 $header_subtitle = "Enter canonical marriage details into the Diocesan archives.";
 
-// Fetch parishioners (Grooms & Brides) and parishes
-$grooms = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE gender = 'Male' AND status != 'Deceased' ORDER BY last_name, first_name");
-$brides = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE gender = 'Female' AND status != 'Deceased' ORDER BY last_name, first_name");
+// Fetch parishioners (Grooms & Brides) and parishes (Parish-Aware)
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+$p_filter = (!is_admin() && !empty($user_parish_id)) ? " AND current_parish_id = " . intval($user_parish_id) : "";
+$grooms = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE gender = 'Male' AND status != 'Deceased' $p_filter ORDER BY last_name, first_name");
+$brides = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE gender = 'Female' AND status != 'Deceased' $p_filter ORDER BY last_name, first_name");
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $preselected_id = $_GET['person_id'] ?? null;

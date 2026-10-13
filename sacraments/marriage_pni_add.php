@@ -13,8 +13,10 @@ if (!is_cleric()) {
     redirect("../dashboard/index.php");
 }
 
-// Fetch parishioners for Groom and Bride
-$parishioners = db_fetchAll("SELECT person_id, first_name, last_name, other_names, gender FROM parishioners WHERE status = 'Active' ORDER BY last_name, first_name");
+// Fetch parishioners for Groom and Bride (Parish-Aware)
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+$p_filter = (!is_admin() && !empty($user_parish_id)) ? " AND current_parish_id = " . intval($user_parish_id) : "";
+$parishioners = db_fetchAll("SELECT person_id, first_name, last_name, other_names, gender FROM parishioners WHERE status = 'Active' $p_filter ORDER BY last_name, first_name");
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $preselected_groom = $_GET['groom_id'] ?? null;

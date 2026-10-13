@@ -14,7 +14,12 @@ $header_title = "Register Death & Burial";
 $header_subtitle = "Enter canonical funeral details into the Diocesan archives.";
 
 // Fetch parishioners and parishes for dropdowns
-$parishioners = db_fetchAll("SELECT person_id, first_name, last_name, other_names FROM parishioners ORDER BY last_name, first_name");
+$user_parish_id = !is_admin() ? ($_SESSION['parish_id'] ?? null) : null;
+if ($user_parish_id) {
+    $parishioners = db_fetchAll("SELECT person_id, first_name, last_name, other_names FROM parishioners WHERE current_parish_id = ? ORDER BY last_name, first_name", [$user_parish_id]);
+} else {
+    $parishioners = db_fetchAll("SELECT person_id, first_name, last_name, other_names FROM parishioners ORDER BY last_name, first_name");
+}
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $preselected_id = $_GET['person_id'] ?? null;

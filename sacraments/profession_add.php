@@ -14,8 +14,10 @@ $header_title = "Register Religious Profession";
 $header_subtitle = "Record first or perpetual vows for religious brothers and sisters.";
 
 $pdo = getDB();
-// Fetch parishioners and parishes for dropdowns (not deceased)
-$parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE status != 'Deceased' ORDER BY last_name, first_name");
+// Fetch parishioners and parishes for dropdowns (Parish-Aware, not deceased)
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+$p_filter = (!is_admin() && !empty($user_parish_id)) ? " AND current_parish_id = " . intval($user_parish_id) : "";
+$parishioners = db_fetchAll("SELECT person_id, first_name, last_name FROM parishioners WHERE status != 'Deceased' $p_filter ORDER BY last_name, first_name");
 $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
 
 $congregations = ['OFM Capuchin', 'FMDM sisters', 'SMI', 'AMR'];
