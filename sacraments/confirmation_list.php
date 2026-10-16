@@ -40,10 +40,10 @@ if ($search) {
 $records = db_fetchAll("
     SELECT c.*, p.first_name, p.last_name, pa.parish_name 
     FROM confirmations c 
-    JOIN parishioners p ON c.person_id = p.person_id 
-    JOIN parishes pa ON c.parish_id = pa.parish_id 
+    LEFT JOIN parishioners p ON c.person_id = p.person_id 
+    LEFT JOIN parishes pa ON c.parish_id = pa.parish_id 
     $where
-    ORDER BY c.date_of_confirmation DESC
+    ORDER BY c.date_of_confirmation DESC, c.confirmation_id DESC
 ", $params);
 
 ?>

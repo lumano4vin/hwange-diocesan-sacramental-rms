@@ -58,12 +58,179 @@ if (!file_exists($sqlite_file) && file_exists(dirname(__DIR__) . "/data/fallback
     $sqlite_file = dirname(__DIR__) . "/data/fallback.sqlite";
 }
 
+/**
+ * Optional Cloud Vault Sync for Serverless SQLite (configured via RMS_CLOUD_GIST_ID and RMS_CLOUD_TOKEN env vars)
+ */
+function rms_cloud_http($method, $url, $headers = [], $body = null, $timeout = 6) {
+    $resp_headers = [];
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$resp_headers) {
+            $len = strlen($header);
+            $parts = explode(':', $header, 2);
+            if (count($parts) === 2) {
+                $resp_headers[strtolower(trim($parts[0]))] = trim($parts[1]);
+            }
+            return $len;
+        });
+        if ($body !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        }
+        $resp_body = @curl_exec($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return ['status' => $status, 'headers' => $resp_headers, 'body' => $resp_body];
+    }
+    return ['status' => 0, 'headers' => [], 'body' => false];
+}
+
+function rms_pull_db_from_cloud($tmp_sqlite, $meta_file) {
+    $gist_id = getenv('RMS_CLOUD_GIST_ID');
+    $token = getenv('RMS_CLOUD_TOKEN');
+    if (empty($gist_id) || empty($token)) {
+        return false;
+    }
+
+    $meta = file_exists($meta_file) ? (@json_decode(@file_get_contents($meta_file), true) ?: []) : [];
+    $has_local = file_exists($tmp_sqlite) && filesize($tmp_sqlite) > 0;
+    $is_post = (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST');
+    $age = time() - (int)($meta['checked_at'] ?? 0);
+
+    if ($has_local && !$is_post && $age < 2) {
+        return true;
+    }
+
+    $headers = [
+        'Authorization: Bearer ' . $token,
+        'Accept: application/vnd.github+json',
+        'User-Agent: HwangeRMS'
+    ];
+    if ($has_local && !empty($meta['etag'])) {
+        $headers[] = 'If-None-Match: ' . $meta['etag'];
+    }
+
+    $res = rms_cloud_http('GET', 'https://api.github.com/gists/' . $gist_id, $headers, null, 6);
+    if ($res['status'] === 304 && $has_local) {
+        $meta['checked_at'] = time();
+        @file_put_contents($meta_file, json_encode($meta));
+        return true;
+    }
+
+    if ($res['status'] === 200 && !empty($res['body'])) {
+        $data = @json_decode($res['body'], true);
+        $file_info = $data['files']['hwange_rms_db.gz.b64'] ?? null;
+        if ($file_info) {
+            $b64 = $file_info['content'] ?? '';
+            if ((!empty($file_info['truncated']) || empty($b64)) && !empty($file_info['raw_url'])) {
+                $raw_res = rms_cloud_http('GET', $file_info['raw_url'], $headers, null, 8);
+                if ($raw_res['status'] === 200) {
+                    $b64 = $raw_res['body'];
+                }
+            }
+            if (!empty($b64)) {
+                $gz = @base64_decode(trim($b64));
+                $sqlite_bytes = $gz ? @gzdecode($gz) : false;
+                if ($sqlite_bytes && substr($sqlite_bytes, 0, 15) === 'SQLite format 3') {
+                    $dl_tmp = $tmp_sqlite . '.dl.' . getmypid();
+                    if (@file_put_contents($dl_tmp, $sqlite_bytes) !== false) {
+                        @unlink($tmp_sqlite . '-wal');
+                        @unlink($tmp_sqlite . '-shm');
+                        @unlink($tmp_sqlite . '-journal');
+                        if (!@rename($dl_tmp, $tmp_sqlite)) {
+                            @copy($dl_tmp, $tmp_sqlite);
+                            @unlink($dl_tmp);
+                        }
+                        clearstatcache(true, $tmp_sqlite);
+                        $meta = [
+                            'etag' => $res['headers']['etag'] ?? '',
+                            'checked_at' => time(),
+                            'hash' => @md5_file($tmp_sqlite)
+                        ];
+                        @file_put_contents($meta_file, json_encode($meta));
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function rms_sync_db_to_cloud() {
+    if (empty($GLOBALS['rms_is_serverless']) || !empty($GLOBALS['rms_db_synced']) || !empty($GLOBALS['rms_skip_cloud_sync'])) {
+        return false;
+    }
+    $gist_id = getenv('RMS_CLOUD_GIST_ID');
+    $token = getenv('RMS_CLOUD_TOKEN');
+    if (empty($gist_id) || empty($token)) {
+        return false;
+    }
+    $sqlite_file = $GLOBALS['rms_sqlite_path'] ?? '';
+    $meta_file = $GLOBALS['rms_meta_path'] ?? '';
+    if (empty($sqlite_file) || !file_exists($sqlite_file)) {
+        return false;
+    }
+
+    clearstatcache(true, $sqlite_file);
+    $current_hash = @md5_file($sqlite_file);
+    if (!$current_hash || $current_hash === ($GLOBALS['rms_initial_db_hash'] ?? '')) {
+        return false;
+    }
+
+    $raw = @file_get_contents($sqlite_file);
+    if (!$raw || substr($raw, 0, 15) !== 'SQLite format 3') {
+        return false;
+    }
+
+    $payload = json_encode([
+        'files' => [
+            'hwange_rms_db.gz.b64' => [
+                'content' => base64_encode(gzencode($raw, 6))
+            ]
+        ]
+    ]);
+
+    $headers = [
+        'Authorization: Bearer ' . $token,
+        'Accept: application/vnd.github+json',
+        'Content-Type: application/json',
+        'User-Agent: HwangeRMS'
+    ];
+
+    $res = rms_cloud_http('PATCH', 'https://api.github.com/gists/' . $gist_id, $headers, $payload, 10);
+    if ($res['status'] === 200) {
+        $GLOBALS['rms_db_synced'] = true;
+        $GLOBALS['rms_initial_db_hash'] = $current_hash;
+        if ($meta_file) {
+            @file_put_contents($meta_file, json_encode([
+                'etag' => $res['headers']['etag'] ?? '',
+                'checked_at' => time(),
+                'hash' => $current_hash
+            ]));
+        }
+        return true;
+    }
+    return false;
+}
+
 // In serverless / read-only environments (such as Vercel / AWS Lambda), the deployment directory is read-only.
-// Copy the fallback SQLite to the writable /tmp directory ONLY once when /tmp file does not yet exist.
+$is_serverless = false;
 if (file_exists($sqlite_file)) {
-    $is_serverless = getenv('VERCEL') || !is_writable($sqlite_file) || !is_writable(dirname($sqlite_file));
+    $is_serverless = (bool)(getenv('VERCEL') || !is_writable($sqlite_file) || !is_writable(dirname($sqlite_file)));
     if ($is_serverless) {
         $tmp_sqlite = sys_get_temp_dir() . '/hwange_database.sqlite';
+        $meta_file = sys_get_temp_dir() . '/hwange_db_meta.json';
+        $GLOBALS['rms_is_serverless'] = true;
+        $GLOBALS['rms_sqlite_path'] = $tmp_sqlite;
+        $GLOBALS['rms_meta_path'] = $meta_file;
+
+        rms_pull_db_from_cloud($tmp_sqlite, $meta_file);
+
         if (!file_exists($tmp_sqlite) || filesize($tmp_sqlite) === 0) {
             @copy($sqlite_file, $tmp_sqlite);
         }
@@ -117,7 +284,12 @@ if (!$connected && file_exists($sqlite_file)) {
         ];
         $pdo = new PDO("sqlite:" . $sqlite_file, null, null, $sqlite_options);
         $pdo->exec("PRAGMA busy_timeout = 5000");
-        $pdo->exec("PRAGMA journal_mode = WAL");
+        if ($is_serverless) {
+            $pdo->exec("PRAGMA journal_mode = DELETE");
+            $pdo->exec("PRAGMA synchronous = NORMAL");
+        } else {
+            $pdo->exec("PRAGMA journal_mode = WAL");
+        }
         $connected = true;
         if ($use_cloud || getenv('DB_HOST')) {
             if (!defined('DB_FALLBACK_MODE')) define('DB_FALLBACK_MODE', true);
@@ -592,6 +764,11 @@ if (isset($pdo)) {
                 run_schema_migrations($pdo);
                 $pdo->exec("PRAGMA user_version = " . RMS_SCHEMA_VERSION);
             }
+            if (!empty($is_serverless) && !empty($sqlite_file)) {
+                clearstatcache(true, $sqlite_file);
+                $GLOBALS['rms_initial_db_hash'] = @md5_file($sqlite_file);
+                register_shutdown_function('rms_sync_db_to_cloud');
+            }
         } else {
             // For MySQL, ensure sessions table exists so session saves never fail
             $pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
@@ -608,6 +785,24 @@ if (isset($pdo)) {
 
 // Register the Database Session Handler if PDO exists
 if (isset($pdo) && session_status() === PHP_SESSION_NONE && !headers_sent()) {
-    session_set_save_handler(new DatabaseSessionHandler($pdo), true);
+    $session_pdo = $pdo;
+    if (!empty($is_serverless) && $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+        try {
+            $sess_file = sys_get_temp_dir() . '/hwange_sessions.sqlite';
+            $session_pdo = new PDO("sqlite:" . $sess_file, null, null, [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+            $session_pdo->exec("PRAGMA busy_timeout = 3000");
+            $session_pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
+                session_id VARCHAR(128) PRIMARY KEY,
+                session_data TEXT,
+                expires_at INTEGER
+            )");
+        } catch (Exception $e) {
+            $session_pdo = $pdo;
+        }
+    }
+    session_set_save_handler(new DatabaseSessionHandler($session_pdo), true);
 }
 

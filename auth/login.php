@@ -39,7 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['parish_id'] = $user['parish_id'];
         $_SESSION['login_success_popup'] = true;
 
-        // Update last login
+        // Update last login (do not trigger a full cloud DB upload just for login timestamp)
+        $GLOBALS['rms_skip_cloud_sync'] = true;
         db_query("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?", [$user['user_id']]);
 
         if (strtolower($user['role']) === 'observer') {

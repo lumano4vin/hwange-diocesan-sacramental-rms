@@ -25,36 +25,87 @@ $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY pa
 $preselected_id = $_GET['person_id'] ?? null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $person_id = $_POST['person_id'] ?? null;
-    $parish_id = $_POST['parish_id'] ?? null;
+    $registration_type = $_POST['registration_type'] ?? 'registered';
+    $parish_id = $_POST['parish_id'] ?? ($_SESSION['parish_id'] ?? 1);
     $date_of_confirmation = $_POST['date_of_confirmation'] ?? '';
-    $minister = $_POST['minister'] ?? '';
-    $sponsor = $_POST['sponsor'] ?? '';
-    $register_book = $_POST['register_book_number'] ?? '';
-    $page_number = $_POST['page_number'] ?? '';
-    $entry_number = $_POST['entry_number'] ?? '';
+    $minister = upper($_POST['minister'] ?? '');
+    $sponsor = upper($_POST['sponsor'] ?? '');
+    $register_book = $_POST['register_book_number'] ?? 'Volume I';
+    $page_number = trim($_POST['page_number'] ?? '1');
+    $entry_number = upper($_POST['entry_number'] ?? '');
 
-    if ($person_id && $parish_id && $date_of_confirmation) {
-        $verification_hash = bin2hex(random_bytes(16));
-        $guid = bin2hex(random_bytes(16));
-        $diocese_id = $primary_diocese['diocese_id'] ?? 1;
-        
-        try {
-            $sql = "INSERT INTO confirmations (person_id, parish_id, date_of_confirmation, minister, sponsor, register_book_number, page_number, entry_number, verification_hash, guid, diocese_id) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            
-            db_query($sql, [$person_id, $parish_id, $date_of_confirmation, $minister, $sponsor, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id]);
-            
-            $new_id = db_lastInsertId();
-            log_audit($_SESSION['user_id'], 'CREATE', 'confirmations', $new_id, "Registered confirmation for person_id: $person_id");
-            
-            set_flash("Confirmation record has been successfully registered.");
-            redirect("confirmation_list.php");
-        } catch (Exception $e) {
-            $error = "System Error: " . $e->getMessage();
+    if ($entry_number !== '' && preg_match('/^\d+$/', $entry_number)) {
+        $year_prefix = $date_of_confirmation ? date('Y', strtotime($date_of_confirmation)) : date('Y');
+        $entry_number = $year_prefix . '/' . str_pad($entry_number, 3, '0', STR_PAD_LEFT);
+    }
+
+    $person_id = null;
+    $error = '';
+
+    if ($registration_type === 'unregistered') {
+        $first_name = upper($_POST['unregistered_first_name'] ?? '');
+        $other_names = upper($_POST['unregistered_other_names'] ?? '');
+        $last_name = upper($_POST['unregistered_last_name'] ?? '');
+        $gender = $_POST['unregistered_gender'] ?? '';
+        $dob = $_POST['unregistered_dob'] ?? null;
+
+        if ($first_name && $last_name && $gender && $dob) {
+            try {
+                $guid_p = bin2hex(random_bytes(16));
+                $diocese_id = $primary_diocese['diocese_id'] ?? 1;
+                $sql_p = "INSERT INTO parishioners (first_name, other_names, last_name, gender, dob, current_parish_id, status, guid, diocese_id) 
+                          VALUES (?, ?, ?, ?, ?, ?, 'Active', ?, ?)";
+                db_query($sql_p, [$first_name, $other_names, $last_name, $gender, $dob, $parish_id, $guid_p, $diocese_id]);
+                $person_id = db_lastInsertId();
+                log_audit($_SESSION['user_id'], 'CREATE', 'parishioners', $person_id, "Registered new candidate for confirmation: $first_name $last_name");
+            } catch (Exception $e) {
+                $error = "Failed to create candidate record: " . $e->getMessage();
+            }
+        } else {
+            $error = "Please provide First Name, Last Name, Gender, and Date of Birth for the new candidate.";
         }
     } else {
-        $error = "Please provide all required canonical information.";
+        $person_id = $_POST['person_id'] ?? null;
+    }
+
+    if (empty($error)) {
+        if ($person_id && $parish_id && $date_of_confirmation) {
+            $verification_hash = bin2hex(random_bytes(16));
+            $guid = bin2hex(random_bytes(16));
+            $diocese_id = $primary_diocese['diocese_id'] ?? 1;
+            $user_role = strtolower($_SESSION['role'] ?? 'secretary');
+            $status = in_array($user_role, ['admin', 'chancellor', 'priest', 'deacon']) ? 'Verified' : 'Draft';
+            $v_by = ($status === 'Verified') ? ($_SESSION['user_id'] ?? null) : null;
+            $v_at = ($status === 'Verified') ? date('Y-m-d H:i:s') : null;
+            
+            try {
+                $sql = "INSERT INTO confirmations (person_id, parish_id, date_of_confirmation, minister, sponsor, register_book_number, page_number, entry_number, verification_hash, status, verified_by, verified_at, guid, diocese_id) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
+                db_query($sql, [$person_id, $parish_id, $date_of_confirmation, $minister, $sponsor, $register_book, $page_number, $entry_number, $verification_hash, $status, $v_by, $v_at, $guid, $diocese_id]);
+                
+                $new_id = db_lastInsertId();
+
+                // Add Canonical Baptismal Notation if baptism record exists
+                $baptism = db_fetch("SELECT baptism_id FROM baptisms WHERE person_id = ?", [$person_id]);
+                if ($baptism) {
+                    $parish_data = db_fetch("SELECT parish_name FROM parishes WHERE parish_id = ?", [$parish_id]);
+                    $parish_name = $parish_data['parish_name'] ?? 'Diocesan Parish';
+                    db_query("INSERT INTO sacraments_notations (baptism_id, sacrament_type, event_date, parish_name, details, status, verified_by, verified_at) 
+                              VALUES (?, 'Confirmation', ?, ?, ?, ?, ?, ?)", 
+                              [$baptism['baptism_id'], $date_of_confirmation, $parish_name, "Confirmed with sponsor $sponsor", $status, $v_by, $v_at]);
+                }
+
+                log_audit($_SESSION['user_id'], 'CREATE', 'confirmations', $new_id, "Registered confirmation for person_id: $person_id");
+                
+                set_flash("Confirmation record has been successfully registered.");
+                redirect("confirmation_list.php");
+            } catch (Exception $e) {
+                $error = "System Error: " . $e->getMessage();
+            }
+        } else {
+            $error = "Please provide all required canonical information.";
+        }
     }
 }
 ?>
@@ -92,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="card bg-card" style="padding: 3rem; border-radius: 2rem; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(20px);">
                     
-                    <?php if (isset($error)): ?>
+                    <?php if (!empty($error)): ?>
                         <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: white; padding: 1rem; border-radius: 1rem; margin-bottom: 2rem; text-align: center;">
                             <?php echo h($error); ?>
                         </div>
@@ -104,10 +155,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; color: #ef4444; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
                                 <ion-icon name="flame-outline"></ion-icon> Primary Subject Information
                             </h3>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                <div class="form-group">
+
+                            <div class="form-group" style="margin-bottom: 1.5rem;">
+                                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Candidate Registration Status *</label>
+                                <div style="display: flex; gap: 1.5rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); width: max-content;">
+                                    <label style="display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;" id="lbl-registered">
+                                        <input type="radio" name="registration_type" value="registered" checked style="accent-color: #ef4444;"> Registered Parishioner
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;" id="lbl-unregistered">
+                                        <input type="radio" name="registration_type" value="unregistered" style="accent-color: #ef4444;"> New / Unregistered Candidate
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start;">
+                                <div class="form-group" id="registered-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Faithful Subject *</label>
-                                    <select name="person_id" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    <select name="person_id" id="person_id" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
                                         <option value="">-- Select Parishioner --</option>
                                         <?php foreach ($parishioners as $p): ?>
                                             <option value="<?php echo $p['person_id']; ?>" <?php echo $preselected_id == $p['person_id'] ? 'selected' : ''; ?>>
@@ -115,6 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Candidate not listed? Select "New / Unregistered Candidate" above to enter their details directly.</p>
                                 </div>
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Parish of Celebration *</label>
@@ -124,6 +189,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <option value="<?php echo $pa['parish_id']; ?>" <?php echo (isset($_SESSION['parish_id']) && $_SESSION['parish_id'] == $pa['parish_id']) ? 'selected' : ''; ?>><?php echo h($pa['parish_name']); ?></option>
                                         <?php endforeach; ?>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div id="unregistered-group" style="display: none; flex-direction: column; gap: 1.5rem; border: 1px dashed rgba(239, 68, 68, 0.3); padding: 2rem; border-radius: 1.5rem; background: rgba(239, 68, 68, 0.02); margin-top: 1.5rem;">
+                                <h4 style="font-family: 'Outfit', sans-serif; font-size: 1rem; color: #ef4444; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                                    <ion-icon name="person-add-outline"></ion-icon> New Candidate Details
+                                </h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">First Name *</label>
+                                        <input type="text" name="unregistered_first_name" class="force-caps" placeholder="e.g. JOHN" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Other Names</label>
+                                        <input type="text" name="unregistered_other_names" class="force-caps" placeholder="Optional" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Last Name *</label>
+                                        <input type="text" name="unregistered_last_name" class="force-caps" placeholder="e.g. MOYO" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Gender *</label>
+                                        <select name="unregistered_gender" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                            <option value="">-- Select Gender --</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Date of Birth *</label>
+                                        <input type="date" name="unregistered_dob" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -158,8 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Book Number *</label>
                                     <select name="register_book_number" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
-                                        <option value="">-- Select Volume --</option>
-                                        <option value="Volume I">Volume I</option>
+                                        <option value="Volume I" selected>Volume I</option>
                                         <option value="Volume II">Volume II</option>
                                         <option value="Volume III">Volume III</option>
                                         <option value="Volume IV">Volume IV</option>
@@ -173,11 +271,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Page *</label>
-                                    <input type="number" name="page_number" min="1" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    <input type="number" name="page_number" min="1" value="1" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
                                 </div>
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Entry No. *</label>
-                                    <input type="text" name="entry_number" required pattern="^\d{4}/\d+$" title="Use strictly format YYYY/Number (e.g. 2026/045 or 1956/29)" placeholder="e.g. 2026/045" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    <input type="text" name="entry_number" required placeholder="e.g. 2026/045" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
                                 </div>
                             </div>
                         </div>
@@ -197,5 +295,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="../assets/js/main.js?v=1.6.2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const radioRegistered = document.querySelector('input[name="registration_type"][value="registered"]');
+            const radioUnregistered = document.querySelector('input[name="registration_type"][value="unregistered"]');
+            const registeredGroup = document.getElementById('registered-group');
+            const unregisteredGroup = document.getElementById('unregistered-group');
+            const selectPerson = document.getElementById('person_id');
+            
+            const inputFirst = document.querySelector('input[name="unregistered_first_name"]');
+            const inputLast = document.querySelector('input[name="unregistered_last_name"]');
+            const selectGender = document.querySelector('select[name="unregistered_gender"]');
+            const inputDob = document.querySelector('input[name="unregistered_dob"]');
+
+            function toggleRegistrationType() {
+                if (radioRegistered.checked) {
+                    registeredGroup.style.display = 'block';
+                    unregisteredGroup.style.display = 'none';
+                    selectPerson.setAttribute('required', '');
+                    inputFirst.removeAttribute('required');
+                    inputLast.removeAttribute('required');
+                    selectGender.removeAttribute('required');
+                    inputDob.removeAttribute('required');
+                    document.getElementById('lbl-registered').style.background = 'rgba(239, 68, 68, 0.15)';
+                    document.getElementById('lbl-registered').style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    document.getElementById('lbl-unregistered').style.background = 'transparent';
+                    document.getElementById('lbl-unregistered').style.border = 'none';
+                } else {
+                    registeredGroup.style.display = 'none';
+                    unregisteredGroup.style.display = 'flex';
+                    selectPerson.removeAttribute('required');
+                    inputFirst.setAttribute('required', '');
+                    inputLast.setAttribute('required', '');
+                    selectGender.setAttribute('required', '');
+                    inputDob.setAttribute('required', '');
+                    document.getElementById('lbl-unregistered').style.background = 'rgba(239, 68, 68, 0.15)';
+                    document.getElementById('lbl-unregistered').style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    document.getElementById('lbl-registered').style.background = 'transparent';
+                    document.getElementById('lbl-registered').style.border = 'none';
+                }
+            }
+
+            radioRegistered.addEventListener('change', toggleRegistrationType);
+            radioUnregistered.addEventListener('change', toggleRegistrationType);
+            toggleRegistrationType();
+        });
+    </script>
 </body>
 </html>

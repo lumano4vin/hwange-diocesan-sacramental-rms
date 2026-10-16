@@ -52,10 +52,10 @@ $parishes_list = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER 
 // Fetch Confirmations joined with Parishioners and Parishes
 $sql = "SELECT c.*, p.first_name, p.last_name, p.dob, pr.parish_name 
         FROM confirmations c
-        JOIN parishioners p ON c.person_id = p.person_id
-        JOIN parishes pr ON c.parish_id = pr.parish_id
+        LEFT JOIN parishioners p ON c.person_id = p.person_id
+        LEFT JOIN parishes pr ON c.parish_id = pr.parish_id
         $where
-        ORDER BY c.date_of_confirmation DESC";
+        ORDER BY c.date_of_confirmation DESC, c.confirmation_id DESC";
 
 $confirmations = db_fetchAll($sql, $params);
 ?>

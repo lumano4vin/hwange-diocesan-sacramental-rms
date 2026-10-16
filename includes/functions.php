@@ -514,6 +514,9 @@ function log_audit($user_id, $action, $table, $record_id, $details = '') {
  * Redirect to a specific page while guaranteeing session & auth cookie persistence
  */
 function redirect($url) {
+    if (function_exists('rms_sync_db_to_cloud')) {
+        rms_sync_db_to_cloud();
+    }
     if (function_exists('sync_auth_cookie')) {
         sync_auth_cookie();
     }

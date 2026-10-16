@@ -8,6 +8,16 @@ require_once '../includes/functions.php';
 header('Content-Type: application/json');
 require_login(); // Ensure only logged-in sessions can trigger sync
 
+// On Vercel/Serverless, cloud persistence is handled directly by includes/db.php
+if (getenv('VERCEL') || !empty($GLOBALS['rms_is_serverless'])) {
+    echo json_encode([
+        'status' => 'success',
+        'has_pending' => false,
+        'payload' => []
+    ]);
+    exit;
+}
+
 $pdo = getDB();
 $tables = ['parishioners', 'baptisms', 'confirmations', 'marriages', 'deaths', 'ordinations_professions'];
 $payload = [];
