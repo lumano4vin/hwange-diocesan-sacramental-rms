@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 db_query($sql_p, [$first_name, $other_names, $last_name, $gender, $dob, $place_of_birth, $father_name, $mother_name, $parish_id, $guid, $diocese_id, $place_of_baptism]);
                 
                 // Fetch the newly generated person_id
-                $person_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
+                $person_id = db_lastInsertId();
                 log_audit($_SESSION['user_id'], 'CREATE', 'parishioners', $person_id, "Automatically registered unregistered/visiting parishioner for death record: $first_name $last_name");
             } catch (Exception $e) {
                 $error = "Failed to create temporary parishioner record: " . $e->getMessage();
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 db_query($sql, [$person_id, $parish_id, $date_of_death, $date_of_burial, $place_of_burial, $minister, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id]);
                 
-                $new_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
+                $new_id = db_lastInsertId();
                 log_audit($_SESSION['user_id'], 'CREATE', 'deaths', $new_id, "Registered death for person_id: $person_id");
                 
                 // If they were an existing registered parishioner, update status to 'Deceased'

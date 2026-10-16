@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           VALUES (?, ?, ?, 'Male', ?, ?, ?, ?, ?, 'Active', ?, ?, ?)";
                 db_query($sql_p, [$g_first, $g_other, $g_last, $g_dob, $g_pob, $g_father, $g_mother, $parish_id, $guid, $diocese_id, $g_baptism]);
                 
-                $groom_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
+                $groom_id = db_lastInsertId();
                 log_audit($_SESSION['user_id'], 'CREATE', 'parishioners', $groom_id, "Automatically registered unregistered groom for PNI: $g_first $g_last");
             } catch (Exception $e) {
                 $error = "Failed to register Groom: " . $e->getMessage();
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           VALUES (?, ?, ?, 'Female', ?, ?, ?, ?, ?, 'Active', ?, ?, ?)";
                 db_query($sql_p, [$b_first, $b_other, $b_last, $b_dob, $b_pob, $b_father, $b_mother, $parish_id, $guid, $diocese_id, $b_baptism]);
                 
-                $bride_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
+                $bride_id = db_lastInsertId();
                 log_audit($_SESSION['user_id'], 'CREATE', 'parishioners', $bride_id, "Automatically registered unregistered bride for PNI: $b_first $b_last");
             } catch (Exception $e) {
                 $error = "Failed to register Bride: " . $e->getMessage();
@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $impediments, $dispensations, $status, $notes
                 ]);
                 
-                $new_id = db_fetch("SELECT LAST_INSERT_ID() as id")['id'];
+                $new_id = db_lastInsertId();
                 log_audit($_SESSION['user_id'], 'CREATE', 'prenuptial_investigations', $new_id, "Completed PNI for Groom ID $groom_id and Bride ID $bride_id");
                 
                 set_flash("Prenuptial Investigation (PNI) record has been saved successfully.");

@@ -55,8 +55,8 @@ switch ($type) {
         break;
     case 'ordination':
         $table = 'ordinations_professions';
-        $pk = 'ordination_id';
-        $redirect_to = '../sacraments/ordination_list.php';
+        $pk = 'record_id';
+        $redirect_to = '../sacraments/vocations_list.php';
         break;
     case 'pni':
         $table = 'prenuptial_investigations';

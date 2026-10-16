@@ -9,7 +9,7 @@ require_once '../includes/functions.php';
 require_login();
 
 $pdo = getDB();
-$parishes = $pdo->query("SELECT id, name FROM parishes ORDER BY name")->fetchAll();
+$parishes = $pdo->query("SELECT parish_id as id, parish_name as name FROM parishes ORDER BY parish_name")->fetchAll();
 
 $error = '';
 $success = '';

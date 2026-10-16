@@ -18,7 +18,7 @@ $sql = "
     SELECT m.*, 
            g.first_name as g_first, g.last_name as g_last, g.father_name as g_father, g.mother_name as g_mother,
            b.first_name as b_first, b.last_name as b_last, b.father_name as b_father, b.mother_name as b_mother,
-           pa.parish_name as marriage_parish, pa.address as marriage_parish_address,
+           pa.parish_name as marriage_parish, pa.location as marriage_parish_address,
            bp_g.date_of_baptism as g_bap_date, bp_g.register_book_number as g_bap_book, bp_g.page_number as g_bap_page, bp_g.entry_number as g_bap_entry,
            bp_b.date_of_baptism as b_bap_date, bp_b.register_book_number as b_bap_book, bp_b.page_number as b_bap_page, bp_b.entry_number as b_bap_entry,
            p_g.parish_name as g_bap_parish, p_b.parish_name as b_bap_parish

@@ -14,21 +14,24 @@ $error = $_GET['error'] ?? '';
 
 // Fetch all clergy (users who are not just 'archivist' or 'guest')
 $clergy = db_fetchAll("
-    SELECT u.*, p.parish_name, pa.role as assignment_role, pa.start_date, pa.status as assignment_status
+    SELECT u.*, COALESCE(p.parish_name, p_direct.parish_name) as parish_name, 
+           COALESCE(pa.role, CASE WHEN u.parish_id IS NOT NULL THEN 'Parish Priest' ELSE NULL END) as assignment_role, 
+           pa.start_date, pa.status as assignment_status
     FROM users u 
     LEFT JOIN parish_assignments pa ON u.user_id = pa.user_id AND pa.status = 'Active'
     LEFT JOIN parishes p ON pa.parish_id = p.parish_id
-    WHERE u.role IN ('admin', 'priest', 'mission_admin')
+    LEFT JOIN parishes p_direct ON u.parish_id = p_direct.parish_id
+    WHERE LOWER(u.role) IN ('admin', 'priest', 'deacon', 'mission_admin')
     ORDER BY u.full_name ASC
 ");
 
 // Fetch assignments for the timeline
 $assignments = db_fetchAll("
-    SELECT pa.*, p.parish_name, u.full_name
+    SELECT pa.*, p.parish_name, COALESCE(u.full_name, pa.priest_name_manual) as full_name
     FROM parish_assignments pa 
     JOIN parishes p ON pa.parish_id = p.parish_id
-    JOIN users u ON pa.user_id = u.user_id
-    ORDER BY pa.start_date DESC
+    LEFT JOIN users u ON pa.user_id = u.user_id
+    ORDER BY pa.start_date DESC, pa.assignment_id DESC
     LIMIT 20
 ");
 
@@ -133,7 +136,7 @@ $assignments = db_fetchAll("
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Vacant Posts</span>
-                    <span class="stat-value" style="color: #ef4444;">2</span>
+                    <span class="stat-value" style="color: #ef4444;"><?php echo db_fetch("SELECT COUNT(*) as count FROM parishes WHERE priest_in_charge_id IS NULL")['count']; ?></span>
                 </div>
             </div>
 

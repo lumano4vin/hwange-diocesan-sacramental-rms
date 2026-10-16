@@ -4,8 +4,114 @@
  * Helper Functions & Session Management
  */
 
+require_once __DIR__ . '/db.php';
+
+/**
+ * Stateless HMAC-signed auth token helpers (prevents session loss across serverless instances or SQLite locks)
+ */
+function get_auth_secret() {
+    $env_secret = getenv('APP_SECRET') ?: getenv('DB_PASSWORD') ?: 'hwange_diocesan_canonical_rms_secret_key_2026';
+    return hash('sha256', 'HWANGE_AUTH_' . $env_secret);
+}
+
+function sync_auth_cookie() {
+    if (empty($_SESSION['user_id']) || headers_sent()) {
+        return;
+    }
+    $payload = [
+        'u' => (int)$_SESSION['user_id'],
+        'un' => (string)($_SESSION['username'] ?? ''),
+        'fn' => (string)($_SESSION['full_name'] ?? ''),
+        'r' => (string)($_SESSION['role'] ?? ''),
+        'p' => $_SESSION['parish_id'] ?? null,
+        'e' => $_SESSION['email'] ?? null,
+        'm' => (int)($_SESSION['must_change_password'] ?? 0),
+        'x' => time() + (86400 * 2)
+    ];
+    $json = json_encode($payload);
+    $b64 = rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
+    $sig = hash_hmac('sha256', $b64, get_auth_secret());
+    $token = $b64 . '.' . $sig;
+
+    if (($_COOKIE['HWANGE_AUTH_TOKEN'] ?? '') !== $token) {
+        setcookie('HWANGE_AUTH_TOKEN', $token, [
+            'expires' => time() + (86400 * 2),
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+        $_COOKIE['HWANGE_AUTH_TOKEN'] = $token;
+    }
+}
+
+function restore_auth_from_cookie() {
+    if (!empty($_SESSION['user_id'])) {
+        return true;
+    }
+    $token = $_COOKIE['HWANGE_AUTH_TOKEN'] ?? '';
+    if (empty($token) || strpos($token, '.') === false) {
+        return false;
+    }
+    list($b64, $sig) = explode('.', $token, 2);
+    $expected = hash_hmac('sha256', $b64, get_auth_secret());
+    if (!hash_equals($expected, $sig)) {
+        return false;
+    }
+    $json = base64_decode(strtr($b64, '-_', '+/'));
+    $data = json_decode($json, true);
+    if (!is_array($data) || empty($data['u']) || (isset($data['x']) && $data['x'] < time())) {
+        return false;
+    }
+    $_SESSION['user_id'] = $data['u'];
+    $_SESSION['username'] = $data['un'] ?? '';
+    $_SESSION['full_name'] = $data['fn'] ?? '';
+    $_SESSION['role'] = $data['r'] ?? '';
+    $_SESSION['parish_id'] = $data['p'] ?? null;
+    $_SESSION['email'] = $data['e'] ?? null;
+    $_SESSION['must_change_password'] = $data['m'] ?? 0;
+    return true;
+}
+
+function clear_auth_cookie() {
+    unset($_COOKIE['HWANGE_AUTH_TOKEN']);
+    if (!headers_sent()) {
+        setcookie('HWANGE_AUTH_TOKEN', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    }
+}
+
+function clear_rms_caches() {
+    $tmp = sys_get_temp_dir();
+    foreach (['dash_cache_*.json', 'header_cache_*.json'] as $pattern) {
+        $files = @glob($tmp . '/' . $pattern);
+        if (is_array($files)) {
+            foreach ($files as $f) {
+                @unlink($f);
+            }
+        }
+    }
+}
+
 if (session_status() === PHP_SESSION_NONE) {
+    if (!headers_sent()) {
+        session_set_cookie_params([
+            'lifetime' => 86400 * 2,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    }
     session_start();
+}
+
+if (empty($_SESSION['user_id'])) {
+    restore_auth_from_cookie();
+} else {
+    sync_auth_cookie();
 }
 
 // 2FA Security Engine
@@ -100,7 +206,7 @@ function format_certificate_date($date_string) {
  * Calculate the relative path to the root directory
  */
 function get_base_url() {
-    $script_path = $_SERVER['REQUEST_URI'] ?? '';
+    $script_path = $_SERVER['REQUEST_URI'] ?? ($_SERVER['SCRIPT_NAME'] ?? '');
     if (($pos = strpos($script_path, '?')) !== false) {
         $script_path = substr($script_path, 0, $pos);
     }
@@ -117,6 +223,9 @@ function get_base_url() {
  * Check if a user is logged in
  */
 function is_logged_in() {
+    if (!isset($_SESSION['user_id'])) {
+        restore_auth_from_cookie();
+    }
     return isset($_SESSION['user_id']);
 }
 
@@ -125,7 +234,7 @@ function is_logged_in() {
  */
 function require_login() {
     if (!is_logged_in()) {
-        header("Location: ../index.php?error=unauthorized");
+        header("Location: " . get_base_url() . "index.php?error=unauthorized");
         exit;
     }
 }
@@ -391,15 +500,26 @@ function get_certificate_text($lang = 'en') {
  * Log an action to the audit trail
  */
 function log_audit($user_id, $action, $table, $record_id, $details = '') {
-    $sql = "INSERT INTO audit_logs (user_id, action_type, table_name, record_id, details) 
-            VALUES (?, ?, ?, ?, ?)";
-    db_query($sql, [$user_id, $action, $table, $record_id, $details]);
+    try {
+        $sql = "INSERT INTO audit_logs (user_id, action_type, table_name, record_id, details) 
+                VALUES (?, ?, ?, ?, ?)";
+        db_query($sql, [$user_id ?: 0, $action, $table, $record_id ?: 0, $details]);
+    } catch (Exception $e) {
+        error_log("Audit log failure: " . $e->getMessage());
+    }
+    clear_rms_caches();
 }
 
 /**
- * Redirect to a specific page
+ * Redirect to a specific page while guaranteeing session & auth cookie persistence
  */
 function redirect($url) {
+    if (function_exists('sync_auth_cookie')) {
+        sync_auth_cookie();
+    }
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
     header("Location: $url");
     exit;
 }
@@ -546,7 +666,10 @@ function handle_session_timeout($timeout_seconds = 7200) { // 2 hours (for exhau
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout_seconds)) {
         session_unset();
         session_destroy();
-        header("Location: ../index.php?error=session_expired");
+        if (function_exists('clear_auth_cookie')) {
+            clear_auth_cookie();
+        }
+        header("Location: " . get_base_url() . "index.php?error=session_expired");
         exit;
     }
     $_SESSION['last_activity'] = time();
@@ -779,14 +902,45 @@ function get_localized_label($key, $lang = 'en') {
 }
 
 /**
- * Generic Audit Log Helper
+ * Generic Audit Log Helper (supports both 4-arg and 5-arg signatures)
  */
-function log_action($action, $table = null, $id = null, $details = null) {
-    $user_id = $_SESSION['user_id'] ?? 0;
+function log_action($action, $table = null, $id = null, $details = null, $extra_details = null) {
+    if (is_numeric($action) && $table !== null) {
+        // Called as log_action($user_id, $action, $table, $id, $details)
+        $user_id = (int)$action;
+        $action_type = (string)$table;
+        $table_name = (string)$id;
+        $record_id = is_numeric($details) ? (int)$details : 0;
+        $log_details = $extra_details ?? '';
+    } else {
+        $user_id = $_SESSION['user_id'] ?? 0;
+        $action_type = (string)$action;
+        $table_name = (string)$table;
+        $record_id = is_numeric($id) ? (int)$id : 0;
+        $log_details = $details ?? '';
+    }
     if (!$user_id) return;
-    
-    db_query("INSERT INTO audit_logs (user_id, action_type, table_name, record_id, details) VALUES (?, ?, ?, ?, ?)", 
-        [$user_id, $action, $table, $id, $details]);
+
+    try {
+        db_query("INSERT INTO audit_logs (user_id, action_type, table_name, record_id, details) VALUES (?, ?, ?, ?, ?)", 
+            [$user_id, $action_type, $table_name, $record_id, $log_details]);
+    } catch (Exception $e) {
+        error_log("Log action failure: " . $e->getMessage());
+    }
+    clear_rms_caches();
+}
+
+/**
+ * Generate a secure temporary password for new users or resets
+ */
+function generateTempPassword($length = 10) {
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+    $password = '';
+    $max = strlen($chars) - 1;
+    for ($i = 0; $i < $length; $i++) {
+        $password .= $chars[random_int(0, $max)];
+    }
+    return $password;
 }
 
 /**
@@ -836,4 +990,5 @@ function get_user_greeting_name($full_name) {
     
     return $title . $parts[0];
 }
+
 

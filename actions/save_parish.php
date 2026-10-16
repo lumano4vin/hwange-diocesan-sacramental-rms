@@ -43,20 +43,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($old_priest_id != $priest_in_charge_id) {
                 $today = date('Y-m-d');
                 
-                // A. Clear old priest
+                // A. Clear old priest & complete old active assignment for this parish
+                db_query("UPDATE parish_assignments SET status = 'Completed', end_date = ? WHERE parish_id = ? AND status = 'Active'", [$today, $parish_id]);
                 if ($old_priest_id) {
                     db_query("UPDATE users SET parish_id = NULL WHERE user_id = ? AND parish_id = ?", [$old_priest_id, $parish_id]);
                 }
                 
                 // B. Assign new priest
                 if ($priest_in_charge_id) {
+                    $priest = db_fetch("SELECT full_name, role FROM users WHERE user_id = ?", [$priest_in_charge_id]);
+                    $priest_name = $priest['full_name'] ?? 'Assigned Priest';
+                    $assign_role = (isset($priest['role']) && strtolower($priest['role']) === 'mission_admin') ? 'Mission Administrator' : 'Parish Priest';
+
                     // Update user parish
                     db_query("UPDATE users SET parish_id = ? WHERE user_id = ?", [$parish_id, $priest_in_charge_id]);
                     
-                    // Clear new priest from other parishes
+                    // Clear new priest from other parishes and complete their prior active assignments
                     db_query("UPDATE parishes SET priest_in_charge_id = NULL WHERE priest_in_charge_id = ? AND parish_id != ?", [$priest_in_charge_id, $parish_id]);
+                    db_query("UPDATE parish_assignments SET status = 'Completed', end_date = ? WHERE user_id = ? AND status = 'Active'", [$today, $priest_in_charge_id]);
+
+                    // Create new active assignment record
+                    db_query("INSERT INTO parish_assignments (parish_id, user_id, priest_name_manual, start_date, role, status, notes) VALUES (?, ?, ?, ?, ?, 'Active', ?)",
+                        [$parish_id, $priest_in_charge_id, $priest_name, $today, $assign_role, 'Updated via Parish Directory']);
                 }
             }
+            log_audit($_SESSION['user_id'] ?? 0, 'UPDATE', 'parishes', $parish_id, "Updated parish: $parish_name ($deanery)");
         } else {
             // Create new record
             $sql = "INSERT INTO parishes (parish_name, location, deanery, priest_in_charge_id, contact_number) 
@@ -68,23 +79,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Sync priest assignment if priest_in_charge_id specified
             if ($priest_in_charge_id) {
                 $today = date('Y-m-d');
+                $priest = db_fetch("SELECT full_name, role FROM users WHERE user_id = ?", [$priest_in_charge_id]);
+                $priest_name = $priest['full_name'] ?? 'Assigned Priest';
+                $assign_role = (isset($priest['role']) && strtolower($priest['role']) === 'mission_admin') ? 'Mission Administrator' : 'Parish Priest';
                 
                 // Update user parish
                 db_query("UPDATE users SET parish_id = ? WHERE user_id = ?", [$new_parish_id, $priest_in_charge_id]);
                 
                 // Clear priest from other parishes
                 db_query("UPDATE parishes SET priest_in_charge_id = NULL WHERE priest_in_charge_id = ? AND parish_id != ?", [$priest_in_charge_id, $new_parish_id]);
+                db_query("UPDATE parish_assignments SET status = 'Completed', end_date = ? WHERE user_id = ? AND status = 'Active'", [$today, $priest_in_charge_id]);
+
+                // Insert active assignment record
+                db_query("INSERT INTO parish_assignments (parish_id, user_id, priest_name_manual, start_date, role, status, notes) VALUES (?, ?, ?, ?, ?, 'Active', ?)",
+                    [$new_parish_id, $priest_in_charge_id, $priest_name, $today, $assign_role, 'Assigned at parish registration']);
             }
+            log_audit($_SESSION['user_id'] ?? 0, 'CREATE', 'parishes', $new_parish_id, "Registered new parish: $parish_name ($deanery)");
         }
 
         // Redirect back to the directory with a success message
-        header("Location: ../dashboard/parishes.php?msg=" . urlencode($message));
-        exit;
+        set_flash($message);
+        redirect("../dashboard/parishes.php?msg=" . urlencode($message));
 
     } catch (PDOException $e) {
         die("Database Error: " . $e->getMessage());
     }
 } else {
-    header("Location: ../dashboard/parishes.php");
-    exit;
+    redirect("../dashboard/parishes.php");
 }

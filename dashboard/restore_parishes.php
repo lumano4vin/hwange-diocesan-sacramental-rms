@@ -17,14 +17,14 @@ $success_count = 0;
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_restore'])) {
-    // ... Parishes Data Array ...
+    // Official 36 Parishes, Missions & Seminary of the Diocese of Hwange
     $parishes_data = [
         ['St. Ignatius Cathedral', 'Hwange', 'Hwange Urban'],
         ['Holy Family', 'Hwange', 'Hwange Urban'],
-        ['Our Lady of Peace', 'Hwange', 'Hwange Urban'],
-        ['Mary Help of Christians', 'Don Bosco, Hwange', 'Hwange Urban'],
+        ['Our Lady of Peace', 'Hwange', 'Victoria Falls'],
+        ['Mary Help of Christians', 'Don Bosco, Hwange', 'Empumalanga'],
         ['Ss. Peter and Paul', 'Hwange', 'Hwange Urban'],
-        ['St. Charles Lwanga', 'Hwange', 'Hwange Urban'],
+        ['St. Charles Lwanga', 'Hwange', 'Empumalanga'],
         ['St. Francis Xavier', 'Dete', 'Dete'],
         ['St. Francis of Assisi', 'Cross Dete', 'Dete'],
         ['St. George', 'Hwange', 'Hwange Urban'],
@@ -33,50 +33,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_restore'])) {
         ['St. Josephine Bakhita', 'Victoria Falls', 'Victoria Falls'],
         ['St. Kizito', 'Victoria Falls', 'Victoria Falls'],
         ['St. Monica', 'Hwange', 'Hwange Urban'],
-        ['St. Teresa', 'Hwange', 'Hwange Urban'],
+        ['St. Teresa', 'Hwange', 'Empumalanga'],
         ['All Souls', 'Binga', 'Binga'],
-        ['Divine Mercy', 'Lubimbi', 'Binga'],
+        ['Divine Mercy', 'Lubimbi', 'Dete'],
         ['Holy Cross', 'Lusulu', 'Binga'],
         ['Mary Immaculate', 'Gomoza', 'Lupane'],
         ['Our Lady of Fatima', 'Fatima', 'Lupane'],
         ['Sacred Heart', 'Jambezi', 'Jambezi'],
         ['St. Augustine', 'Mzola', 'Lupane'],
         ['St. Cecilia', 'Tshongokwe', 'Lupane'],
-        ['St. Faustine', 'Matetsi', 'Victoria Falls'],
+        ['St. Faustine', 'Matetsi', 'Jambezi'],
         ['St. John the Baptist (Dandanda)', 'Dandanda', 'Lupane'],
         ['St. John the Baptist (Makwa)', 'Makwa', 'Makwa'],
         ['St. John Vianney', 'Kariangwe', 'Binga'],
         ['St. Luke', 'Chisuma', 'Victoria Falls'],
-        ['St. Mathew', 'Dambwamkulu', 'Binga'],
+        ['St. Mathew', 'Dambwamkulu', 'Makwa'],
         ['St. Mark', 'Nagangala', 'Binga'],
         ['St. Martin de Porres', 'Jotsholo', 'Lupane'],
-        ['St. Mary', 'Lukosi', 'Hwange Urban'],
-        ['St. Michael', 'Kasibo', 'Hwange Urban'],
+        ['St. Mary', 'Lukosi', 'Empumalanga'],
+        ['St. Michael', 'Kasibo', 'Makwa'],
         ['St. Padre Pio', 'Siacilaba', 'Binga'],
-        ['St. Therese', 'Kamativi', 'Dete']
+        ['St. Therese', 'Kamativi', 'Dete'],
+        ['Immaculate Conception of the Minor Seminary', 'Chezhou-Dete', 'Dete']
     ];
 
     try {
         global $pdo;
         $pdo->beginTransaction();
 
-        // 1. Clear existing
-        db_query("DELETE FROM parishes");
-        
-        // 2. Reset sequence (SQLite specific)
-        try {
-            db_query("DELETE FROM sqlite_sequence WHERE name='parishes'");
-        } catch (Exception $e) { /* Ignore non-sqlite errors */ }
-
-        // 3. Insert fresh data
-        $sql = "INSERT INTO parishes (parish_name, location, deanery) VALUES (?, ?, ?)";
+        // Safely upsert each parish without wiping existing IDs or priest assignments
         foreach ($parishes_data as $row) {
-            db_query($sql, $row);
+            [$p_name, $p_loc, $p_deanery] = $row;
+            $existing = db_fetch("SELECT parish_id FROM parishes WHERE parish_name = ?", [$p_name]);
+            if ($existing) {
+                db_query("UPDATE parishes SET location = ?, deanery = ? WHERE parish_id = ?", [$p_loc, $p_deanery, $existing['parish_id']]);
+            } else {
+                db_query("INSERT INTO parishes (parish_name, location, deanery) VALUES (?, ?, ?)", [$p_name, $p_loc, $p_deanery]);
+            }
             $success_count++;
         }
         
         $pdo->commit();
-        log_audit($_SESSION['user_id'], 'RESTORE', 'parishes', 0, "Restored $success_count official parishes.");
+        log_audit($_SESSION['user_id'], 'RESTORE', 'parishes', 0, "Verified/restored $success_count official parishes and missions.");
         
     } catch (Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();

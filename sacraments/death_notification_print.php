@@ -15,7 +15,7 @@ if (!$death_id) die("Invalid Death ID");
 // Fetch death and baptismal details
 $sql = "
     SELECT d.*, p.first_name, p.last_name, p.father_name, p.mother_name, p.place_of_baptism,
-           pa.parish_name as burial_parish, pa.address as burial_parish_address,
+           pa.parish_name as burial_parish, pa.location as burial_parish_address,
            b.date_of_baptism, b.register_book_number as b_book, b.page_number as b_page, b.entry_number as b_entry,
            bp.parish_name as bap_parish
     FROM deaths d

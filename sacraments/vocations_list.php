@@ -95,8 +95,9 @@ $professions = array_filter($records, function($r) {
                                                 <td style="padding: 1.25rem 2rem;">
                                                     <div style="display: flex; gap: 0.75rem;">
                                                         <a href="../parishioners/view.php?id=<?php echo $row['person_id']; ?>" title="View Profile" style="color: var(--accent); font-size: 1.25rem;"><ion-icon name="person-circle-outline"></ion-icon></a>
+                                                        <a href="vocations_edit.php?id=<?php echo $row['record_id']; ?>" title="Edit Record" style="color: #60a5fa; font-size: 1.25rem;"><ion-icon name="create-outline"></ion-icon></a>
                                                         <?php if (is_admin()): ?>
-                                                            <a href="../actions/delete_record.php?type=ordination&id=<?php echo $row['ordination_id']; ?>" 
+                                                            <a href="../actions/delete_record.php?type=ordination&id=<?php echo $row['record_id']; ?>" 
                                                                onclick="return confirm('WARNING: Permanent deletion of ordination records is logged and IRREVERSIBLE. Proceed?')" 
                                                                title="Delete Record" style="color: var(--error); font-size: 1.25rem;">
                                                                 <ion-icon name="trash-outline"></ion-icon>
@@ -152,8 +153,9 @@ $professions = array_filter($records, function($r) {
                                                 <td style="padding: 1.25rem 2rem;">
                                                     <div style="display: flex; gap: 0.75rem;">
                                                         <a href="../parishioners/view.php?id=<?php echo $row['person_id']; ?>" title="View Profile" style="color: white; font-size: 1.25rem;"><ion-icon name="person-circle-outline"></ion-icon></a>
+                                                        <a href="vocations_edit.php?id=<?php echo $row['record_id']; ?>" title="Edit Record" style="color: #60a5fa; font-size: 1.25rem;"><ion-icon name="create-outline"></ion-icon></a>
                                                         <?php if (is_admin()): ?>
-                                                            <a href="../actions/delete_record.php?type=ordination&id=<?php echo $row['ordination_id']; ?>" 
+                                                            <a href="../actions/delete_record.php?type=ordination&id=<?php echo $row['record_id']; ?>" 
                                                                onclick="return confirm('WARNING: Permanent deletion of profession records is logged and IRREVERSIBLE. Proceed?')" 
                                                                title="Delete Record" style="color: var(--error); font-size: 1.25rem;">
                                                                 <ion-icon name="trash-outline"></ion-icon>

@@ -4,7 +4,8 @@
  * System Integrity & Health Check Utility
  */
 
-require_once 'includes/functions.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 echo "===========================================\n";
 echo " HWANGE DIOCESAN SYSTEM - HEALTH CHECK\n";

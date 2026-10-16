@@ -14,7 +14,7 @@ $clergy = db_fetchAll("
     FROM users u
     LEFT JOIN parishes p ON u.parish_id = p.parish_id
     LEFT JOIN clergy_profiles cp ON u.user_id = cp.user_id
-    WHERE u.role IN ('Priest', 'Deacon', 'Admin', 'Chancellor')
+    WHERE LOWER(u.role) IN ('priest', 'deacon', 'admin', 'chancellor', 'mission_admin')
     ORDER BY u.full_name ASC
 ");
 

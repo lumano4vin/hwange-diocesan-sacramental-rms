@@ -52,9 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("UPDATE parishes SET priest_in_charge_id = NULL WHERE priest_in_charge_id = ?")
             ->execute([$user_id]);
 
-        // 4. Insert new assignment
-        $sql = "INSERT INTO parish_assignments (user_id, parish_id, role, start_date, status) VALUES (?, ?, ?, ?, 'Active')";
-        $pdo->prepare($sql)->execute([$user_id, $parish_id, $role, $start_date]);
+        // 4. Fetch incoming cleric's full_name and role
+        $u_stmt = $pdo->prepare("SELECT full_name, role FROM users WHERE user_id = ?");
+        $u_stmt->execute([$user_id]);
+        $u_row = $u_stmt->fetch(PDO::FETCH_ASSOC);
+        $priest_name_manual = $u_row['full_name'] ?? 'Assigned Cleric';
+        $u_role = strtolower($u_row['role'] ?? 'priest');
+
+        // Insert new assignment with priest_name_manual populated
+        $sql = "INSERT INTO parish_assignments (user_id, parish_id, priest_name_manual, role, start_date, status, notes) VALUES (?, ?, ?, ?, ?, 'Active', ?)";
+        $pdo->prepare($sql)->execute([$user_id, $parish_id, $priest_name_manual, $role, $start_date, "Assigned via Clergy Command Center"]);
         $new_assignment_id = $pdo->lastInsertId();
 
         // 5. Create Handover Protocol if it's a leadership role
@@ -64,9 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // 6. Update user's parish_id
-        $u_stmt = $pdo->prepare("SELECT role FROM users WHERE user_id = ?");
-        $u_stmt->execute([$user_id]);
-        $u_role = strtolower($u_stmt->fetchColumn());
         if (in_array($u_role, ['priest', 'mission_admin', 'admin'])) {
             $pdo->prepare("UPDATE users SET parish_id = ? WHERE user_id = ?")
                 ->execute([$parish_id, $user_id]);
@@ -79,13 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // 8. Log action
-        log_action($_SESSION['user_id'], 'assigned', 'parish_assignments', $new_assignment_id);
+        log_action($_SESSION['user_id'], 'assigned', 'parish_assignments', $new_assignment_id, "Assigned $priest_name_manual to parish_id $parish_id as $role");
 
-        header("Location: ../admin/clergy_management.php?success=Assignment updated successfully.");
-        exit;
+        redirect("../admin/clergy_management.php?success=" . urlencode("Assignment updated successfully."));
 
     } catch (Exception $e) {
-        header("Location: ../admin/clergy_management.php?error=" . urlencode($e->getMessage()));
-        exit;
+        redirect("../admin/clergy_management.php?error=" . urlencode($e->getMessage()));
     }
 }

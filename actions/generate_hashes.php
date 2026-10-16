@@ -22,7 +22,7 @@ $tables = [
     'marriages' => 'marriage_id',
     'confirmations' => 'confirmation_id',
     'deaths' => 'death_id',
-    'ordinations_professions' => 'ordination_id'
+    'ordinations_professions' => 'record_id'
 ];
 
 $stats = [];

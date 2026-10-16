@@ -89,7 +89,7 @@ $modules = [
         'icon' => 'moon-outline',
         'color' => '#94a3b8',
         'list_url' => 'sacraments/burial_list.php',
-        'add_url' => 'sacraments/death_add.php',
+        'add_url' => 'sacraments/burial_add.php',
         'count' => $counts['deaths'],
         'canon' => 'Canon 1176: Deceased members of the Christian faithful must be given ecclesiastical funerals according to the norm of law.'
     ],

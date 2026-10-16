@@ -19,8 +19,8 @@ try {
     $pdo->exec("UPDATE parishes SET deanery = 'Dete' WHERE parish_name LIKE '%Divine Mercy%'");
     echo "[SUCCESS] Moved Divine Mercy to Dete Deanery.\n";
 
-    // 3. St. Teresa -> Empumalanga
-    $pdo->exec("UPDATE parishes SET deanery = 'Empumalanga' WHERE parish_name LIKE '%St. Teresa%' OR parish_name LIKE '%St. Therese%'");
+    // 3. St. Teresa (Hwange) -> Empumalanga (keep St. Therese, Kamativi in Dete)
+    $pdo->exec("UPDATE parishes SET deanery = 'Empumalanga' WHERE parish_name = 'St. Teresa'");
     echo "[SUCCESS] Moved St. Teresa to Empumalanga Deanery.\n";
 
     // 4. Mary Help of Christians -> Empumalanga

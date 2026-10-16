@@ -5,7 +5,7 @@ echo "--- Adding Dandanda Mission ---\n";
 
 // 1. Create Fr. Prichard Shoko
 $password = password_hash('Hwange@2024', PASSWORD_DEFAULT);
-db_query("INSERT INTO users (full_name, username, password, role, status) VALUES (?, ?, ?, 'priest', 'Active')", 
+db_query("INSERT INTO users (full_name, username, password_hash, role, status) VALUES (?, ?, ?, 'priest', 'Active')", 
     ['Fr. Prichard Shoko', 'prichard.shoko', $password]);
 $userId = db_fetch("SELECT user_id FROM users WHERE username = 'prichard.shoko'")['user_id'];
 

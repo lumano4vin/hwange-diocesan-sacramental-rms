@@ -15,6 +15,9 @@ $encoded_name = urlencode($name);
 
 session_unset();
 session_destroy();
+if (function_exists('clear_auth_cookie')) {
+    clear_auth_cookie();
+}
 
 redirect('../index.php?msg=logged_out&name=' . $encoded_name);
 ?>

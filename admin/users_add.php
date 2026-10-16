@@ -12,8 +12,8 @@ if (!isDiocesanAdmin()) {
 }
 
 $pdo = getDB();
-$parishes = $pdo->query("SELECT id, name FROM parishes ORDER BY name")->fetchAll();
-$deaneries = $pdo->query("SELECT id, name FROM deaneries ORDER BY name")->fetchAll();
+$parishes = $pdo->query("SELECT parish_id as id, parish_name as name FROM parishes ORDER BY parish_name")->fetchAll();
+$deaneries = $pdo->query("SELECT deanery_id as id, deanery_name as name FROM deaneries ORDER BY deanery_name")->fetchAll();
 
 $error = '';
 $success_msg = '';

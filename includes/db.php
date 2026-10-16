@@ -31,7 +31,8 @@ $dns_resolvable = true;
 
 if ($host !== 'localhost' && $host !== '127.0.0.1') {
     $fail_cache = sys_get_temp_dir() . '/db_dns_failed.txt';
-    if (file_exists($fail_cache) && (time() - filemtime($fail_cache)) < 300) {
+    // Fast-fail known decommissioned host or cached DNS failures (1 hour cache)
+    if ($host === 'mysql-3614de40-lumano4vin-1607.f.aivencloud.com' || (file_exists($fail_cache) && abs(time() - filemtime($fail_cache)) < 3600)) {
         $dns_resolvable = false;
     } else {
         $resolved = gethostbyname($host);
@@ -58,12 +59,12 @@ if (!file_exists($sqlite_file) && file_exists(dirname(__DIR__) . "/data/fallback
 }
 
 // In serverless / read-only environments (such as Vercel / AWS Lambda), the deployment directory is read-only.
-// Copy the fallback SQLite to the writable /tmp directory so write operations and WAL locking succeed.
+// Copy the fallback SQLite to the writable /tmp directory ONLY once when /tmp file does not yet exist.
 if (file_exists($sqlite_file)) {
     $is_serverless = getenv('VERCEL') || !is_writable($sqlite_file) || !is_writable(dirname($sqlite_file));
     if ($is_serverless) {
         $tmp_sqlite = sys_get_temp_dir() . '/hwange_database.sqlite';
-        if (!file_exists($tmp_sqlite) || filesize($tmp_sqlite) === 0 || filemtime($sqlite_file) > filemtime($tmp_sqlite)) {
+        if (!file_exists($tmp_sqlite) || filesize($tmp_sqlite) === 0) {
             @copy($sqlite_file, $tmp_sqlite);
         }
         if (file_exists($tmp_sqlite) && filesize($tmp_sqlite) > 0) {
@@ -115,6 +116,8 @@ if (!$connected && file_exists($sqlite_file)) {
             PDO::ATTR_EMULATE_PREPARES   => false,
         ];
         $pdo = new PDO("sqlite:" . $sqlite_file, null, null, $sqlite_options);
+        $pdo->exec("PRAGMA busy_timeout = 5000");
+        $pdo->exec("PRAGMA journal_mode = WAL");
         $connected = true;
         if ($use_cloud || getenv('DB_HOST')) {
             if (!defined('DB_FALLBACK_MODE')) define('DB_FALLBACK_MODE', true);
@@ -143,8 +146,19 @@ if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
         return implode('', $args);
     });
 }
+
+function db_add_column_if_missing($pdo, $table, $column_def) {
+    try {
+        $pdo->exec("ALTER TABLE $table ADD COLUMN $column_def");
+    } catch (Exception $e) {
+        // Column already exists
+    }
+}
+
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
-// Wrapped in a function to prevent hanging on every page load when using remote DB
+// Wrapped in a function and gated by PRAGMA user_version so it does not lock SQLite on every page load
+if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 4);
+
 function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS receptions (
         reception_id INTEGER PRIMARY KEY, 
@@ -198,28 +212,18 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
 
-    // Column migration for Inter-Parish Comms
-    try {
-        $pdo->exec("ALTER TABLE communications ADD COLUMN recipient_parish_id INTEGER DEFAULT NULL");
-    } catch (Exception $e) {}
+    // Column migrations (each isolated in its own try/catch)
+    db_add_column_if_missing($pdo, 'communications', 'recipient_parish_id INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'users', 'two_factor_secret VARCHAR(64) DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'users', 'two_factor_enabled TINYINT(1) DEFAULT 0');
+    db_add_column_if_missing($pdo, 'parishioners', 'place_of_residence TEXT');
+    db_add_column_if_missing($pdo, 'parishioners', 'place_of_baptism TEXT');
 
-    // Column migration for Users (2FA)
-    try {
-        $pdo->exec("ALTER TABLE users ADD COLUMN two_factor_secret VARCHAR(64) DEFAULT NULL");
-        $pdo->exec("ALTER TABLE users ADD COLUMN two_factor_enabled TINYINT(1) DEFAULT 0");
-    } catch (Exception $e) {}
-
-    // Column migration for Parishioners
-    try {
-        $pdo->exec("ALTER TABLE parishioners ADD COLUMN place_of_residence TEXT");
-    } catch (Exception $e) {}
-
-    // Column migration for Receptions (Canonical Baptism Metadata)
-    try {
-        $pdo->exec("ALTER TABLE receptions ADD COLUMN previous_baptism_church VARCHAR(255)");
-        $pdo->exec("ALTER TABLE receptions ADD COLUMN previous_baptism_date DATE");
-        $pdo->exec("ALTER TABLE receptions ADD COLUMN previous_baptism_place VARCHAR(255)");
-    } catch (Exception $e) {}
+    db_add_column_if_missing($pdo, 'receptions', 'previous_baptism_church VARCHAR(255)');
+    db_add_column_if_missing($pdo, 'receptions', 'previous_baptism_date DATE');
+    db_add_column_if_missing($pdo, 'receptions', 'previous_baptism_place VARCHAR(255)');
+    db_add_column_if_missing($pdo, 'receptions', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'receptions', 'verified_at DATETIME DEFAULT NULL');
 
     // Prenuptial Investigation (PNI) System
     $pdo->exec("CREATE TABLE IF NOT EXISTS prenuptial_investigations (
@@ -229,29 +233,19 @@ function run_schema_migrations($pdo) {
         parish_id INTEGER NOT NULL,
         priest_user_id INTEGER,
         investigation_date DATE NOT NULL,
-        
-        -- Freedom to Marry
         groom_free_to_marry INTEGER DEFAULT 0,
         bride_free_to_marry INTEGER DEFAULT 0,
         groom_previous_marriage INTEGER DEFAULT 0,
         bride_previous_marriage INTEGER DEFAULT 0,
-        
-        -- Consent & Intentions
         consent_unity INTEGER DEFAULT 0,
         consent_indissolubility INTEGER DEFAULT 0,
         consent_procreation INTEGER DEFAULT 0,
-        
-        -- Banns of Marriage (Canon 1067)
         banns_date_1 DATE,
         banns_date_2 DATE,
         banns_date_3 DATE,
         banns_parish_id INTEGER,
-        
-        -- Impediments & Dispensations
         impediments_noted TEXT,
         dispensations_required TEXT,
-        
-        -- Administrative
         status VARCHAR(20) DEFAULT 'Draft',
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -260,31 +254,42 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
 
-    // Column migration for PNI Banns (Self-Healing)
-    try {
-        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_date_1 DATE");
-    } catch (Exception $e) {}
-    try {
-        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_date_2 DATE");
-    } catch (Exception $e) {}
-    try {
-        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_date_3 DATE");
-    } catch (Exception $e) {}
-    try {
-        $pdo->exec("ALTER TABLE prenuptial_investigations ADD COLUMN banns_parish_id INTEGER");
-    } catch (Exception $e) {}
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'banns_date_1 DATE');
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'banns_date_2 DATE');
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'banns_date_3 DATE');
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'banns_parish_id INTEGER');
 
-    // Link marriages to PNI and add Civil Record Number
-    try {
-        $pdo->exec("ALTER TABLE marriages ADD COLUMN pni_id INTEGER DEFAULT NULL");
-        $pdo->exec("ALTER TABLE marriages ADD COLUMN baptism_notified_groom INTEGER DEFAULT 0");
-        $pdo->exec("ALTER TABLE marriages ADD COLUMN baptism_notified_bride INTEGER DEFAULT 0");
-        $pdo->exec("ALTER TABLE marriages ADD COLUMN civil_record_number VARCHAR(100) DEFAULT NULL");
-    } catch (Exception $e) {}
+    // Link marriages to PNI and add Civil Record Number & verification columns
+    db_add_column_if_missing($pdo, 'marriages', 'pni_id INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'marriages', 'baptism_notified_groom INTEGER DEFAULT 0');
+    db_add_column_if_missing($pdo, 'marriages', 'baptism_notified_bride INTEGER DEFAULT 0');
+    db_add_column_if_missing($pdo, 'marriages', 'civil_record_number VARCHAR(100) DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'marriages', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'marriages', 'verified_at DATETIME DEFAULT NULL');
 
-    try {
-        $pdo->exec("ALTER TABLE deaths ADD COLUMN baptism_notified INTEGER DEFAULT 0");
-    } catch (Exception $e) {}
+    // Verification & canonical columns across remaining sacrament tables
+    db_add_column_if_missing($pdo, 'baptisms', 'place_of_baptism TEXT');
+    db_add_column_if_missing($pdo, 'baptisms', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'baptisms', 'verified_at DATETIME DEFAULT NULL');
+
+    db_add_column_if_missing($pdo, 'confirmations', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'confirmations', 'verified_at DATETIME DEFAULT NULL');
+
+    db_add_column_if_missing($pdo, 'deaths', 'baptism_notified INTEGER DEFAULT 0');
+    db_add_column_if_missing($pdo, 'deaths', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'deaths', 'verified_at DATETIME DEFAULT NULL');
+
+    db_add_column_if_missing($pdo, 'first_holy_communions', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'first_holy_communions', 'verified_at DATETIME DEFAULT NULL');
+
+    db_add_column_if_missing($pdo, 'ordinations_professions', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'ordinations_professions', 'verified_at DATETIME DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'ordinations_professions', 'guid VARCHAR(36) DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'ordinations_professions', 'diocese_id INTEGER DEFAULT 1');
+
+    db_add_column_if_missing($pdo, 'sacraments_notations', "status VARCHAR(20) DEFAULT 'Verified'");
+    db_add_column_if_missing($pdo, 'sacraments_notations', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'sacraments_notations', 'verified_at DATETIME DEFAULT NULL');
 
     // 12. Clergy Personnel Dossier (Chancery Module)
     $pdo->exec("CREATE TABLE IF NOT EXISTS clergy_profiles (
@@ -313,12 +318,12 @@ function run_schema_migrations($pdo) {
         parish_id INTEGER NOT NULL,
         fiscal_year INTEGER NOT NULL,
         fiscal_month INTEGER NOT NULL,
-        total_collections DECIMAL(10,2) DEFAULT 0, -- Sunday collections
-        sacramental_offerings DECIMAL(10,2) DEFAULT 0, -- Stole fees
+        total_collections DECIMAL(10,2) DEFAULT 0,
+        sacramental_offerings DECIMAL(10,2) DEFAULT 0,
         other_income DECIMAL(10,2) DEFAULT 0,
-        assessment_rate DECIMAL(5,2) DEFAULT 10.00, -- Percentage owed to Diocese
+        assessment_rate DECIMAL(5,2) DEFAULT 10.00,
         calculated_levy DECIMAL(10,2),
-        status VARCHAR(50) DEFAULT 'Draft', -- Draft, Submitted, Approved, Rejected
+        status VARCHAR(50) DEFAULT 'Draft',
         submitted_by INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id),
@@ -331,7 +336,7 @@ function run_schema_migrations($pdo) {
         amount DECIMAL(10,2) NOT NULL,
         payment_date DATE NOT NULL,
         payment_method VARCHAR(50),
-        reference_number VARCHAR(100), -- Receipt # or Bank Ref
+        reference_number VARCHAR(100),
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
@@ -358,6 +363,78 @@ function run_schema_migrations($pdo) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
+
+    // 15. Auxiliary Admin Tables (Assets, Minutes, Password Reset Tickets)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS parish_assets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        item_name VARCHAR(255) NOT NULL,
+        category VARCHAR(100),
+        description TEXT,
+        quantity INTEGER DEFAULT 1,
+        acquisition_date DATE,
+        estimated_value DECIMAL(12,2),
+        current_status VARCHAR(50) DEFAULT 'Good',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS meeting_minutes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        meeting_date DATE NOT NULL,
+        content TEXT,
+        created_by INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS password_reset_tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        status VARCHAR(50) DEFAULT 'Pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS parish_handovers (
+        handover_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        outgoing_priest_id INTEGER,
+        incoming_priest_id INTEGER,
+        assignment_id INTEGER,
+        status VARCHAR(50) DEFAULT 'Pending',
+        handover_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        notes TEXT
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS annual_reports (
+        report_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        report_year INTEGER NOT NULL,
+        report_data TEXT NOT NULL,
+        submitted_by INTEGER,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(parish_id, report_year)
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sacramental_notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender_parish_id INTEGER NOT NULL,
+        recipient_parish_id INTEGER NOT NULL,
+        parishioner_id INTEGER NOT NULL,
+        sacrament_type VARCHAR(50),
+        sacrament_details TEXT,
+        status VARCHAR(30) DEFAULT 'Pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS deaneries (
+        deanery_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        deanery_name VARCHAR(100) NOT NULL UNIQUE
+    )");
+
+    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+        $pdo->exec("PRAGMA user_version = " . RMS_SCHEMA_VERSION);
+    }
 }
 
 /**
@@ -405,10 +482,12 @@ function db_year_sql($column) {
 }
 
 // ---------------------------------------------------------
-// CUSTOM DATABASE SESSION HANDLER (Fixes Vercel Logouts)
+// CUSTOM DATABASE SESSION HANDLER (Fixes Vercel & SQLite Lock Logouts)
 // ---------------------------------------------------------
-class DatabaseSessionHandler implements SessionHandlerInterface {
+class DatabaseSessionHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface {
     private $pdo;
+    private $read_failed = false;
+    private $had_data = false;
 
     public function __construct($pdo) {
         $this->pdo = $pdo;
@@ -424,23 +503,45 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
 
     #[\ReturnTypeWillChange]
     public function read($id) {
-        try {
-            $stmt = $this->pdo->prepare("SELECT session_data FROM sessions WHERE session_id = ? AND expires_at > ?");
-            $stmt->execute([$id, time()]);
-            if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                return $row['session_data'];
+        $this->read_failed = false;
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            try {
+                $stmt = $this->pdo->prepare("SELECT session_data FROM sessions WHERE session_id = ? AND expires_at > ?");
+                $stmt->execute([$id, time()]);
+                if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $data = (string)$row['session_data'];
+                    $this->had_data = ($data !== '');
+                    return $data;
+                }
+                return '';
+            } catch (Exception $e) {
+                $this->read_failed = true;
+                usleep(50000);
             }
-        } catch (Exception $e) {}
+        }
         return '';
     }
 
     public function write($id, $data): bool {
+        // Never overwrite a valid session in the DB with empty data if read() failed due to a transient lock
+        if ($data === '' && $this->read_failed) {
+            return true;
+        }
         try {
             $expires = time() + (86400 * 2); // 2 days expiration
             $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
             if ($driver === 'mysql') {
                 $stmt = $this->pdo->prepare("INSERT INTO sessions (session_id, session_data, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE session_data = VALUES(session_data), expires_at = VALUES(expires_at)");
             } else {
+                if ($data === '' && !$this->had_data) {
+                    // Avoid writing empty rows if an existing valid row is already stored for this session_id
+                    $chk = $this->pdo->prepare("SELECT session_data FROM sessions WHERE session_id = ?");
+                    $chk->execute([$id]);
+                    $existing = $chk->fetchColumn();
+                    if (!empty($existing)) {
+                        return true;
+                    }
+                }
                 $stmt = $this->pdo->prepare("REPLACE INTO sessions (session_id, session_data, expires_at) VALUES (?, ?, ?)");
             }
             $stmt->execute([$id, $data, $expires]);
@@ -470,14 +571,27 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
             return false;
         }
     }
+
+    public function validateId($id): bool {
+        // Always accept session IDs so strict_mode does not drop sessions across serverless containers
+        return true;
+    }
+
+    public function updateTimestamp($id, $data): bool {
+        return $this->write($id, $data);
+    }
 }
 
-// Call run_schema_migrations on SQLite databases to ensure they are self-healing
+// Run schema migrations only when SQLite schema version is older than RMS_SCHEMA_VERSION
 if (isset($pdo)) {
     try {
         $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
         if ($driver === 'sqlite') {
-            run_schema_migrations($pdo);
+            $current_ver = (int)$pdo->query("PRAGMA user_version")->fetchColumn();
+            if ($current_ver < RMS_SCHEMA_VERSION) {
+                run_schema_migrations($pdo);
+                $pdo->exec("PRAGMA user_version = " . RMS_SCHEMA_VERSION);
+            }
         } else {
             // For MySQL, ensure sessions table exists so session saves never fail
             $pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
@@ -496,3 +610,4 @@ if (isset($pdo)) {
 if (isset($pdo) && session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_set_save_handler(new DatabaseSessionHandler($pdo), true);
 }
+

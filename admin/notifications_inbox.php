@@ -31,10 +31,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'acknowledge') {
 
 // Fetch Inbound Notifications
 $stmt = $pdo->prepare("
-    SELECT sn.*, pa.name as sender_parish, p.first_name, p.last_name
+    SELECT sn.*, pa.parish_name as sender_parish, p.first_name, p.last_name
     FROM sacramental_notifications sn
-    JOIN parishes pa ON sn.sender_parish_id = pa.id
-    JOIN parishioners p ON sn.parishioner_id = p.id
+    JOIN parishes pa ON sn.sender_parish_id = pa.parish_id
+    JOIN parishioners p ON sn.parishioner_id = p.person_id
     WHERE sn.recipient_parish_id = ?
     ORDER BY sn.created_at DESC
 ");

@@ -35,7 +35,7 @@ try {
 
     // 1. Create a "Shadow Parishioner" record
     // Historical registers often lack full birth details, so we create a skeleton profile.
-    $sql_p = "INSERT INTO parishioners (parish_id, first_name, last_name, father_name, mother_name, created_at) VALUES (?, ?, 'Archived', ?, ?, CURRENT_TIMESTAMP)";
+    $sql_p = "INSERT INTO parishioners (current_parish_id, first_name, last_name, father_name, mother_name, created_at) VALUES (?, ?, 'Archived', ?, ?, CURRENT_TIMESTAMP)";
     
     $stmt_p = $pdo->prepare($sql_p);
     $stmt_p->execute([$parish_id, $first_name, $father_name, $mother_name]);
@@ -45,7 +45,7 @@ try {
     if ($sacrament_type === 'baptism') {
         $guid = sprintf('%04X%04X-%04X-%04X-%04X-%04X%04X%04X', mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(16384, 20479), mt_rand(32768, 49151), mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535));
         
-        $sql_b = "INSERT INTO baptisms (person_id, parish_id, date_of_baptism, minister, sponsors, register_book_number, guid, status) VALUES (?, ?, ?, ?, ?, 'ARCHIVE-I', ?, 'Verified')";
+        $sql_b = "INSERT INTO baptisms (person_id, parish_id, date_of_baptism, minister, godparents, register_book_number, guid, status) VALUES (?, ?, ?, ?, ?, 'ARCHIVE-I', ?, 'Verified')";
         
         $stmt_b = $pdo->prepare($sql_b);
         $stmt_b->execute([$person_id, $parish_id, $baptism_date, $minister, $godparents, $guid]);

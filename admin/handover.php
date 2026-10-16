@@ -32,7 +32,7 @@ if ($parish_id) {
 }
 
 // Fetch priests for assignment
-$priests = db_fetchAll("SELECT user_id, full_name, username, role FROM users WHERE role IN ('priest', 'deacon', 'admin') AND status = 'Active'");
+$priests = db_fetchAll("SELECT user_id, full_name, username, role FROM users WHERE LOWER(role) IN ('priest', 'deacon', 'admin', 'mission_admin') AND LOWER(status) = 'active' ORDER BY full_name ASC");
 
 // Process Handover (Step 4)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['execute_handover'])) {

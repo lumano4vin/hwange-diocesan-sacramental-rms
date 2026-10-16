@@ -264,20 +264,21 @@ $header_subtitle = "Canonical record for " . h($parishioner['first_name'] . ' ' 
                                     ['label' => 'Spouse', 'value' => $spouse],
                                     ['label' => 'Age at Sacrament', 'value' => get_age($parishioner['dob'], $m['date_of_marriage'])],
                                     ['label' => 'Parish', 'value' => $m['parish_name']],
-                                    ['label' => 'Minister', 'value' => $m['minister']]
+                                    ['label' => 'Minister', 'value' => $m['officiant'] ?? '']
                                 ]
                             ];
                         }
 
                         // Vocations
                         foreach ($vocations as $v) {
+                            $v_details = ($v['celebrant_superior'] ?? '') . (!empty($v['congregation']) ? ' (' . $v['congregation'] . ')' : '');
                             $events[] = [
                                 'date' => $v['event_date'],
-                                'title' => $v['event_type'], // e.g., Diaconate, Priesthood, Profession
+                                'title' => $v['record_type'] ?? 'Vocation', // e.g., Diaconate, Priesthood, Profession
                                 'type' => 'vocation',
                                 'icon' => 'medal-outline',
                                 'meta' => [
-                                    ['label' => 'Details', 'value' => $v['details']]
+                                    ['label' => 'Details', 'value' => $v_details]
                                 ]
                             ];
                         }
@@ -349,7 +350,7 @@ $header_subtitle = "Canonical record for " . h($parishioner['first_name'] . ' ' 
                                         <?php if (!$baptism): ?><a href="../sacraments/baptism_add.php?person_id=<?php echo $id; ?>" class="btn btn-sm btn-primary">Baptism</a><?php endif; ?>
                                         <?php if (!$confirmation): ?><a href="../sacraments/confirmation_add.php?person_id=<?php echo $id; ?>" class="btn btn-sm btn-primary">Confirmation</a><?php endif; ?>
                                         <a href="../sacraments/marriage_add.php?person_id=<?php echo $id; ?>" class="btn btn-sm btn-primary">Marriage</a>
-                                        <a href="../sacraments/death_add.php?person_id=<?php echo $id; ?>" class="btn btn-sm btn-secondary">Burial</a>
+                                        <a href="../sacraments/burial_add.php?person_id=<?php echo $id; ?>" class="btn btn-sm btn-secondary">Burial</a>
                                     </div>
                                 </div>
                             </div>
