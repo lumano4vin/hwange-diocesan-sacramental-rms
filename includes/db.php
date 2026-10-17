@@ -115,8 +115,9 @@ function rms_cloud_http($method, $url, $headers = [], $body = null, $timeout = 6
         $ctx = stream_context_create($opts);
         $resp_body = @file_get_contents($url, false, $ctx);
         $status = 0;
-        if (!empty($http_response_header)) {
-            foreach ($http_response_header as $line) {
+        $raw_headers = function_exists('http_get_last_response_headers') ? @http_get_last_response_headers() : (isset($http_response_header) ? $http_response_header : []);
+        if (!empty($raw_headers)) {
+            foreach ($raw_headers as $line) {
                 if (preg_match('#HTTP/\S+\s+(\d{3})#', $line, $m)) {
                     $status = (int)$m[1];
                 } else {
