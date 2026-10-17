@@ -30,8 +30,7 @@ if (isset($_POST['verify']) && ($_SESSION['role'] === 'admin' || $_SESSION['role
     db_query("UPDATE receptions SET status = 'Verified' WHERE reception_id = ?", [$id]);
     log_audit($_SESSION['user_id'], 'UPDATE', 'receptions', $id, "Verified Profession of Faith record");
     set_flash("Record has been verified and officially added to the canonical archives.");
-    header("Location: view_reception.php?id=$id");
-    exit;
+    redirect("view_reception.php?id=$id");
 }
 
 $header_title = "Canonical Record: " . h($record['first_name'] . ' ' . $record['last_name']);

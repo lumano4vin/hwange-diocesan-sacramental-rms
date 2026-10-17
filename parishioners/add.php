@@ -54,11 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Smart redirection for sacramental workflows
             $ref = $_GET['ref'] ?? '';
             if ($ref === 'reception') {
-                header("Location: ../sacraments/reception_add.php?person_id=" . $new_id);
+                redirect("../sacraments/reception_add.php?person_id=" . $new_id);
             } else {
-                header("Location: view.php?id=" . $new_id);
+                redirect("view.php?id=" . $new_id);
             }
-            exit;
         } catch (Exception $e) {
             $error = "Canonical Error: " . $e->getMessage();
         }

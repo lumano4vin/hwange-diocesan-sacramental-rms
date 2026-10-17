@@ -70,6 +70,8 @@ function rms_cloud_http($method, $url, $headers = [], $body = null, $timeout = 6
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$resp_headers) {
             $len = strlen($header);
             $parts = explode(':', $header, 2);
@@ -84,8 +86,50 @@ function rms_cloud_http($method, $url, $headers = [], $body = null, $timeout = 6
         $resp_body = @curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+        if ($status > 0) {
+            return ['status' => $status, 'headers' => $resp_headers, 'body' => $resp_body];
+        }
+    }
+
+    // Stream context fallback (when cURL fails or is absent)
+    if (ini_get('allow_url_fopen')) {
+        $clean_headers = [];
+        foreach ($headers as $h) {
+            $clean_headers[] = trim($h);
+        }
+        $opts = [
+            'http' => [
+                'method' => $method,
+                'header' => implode("\r\n", $clean_headers) . "\r\n",
+                'timeout' => $timeout,
+                'ignore_errors' => true,
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ]
+        ];
+        if ($body !== null) {
+            $opts['http']['content'] = $body;
+        }
+        $ctx = stream_context_create($opts);
+        $resp_body = @file_get_contents($url, false, $ctx);
+        $status = 0;
+        if (!empty($http_response_header)) {
+            foreach ($http_response_header as $line) {
+                if (preg_match('#HTTP/\S+\s+(\d{3})#', $line, $m)) {
+                    $status = (int)$m[1];
+                } else {
+                    $parts = explode(':', $line, 2);
+                    if (count($parts) === 2) {
+                        $resp_headers[strtolower(trim($parts[0]))] = trim($parts[1]);
+                    }
+                }
+            }
+        }
         return ['status' => $status, 'headers' => $resp_headers, 'body' => $resp_body];
     }
+
     return ['status' => 0, 'headers' => [], 'body' => false];
 }
 
@@ -105,8 +149,9 @@ function rms_pull_db_from_cloud($tmp_sqlite, $meta_file) {
         return true;
     }
 
+    $auth_header = (strpos($token, 'ghp_') === 0 || strpos($token, 'github_pat_') === 0) ? 'Authorization: Bearer ' . $token : 'Authorization: token ' . $token;
     $headers = [
-        'Authorization: Bearer ' . $token,
+        $auth_header,
         'Accept: application/vnd.github+json',
         'User-Agent: HwangeRMS'
     ];
@@ -127,7 +172,12 @@ function rms_pull_db_from_cloud($tmp_sqlite, $meta_file) {
         if ($file_info) {
             $b64 = $file_info['content'] ?? '';
             if ((!empty($file_info['truncated']) || empty($b64)) && !empty($file_info['raw_url'])) {
-                $raw_res = rms_cloud_http('GET', $file_info['raw_url'], $headers, null, 8);
+                $raw_headers = [
+                    $auth_header,
+                    'User-Agent: HwangeRMS',
+                    'Accept: text/plain'
+                ];
+                $raw_res = rms_cloud_http('GET', $file_info['raw_url'], $raw_headers, null, 8);
                 if ($raw_res['status'] === 200) {
                     $b64 = $raw_res['body'];
                 }
@@ -161,8 +211,8 @@ function rms_pull_db_from_cloud($tmp_sqlite, $meta_file) {
     return false;
 }
 
-function rms_sync_db_to_cloud() {
-    if (empty($GLOBALS['rms_is_serverless']) || !empty($GLOBALS['rms_db_synced']) || !empty($GLOBALS['rms_skip_cloud_sync'])) {
+function rms_sync_db_to_cloud($force = false) {
+    if (empty($GLOBALS['rms_is_serverless']) || (!empty($GLOBALS['rms_db_synced']) && !$force) || !empty($GLOBALS['rms_skip_cloud_sync'])) {
         return false;
     }
     $gist_id = getenv('RMS_CLOUD_GIST_ID');
@@ -176,9 +226,17 @@ function rms_sync_db_to_cloud() {
         return false;
     }
 
+    if (isset($GLOBALS['pdo'])) {
+        try {
+            if ($GLOBALS['pdo']->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $GLOBALS['pdo']->query("PRAGMA wal_checkpoint(PASSIVE)");
+            }
+        } catch (Exception $e) {}
+    }
+
     clearstatcache(true, $sqlite_file);
     $current_hash = @md5_file($sqlite_file);
-    if (!$current_hash || $current_hash === ($GLOBALS['rms_initial_db_hash'] ?? '')) {
+    if (!$force && (!$current_hash || $current_hash === ($GLOBALS['rms_initial_db_hash'] ?? ''))) {
         return false;
     }
 
@@ -188,6 +246,7 @@ function rms_sync_db_to_cloud() {
     }
 
     $payload = json_encode([
+        'description' => 'Hwange Diocesan RMS Cloud Database Vault (Auto-Synced ' . date('c') . ')',
         'files' => [
             'hwange_rms_db.gz.b64' => [
                 'content' => base64_encode(gzencode($raw, 6))
@@ -195,8 +254,9 @@ function rms_sync_db_to_cloud() {
         ]
     ]);
 
+    $auth_header = (strpos($token, 'ghp_') === 0 || strpos($token, 'github_pat_') === 0) ? 'Authorization: Bearer ' . $token : 'Authorization: token ' . $token;
     $headers = [
-        'Authorization: Bearer ' . $token,
+        $auth_header,
         'Accept: application/vnd.github+json',
         'Content-Type: application/json',
         'User-Agent: HwangeRMS'
@@ -624,6 +684,10 @@ function db_query($sql, $params = []) {
     global $pdo;
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
+    $trimmed = ltrim($sql);
+    if (preg_match('/^(INSERT|UPDATE|DELETE|REPLACE|ALTER|DROP|CREATE)\b/i', $trimmed)) {
+        $GLOBALS['rms_db_dirty'] = true;
+    }
     return $stmt;
 }
 

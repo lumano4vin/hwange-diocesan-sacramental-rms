@@ -100,6 +100,25 @@ $counts = [
 
             </div>
 
+            <!-- Cloud Vault Cross-Deployment Persistence -->
+            <div class="vault-card" style="margin-top: 2rem; text-align: left; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="font-family: 'Outfit'; margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 10px;">
+                            <ion-icon name="cloud-done-outline" style="color: #38bdf8;"></ion-icon> Cloud Vault Persistence
+                        </h2>
+                        <p style="color: var(--text-muted); margin: 0; max-width: 600px;">
+                            Guarantees all records and changes survive serverless redeployments on Vercel by syncing database snapshots with the encrypted GitHub Cloud Vault.
+                        </p>
+                    </div>
+                    <div>
+                        <a href="../actions/check_cloud_vault.php" class="btn btn-primary" style="padding: 0.8rem 1.5rem; display: inline-flex; align-items: center; gap: 8px;">
+                            <ion-icon name="shield-checkmark-outline"></ion-icon> Open Cloud Vault Status & Setup
+                        </a>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 

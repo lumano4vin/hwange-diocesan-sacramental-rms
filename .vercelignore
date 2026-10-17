@@ -18,7 +18,11 @@ ZAOU/
 tmp/
 php/
 migrate_to_mysql.php
-check_*.php
+check_deaths_schema.php
+check_receptions_schema.php
+check_schema.php
+check_tables.php
+!actions/check_cloud_vault.php
 fix_*.php
 init_*.php
 setup*.php
