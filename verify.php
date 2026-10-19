@@ -11,37 +11,81 @@ require_once 'includes/db.php';
 require_once 'includes/functions.php';
 
 $id = $_GET['id'] ?? 0;
-$hash = $_GET['hash'] ?? '';
-$type = $_GET['type'] ?? 'baptism';
+$hash = trim($_GET['hash'] ?? '');
+$guid = trim($_GET['guid'] ?? '');
+$type = strtolower(trim($_GET['type'] ?? 'baptism'));
 
 $record = null;
 $verified = false;
 
-if (!empty($id) && !empty($hash)) {
-    // Determine table based on type
-    $table = 'baptisms';
-    $id_col = 'baptism_id';
-    
-    if ($type === 'marriage') { $table = 'marriages'; $id_col = 'marriage_id'; }
-    if ($type === 'confirmation') { $table = 'confirmations'; $id_col = 'confirmation_id'; }
-    if ($type === 'death') { $table = 'deaths'; $id_col = 'death_id'; }
+// Table & Column mapping
+$type_map = [
+    'baptism'      => ['table' => 'baptisms', 'id_col' => 'baptism_id', 'date_col' => 'date_of_baptism', 'label' => 'Baptism'],
+    'marriage'     => ['table' => 'marriages', 'id_col' => 'marriage_id', 'date_col' => 'date_of_marriage', 'label' => 'Holy Matrimony'],
+    'confirmation' => ['table' => 'confirmations', 'id_col' => 'confirmation_id', 'date_col' => 'date_of_confirmation', 'label' => 'Confirmation'],
+    'death'        => ['table' => 'deaths', 'id_col' => 'death_id', 'date_col' => 'date_of_death', 'label' => 'Christian Burial'],
+    'burial'       => ['table' => 'deaths', 'id_col' => 'death_id', 'date_col' => 'date_of_death', 'label' => 'Christian Burial'],
+    'reception'    => ['table' => 'receptions', 'id_col' => 'reception_id', 'date_col' => 'date_of_reception', 'label' => 'Profession of Faith'],
+    'communion'    => ['table' => 'first_holy_communions', 'id_col' => 'communion_id', 'date_col' => 'date_of_communion', 'label' => 'First Holy Communion'],
+    'ordination'   => ['table' => 'ordinations_professions', 'id_col' => 'record_id', 'date_col' => 'event_date', 'label' => 'Holy Orders / Profession']
+];
 
-    $sql = "SELECT * FROM $table WHERE $id_col = ? AND verification_hash = ?";
-    $record = db_fetch($sql, [$id, $hash]);
-    
-    if ($record) {
-        $verified = true;
-        
-        // Fetch Person Name
-        $p_id = $record['person_id'] ?? ($record['groom_person_id'] ?? 0);
-        $person = db_fetch("SELECT first_name, last_name FROM parishioners WHERE person_id = ?", [$p_id]);
-        $record['name'] = $person['first_name'] . ' ' . $person['last_name'];
-        
-        // Fetch Parish Name
-        $parish = db_fetch("SELECT parish_name FROM parishes WHERE parish_id = ?", [$record['parish_id']]);
-        $record['parish_name'] = $parish['parish_name'];
+$config = $type_map[$type] ?? $type_map['baptism'];
+$table = $config['table'];
+$id_col = $config['id_col'];
+$date_col = $config['date_col'];
+$type_label = $config['label'];
+
+if (!empty($guid)) {
+    $record = db_fetch("SELECT * FROM $table WHERE guid = ?", [$guid]);
+}
+
+if (!$record && !empty($id) && !empty($hash)) {
+    $record = db_fetch("SELECT * FROM $table WHERE $id_col = ? AND verification_hash = ?", [$id, $hash]);
+}
+
+if (!$record && !empty($hash)) {
+    $record = db_fetch("SELECT * FROM $table WHERE verification_hash = ?", [$hash]);
+}
+
+if (!$record && !empty($guid)) {
+    // Search across all tables if type was mismatched
+    foreach ($type_map as $alt_type => $alt_cfg) {
+        $alt_table = $alt_cfg['table'];
+        $alt_rec = db_fetch("SELECT * FROM $alt_table WHERE guid = ?", [$guid]);
+        if ($alt_rec) {
+            $record = $alt_rec;
+            $table = $alt_table;
+            $id_col = $alt_cfg['id_col'];
+            $date_col = $alt_cfg['date_col'];
+            $type_label = $alt_cfg['label'];
+            break;
+        }
     }
 }
+
+if ($record) {
+    $verified = true;
+    
+    // Fetch Person Name(s)
+    if ($table === 'marriages') {
+        $groom = db_fetch("SELECT first_name, last_name FROM parishioners WHERE person_id = ?", [$record['groom_person_id'] ?? 0]);
+        $bride = db_fetch("SELECT first_name, last_name FROM parishioners WHERE person_id = ?", [$record['bride_person_id'] ?? 0]);
+        $g_name = $groom ? ($groom['first_name'] . ' ' . $groom['last_name']) : 'Groom';
+        $b_name = $bride ? ($bride['first_name'] . ' ' . $bride['last_name']) : 'Bride';
+        $record['name'] = "$g_name & $b_name";
+    } else {
+        $p_id = $record['person_id'] ?? 0;
+        $person = db_fetch("SELECT first_name, last_name FROM parishioners WHERE person_id = ?", [$p_id]);
+        $record['name'] = $person ? ($person['first_name'] . ' ' . $person['last_name']) : 'Canonical Subject';
+    }
+    
+    // Fetch Parish Name
+    $parish = db_fetch("SELECT parish_name FROM parishes WHERE parish_id = ?", [$record['parish_id'] ?? 0]);
+    $record['parish_name'] = $parish['parish_name'] ?? 'Diocese of Hwange';
+    $record['event_date_formatted'] = !empty($record[$date_col]) ? date('d F Y', strtotime($record[$date_col])) : 'Recorded';
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -87,15 +131,19 @@ if (!empty($id) && !empty($hash)) {
             <div class="record-details">
                 <div class="detail-row">
                     <span class="label">Sacrament Type</span>
-                    <span class="value"><?php echo strtoupper($type); ?></span>
+                    <span class="value"><?php echo h($type_label); ?></span>
                 </div>
                 <div class="detail-row">
-                    <span class="label">Full Name</span>
+                    <span class="label">Canonical Name(s)</span>
                     <span class="value"><?php echo h($record['name']); ?></span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Parish / Mission</span>
                     <span class="value"><?php echo h($record['parish_name']); ?></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Celebration Date</span>
+                    <span class="value"><?php echo h($record['event_date_formatted']); ?></span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Canonical Status</span>

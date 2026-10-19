@@ -994,4 +994,34 @@ function get_user_greeting_name($full_name) {
     return $title . $parts[0];
 }
 
+/**
+ * Generate verification URLs for certificates
+ */
+function get_certificate_verification_url($type, $id, $hash = '', $guid = '') {
+    $current_host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1:8000';
+    $host_only = explode(':', $current_host)[0];
+    $is_local = in_array($host_only, ['localhost', '127.0.0.1', '::1']);
+    
+    // For QR codes on physical printed certificates, default to the live public portal so smartphones can resolve it anywhere:
+    $public_base = 'https://hwange-diocesan-sacramental-rms.vercel.app';
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ? 'https://' : 'http://';
+    
+    $base_for_qr = $is_local ? $public_base : ($protocol . $current_host);
+    $base_for_click = $protocol . $current_host;
+    
+    $params = [
+        'type' => $type,
+        'id'   => $id
+    ];
+    if (!empty($hash)) $params['hash'] = $hash;
+    if (!empty($guid)) $params['guid'] = $guid;
+    $query = http_build_query($params);
+    
+    return [
+        'qr_url'    => $base_for_qr . '/verify.php?' . $query,
+        'click_url' => $base_for_click . '/verify.php?' . $query
+    ];
+}
+
+
 

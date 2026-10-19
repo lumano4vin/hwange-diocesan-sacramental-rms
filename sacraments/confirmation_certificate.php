@@ -27,6 +27,7 @@ if (!$record) die("Canonical record not found in the archives.");
 // Language Support
 $lang = $_GET['lang'] ?? 'en';
 $t = get_certificate_text($lang);
+$verify_urls = get_certificate_verification_url('confirmation', $id, $record['verification_hash'] ?? '', $record['guid'] ?? '');
 
 ?>
 <!DOCTYPE html>
@@ -45,21 +46,51 @@ $t = get_certificate_text($lang);
         }
 
         @page {
-            size: A4;
+            size: A4 portrait;
             margin: 0;
         }
 
-
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; margin: 0 !important; padding: 0 !important; }
-            .certificate-container { 
-                margin: 0 !important; 
-                box-shadow: none !important; 
-                width: 794px !important; 
-                height: 1122px !important; 
-                padding: 20px 40px !important;
+            .no-print, .theme-selector { display: none !important; }
+            html, body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
                 overflow: hidden !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .certificate-container { 
+                margin: 6mm auto !important; 
+                box-shadow: none !important; 
+                width: 198mm !important; 
+                height: 284mm !important; 
+                max-height: 284mm !important;
+                box-sizing: border-box !important;
+                padding: 6mm 10mm 6mm 10mm !important; 
+                overflow: hidden !important;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+            }
+            body.theme-heirloom .certificate-container {
+                border-width: 12px !important;
+                outline-width: 2px !important;
+                outline-offset: -8px !important;
+                padding: 5mm 10mm 5mm 10mm !important;
+            }
+            body.theme-heirloom .heirloom-only {
+                margin-top: 2px !important;
+                padding-top: 2px !important;
+            }
+            body.theme-heirloom .certificate-title {
+                margin: 2px 0 !important;
+                font-size: 28px !important;
+            }
+            body.theme-heirloom .sacrament-declaration {
+                margin: 2px 0 !important;
+                font-size: 18px !important;
             }
         }
 
@@ -315,40 +346,14 @@ $t = get_certificate_text($lang);
             font-weight: 700;
         }
 
-                @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; margin: 0 !important; padding: 0 !important; }
-            .certificate-container { 
-                margin: 0 !important; 
-                box-shadow: none !important; 
-                width: 210mm !important; 
-                height: 297mm !important; 
-                box-sizing: border-box !important;
-                padding: 10mm 15mm 12mm 15mm !important; 
-                overflow: hidden !important;
-            }
-            body.theme-heirloom .certificate-container {
-                border: 15px solid #1e3a8a !important;
-                outline: 2px solid #d4af37 !important;
-                outline-offset: -10px !important;
-                padding: 5mm 15mm 2mm 15mm !important;
-            }
-            body.theme-heirloom .heirloom-only {
-                margin-top: 2px !important;
-                padding-top: 2px !important;
-            }
-            body.theme-heirloom .certificate-title {
-                margin: 2px 0 !important;
-                font-size: 30px !important;
-            }
-            body.theme-heirloom .sacrament-declaration {
-                margin: 2px 0 !important;
-                font-size: 20px !important;
-            }
-        }
     </style>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="../assets/js/qrcode.min.js"></script>
+    <script>
+        if (typeof QRCode === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+        }
+    </script>
 </head>
 <body>
     <!-- Theme Selector Top Bar (Hidden on Print) -->
@@ -464,23 +469,33 @@ $t = get_certificate_text($lang);
             </div>
             
             <div class="signature-block">
-                <div id="qrcode" style="margin-bottom: 10px; display: flex; justify-content: center;"></div>
-                <div class="signature-line"></div>
-                <div style="font-size: 13px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;"><?php echo $t['priest']; ?></div>
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 5px;"><?php echo $t['date_issue']; ?>: <?php echo date('d M Y'); ?></div>
-                <div class="heirloom-only" style="display: none; font-size: 8px; color: #cbd5e1; margin-top: 5px; font-family: monospace; letter-spacing: 0.5px;">GUID: <?php echo $record['guid']; ?></div>
+                <a href="<?php echo htmlspecialchars($verify_urls['click_url']); ?>" target="_blank" title="Scan or click to verify this certificate online" style="text-decoration: none; color: inherit; display: inline-block; cursor: pointer;">
+                    <div id="qrcode" style="margin-bottom: 4px; display: flex; justify-content: center;"></div>
+                    <div style="font-size: 8px; font-weight: 700; color: #64748b; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
+                        SCAN / CLICK TO VERIFY
+                    </div>
+                </a>
+                <div class="signature-line" style="margin-top: 15px; margin-bottom: 6px;"></div>
+                <div style="font-size: 13px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;"><?php echo $t['priest'] ?? 'Parish Priest'; ?></div>
+                <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;"><?php echo $t['date_issue'] ?? 'Date'; ?>: <?php echo date('d M Y'); ?></div>
+                <div class="heirloom-only" style="display: none; font-size: 8px; color: #cbd5e1; margin-top: 3px; font-family: monospace; letter-spacing: 0.5px;">GUID: <?php echo $record['guid']; ?></div>
             </div>
         </div>
  </div>
 
         <script>
-            new QRCode(document.getElementById("qrcode"), {
-                text: "Verification GUID: <?php echo $record['guid']; ?> | Ref: C-<?php echo str_pad($record['confirmation_id'], 4, '0', STR_PAD_LEFT); ?>",
-                width: 70,
-                height: 70,
-                colorDark : "#0f172a",
-                colorLight : "#fffef2",
-                correctLevel : QRCode.CorrectLevel.H
+            document.addEventListener("DOMContentLoaded", function() {
+                var qrContainer = document.getElementById("qrcode");
+                if (qrContainer && typeof QRCode !== 'undefined') {
+                    new QRCode(qrContainer, {
+                        text: <?php echo json_encode($verify_urls['qr_url']); ?>,
+                        width: 64,
+                        height: 64,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.M
+                    });
+                }
             });
         </script>
         

@@ -36,6 +36,9 @@ $title_map = [
 ];
 $title_display = $title_map[$record['record_type']] ?? 'Sacred Record';
 
+// Generate verified canonical verification URLs
+$verify_urls = get_certificate_verification_url('ordination', $id, $record['verification_hash'] ?? '', $record['guid'] ?? '');
+
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>">
@@ -53,21 +56,48 @@ $title_display = $title_map[$record['record_type']] ?? 'Sacred Record';
         }
 
         @page {
-            size: A4;
+            size: A4 portrait;
             margin: 0;
         }
 
-
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; margin: 0 !important; padding: 0 !important; }
-            .certificate-container { 
+            body { 
+                background: white !important; 
                 margin: 0 !important; 
+                padding: 0 !important; 
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .certificate-container { 
+                margin: 6mm auto !important; 
                 box-shadow: none !important; 
-                width: 794px !important; 
-                height: 1122px !important; 
-                padding: 20px 40px !important;
+                width: 198mm !important; 
+                height: 284mm !important; 
+                max-height: 284mm !important;
+                box-sizing: border-box !important;
+                padding: 6mm 10mm !important; 
                 overflow: hidden !important;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+            }
+            body.theme-heirloom .certificate-container {
+                border: 12px solid #1e3a8a !important;
+                outline: 2px solid #d4af37 !important;
+                outline-offset: -8px !important;
+                padding: 5mm 10mm 3mm 10mm !important;
+            }
+            body.theme-heirloom .heirloom-only {
+                margin-top: 2px !important;
+                padding-top: 2px !important;
+            }
+            body.theme-heirloom .certificate-title {
+                margin: 2px 0 !important;
+                font-size: 26px !important;
+            }
+            body.theme-heirloom .sacrament-declaration {
+                margin: 2px 0 !important;
+                font-size: 18px !important;
             }
         }
 
@@ -353,38 +383,18 @@ $title_display = $title_map[$record['record_type']] ?? 'Sacred Record';
             font-weight: 800;
             cursor: pointer;
             border: none;
-            display: flex;
-            .certificate-container { 
-                margin: 0 !important; 
-                box-shadow: none !important; 
-                width: 210mm !important; 
-                height: 297mm !important; 
-                box-sizing: border-box !important;
-                padding: 10mm 15mm 12mm 15mm !important; 
-                overflow: hidden !important;
-            }
-            body.theme-heirloom .certificate-container {
-                border: 15px solid #1e3a8a !important;
-                outline: 2px solid #d4af37 !important;
-                outline-offset: -10px !important;
-                padding: 5mm 15mm 2mm 15mm !important;
-            }
-            body.theme-heirloom .heirloom-only {
-                margin-top: 2px !important;
-                padding-top: 2px !important;
-            }
-            body.theme-heirloom .certificate-title {
-                margin: 2px 0 !important;
-                font-size: 30px !important;
-            }
-            body.theme-heirloom .sacrament-declaration {
-                margin: 2px 0 !important;
-                font-size: 20px !important;
-            }
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
     </style>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="../assets/js/qrcode.min.js"></script>
+    <script>
+        if (typeof QRCode === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+        }
+    </script>
 </head>
 <body>
 
@@ -443,7 +453,10 @@ $title_display = $title_map[$record['record_type']] ?? 'Sacred Record';
             </div>
             
             <div class="signature-block">
-                <div id="qrcode" style="margin-bottom: 10px; display: flex; justify-content: center;"></div>
+                <a href="<?php echo htmlspecialchars($verify_urls['click_url']); ?>" target="_blank" title="Scan or click to verify canonical record" style="text-decoration: none; display: inline-block;">
+                    <div id="qrcode" style="margin-bottom: 6px; display: flex; justify-content: center;"></div>
+                    <div style="font-size: 8px; color: #64748b; font-weight: 700; letter-spacing: 0.5px; text-align: center; margin-bottom: 4px;">SCAN / CLICK TO VERIFY</div>
+                </a>
                 <div class="signature-line"></div>
                 <div class="signature-label">Bishop / Superior General</div>
                 <div style="font-size: 11px; color: #94a3b8; margin-top: 8px;"><?php echo $t['date_issue']; ?>: <?php echo date('d M Y'); ?></div>
@@ -453,14 +466,19 @@ $title_display = $title_map[$record['record_type']] ?? 'Sacred Record';
 
 
         <script>
-            new QRCode(document.getElementById("qrcode"), {
-                text: "Verification GUID: <?php echo $record['guid']; ?> | Ref: <?php echo $record['entry_number'] ?: 'ORD-'.$record['record_id']; ?>",
-                width: 70,
-                height: 70,
-                colorDark : "#0f172a",
-                colorLight : "#fffef2",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+            (function() {
+                var qrTarget = document.getElementById("qrcode");
+                if (qrTarget && typeof QRCode !== 'undefined') {
+                    new QRCode(qrTarget, {
+                        text: <?php echo json_encode($verify_urls['qr_url']); ?>,
+                        width: 64,
+                        height: 64,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.M
+                    });
+                }
+            })();
         </script>
         
         <div class="canonical-meta heirloom-hide">
