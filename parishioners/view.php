@@ -133,6 +133,9 @@ $header_subtitle = "Canonical record for " . h($parishioner['first_name'] . ' ' 
                             </div>
 
                             <div style="margin-top: 2.5rem; display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+                                <a href="../sacraments/canonical_inquiry.php?person_id=<?php echo $id; ?>" class="btn" style="background: linear-gradient(135deg, #1e3a8a, #d4af37); color: white; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border: none; padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);">
+                                    <ion-icon name="document-text-outline" style="font-size: 1.2rem;"></ion-icon> Canonical Status Certificate / Inquiry
+                                </a>
                                 <a href="edit.php?id=<?php echo $id; ?>" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                                     <ion-icon name="create-outline"></ion-icon> Edit Profile
                                 </a>

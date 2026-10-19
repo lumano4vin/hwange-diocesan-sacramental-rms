@@ -68,21 +68,27 @@ $parishioners = db_fetchAll($sql, $params);
                 include '../includes/header.php'; 
             ?>
 
-            <div class="filter-bar" style="margin-bottom: 2rem;">
-                <form method="GET" action="" style="display: flex; gap: 1rem; width: 100%; max-width: 600px;">
+            <div class="filter-bar" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <form method="GET" action="" style="display: flex; gap: 1rem; width: 100%; max-width: 500px;">
                     <div class="search-box" style="flex: 1;">
                         <ion-icon name="search-outline"></ion-icon>
                         <input type="text" name="q" placeholder="Search parishioner by name..." value="<?php echo h($search); ?>">
                     </div>
                     <button type="submit" class="btn btn-primary">Search</button>
                 </form>
+
+                <div>
+                    <a href="../sacraments/canonical_inquiry.php" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; text-decoration: none;">
+                        <ion-icon name="document-text-outline" style="font-size: 1.1rem;"></ion-icon> Canonical Inquiry Form
+                    </a>
+                </div>
             </div>
 
             <?php if (empty($parishioners)): ?>
                 <div class="empty-state" style="text-align: center; padding: 3rem; background: var(--card-bg); border-radius: 12px;">
                     <ion-icon name="document-text-outline" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></ion-icon>
                     <h3>No Parishioners Found</h3>
-                    <p style="color: var(--text-muted);">Search for a parishioner to generate a letter of good standing.</p>
+                    <p style="color: var(--text-muted);">Search for a parishioner to generate a letter of good standing or sacramental status extract.</p>
                 </div>
             <?php else: ?>
                 <div class="letter-list">
@@ -92,9 +98,12 @@ $parishioners = db_fetchAll($sql, $params);
                                 <h3><?php echo h($p['first_name'] . ' ' . $p['last_name']); ?></h3>
                                 <p>DOB: <?php echo date('d M Y', strtotime($p['dob'])); ?> | Parish: <?php echo h($p['parish_name'] ?: 'Not Assigned'); ?></p>
                             </div>
-                            <div class="letter-actions">
+                            <div class="letter-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <a href="../sacraments/canonical_inquiry.php?person_id=<?php echo $p['person_id']; ?>" class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                                    <ion-icon name="ribbon-outline"></ion-icon> Status Extract / Inquiry
+                                </a>
                                 <button onclick="openLetterModal(<?php echo $p['person_id']; ?>, '<?php echo h(addslashes($p['first_name'] . ' ' . $p['last_name'])); ?>')" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-                                    <ion-icon name="document-text-outline"></ion-icon> Generate Letter
+                                    <ion-icon name="document-text-outline"></ion-icon> Letter of Standing
                                 </button>
                             </div>
                         </div>
