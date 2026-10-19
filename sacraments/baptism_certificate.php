@@ -89,40 +89,67 @@ $orders_notation = db_fetch("
                 padding: 0 !important;
                 width: 210mm !important;
                 height: 297mm !important;
+                max-height: 297mm !important;
                 overflow: hidden !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
             .certificate-container { 
-                margin: 6mm auto !important; 
+                margin: 10mm auto !important; 
                 box-shadow: none !important; 
-                width: 198mm !important; 
-                height: 284mm !important; 
-                max-height: 284mm !important;
+                width: 186mm !important; 
+                height: 274mm !important; 
+                max-height: 274mm !important;
                 box-sizing: border-box !important;
-                padding: 6mm 10mm 6mm 10mm !important; 
+                padding: 6mm 10mm 4mm 10mm !important; 
                 overflow: hidden !important;
                 page-break-inside: avoid !important;
                 page-break-after: avoid !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
             }
             body.theme-heirloom .certificate-container {
-                border-width: 12px !important;
-                outline-width: 2px !important;
-                outline-offset: -8px !important;
-                padding: 5mm 10mm 5mm 10mm !important;
+                border: 10px solid #1e3a8a !important;
+                outline: 2px solid #d4af37 !important;
+                outline-offset: -6px !important;
+                padding: 5mm 8mm 3mm 8mm !important;
+            }
+            body.theme-heirloom .certificate-container::after {
+                margin: 8px !important;
+                background-size: 40px 40px !important;
             }
             body.theme-heirloom .heirloom-only {
-                margin-top: 2px !important;
-                padding-top: 2px !important;
+                margin-top: 1px !important;
+                padding-top: 1px !important;
             }
             body.theme-heirloom .certificate-title {
                 margin: 2px 0 !important;
-                font-size: 28px !important;
+                font-size: 26px !important;
             }
             body.theme-heirloom .sacrament-declaration {
                 margin: 2px 0 !important;
-                font-size: 18px !important;
+                font-size: 17px !important;
             }
+            .header { margin-bottom: 4px !important; }
+            .diocese-name { font-size: 20px !important; letter-spacing: 2px !important; }
+            .diocese-sub { font-size: 10px !important; letter-spacing: 2px !important; margin-top: 1px !important; }
+            .certificate-title { font-size: 34px !important; margin: 2px 0 !important; line-height: 1.1 !important; }
+            .content { font-size: 13.5px !important; line-height: 1.25 !important; }
+            .content p { margin: 4px 0 !important; }
+            .field-value { font-size: 18px !important; padding-bottom: 2px !important; min-width: 260px !important; }
+            .field-label { font-size: 9.5px !important; margin-top: 5px !important; letter-spacing: 1.5px !important; }
+            .sacrament-declaration { font-size: 20px !important; margin: 4px 0 !important; letter-spacing: 1.5px !important; }
+            .details-grid { gap: 6px 15px !important; margin-top: 6px !important; }
+            .details-grid div div { font-size: 14px !important; padding-bottom: 2px !important; }
+            .marginal-notations-box { margin-top: 5px !important; padding: 4px 8px !important; font-size: 9.5px !important; }
+            .footer { margin-top: auto !important; padding-top: 4px !important; }
+            .seal { width: 70px !important; height: 70px !important; font-size: 7.5px !important; padding: 4px !important; }
+            .signature-block { width: 220px !important; }
+            .signature-block #qrcode canvas, .signature-block #qrcode img { width: 48px !important; height: 48px !important; }
+            .signature-line { margin-top: 6px !important; margin-bottom: 2px !important; }
+            .signature-label { font-size: 10.5px !important; }
+            .canonical-meta { font-size: 7.5px !important; line-height: 1.2 !important; margin-top: 4px !important; }
         }
 
         body {
