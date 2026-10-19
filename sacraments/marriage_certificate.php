@@ -468,10 +468,23 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
                     <div style="font-family: 'Cinzel', serif; font-weight: 700; color: var(--navy);"><?php echo h($record['officiant'] ?: '-'); ?></div>
                 </div>
                 <div>
-                    <span class="field-label">Godparents</span>
+                    <span class="field-label"><?php echo $t['witnesses'] ?? 'Canonical Witnesses'; ?></span>
                     <div style="font-family: 'Cinzel', serif; font-weight: 700; color: var(--navy);"><?php echo h($record['witnesses_names'] ?: '-'); ?></div>
                 </div>
             </div>
+
+            <?php if (!empty($record['dispensation_type'])): ?>
+                <div style="margin-top: 10px; font-size: 11px; color: var(--navy); font-family: 'Cinzel', serif; background: rgba(212, 175, 55, 0.1); border: 1px dashed rgba(212, 175, 55, 0.4); border-radius: 4px; padding: 4px 8px;">
+                    <span style="color: var(--gold); font-weight: 700;">CANONICAL DISPENSATION:</span> 
+                    <?php echo h($record['dispensation_type']); ?> 
+                    <?php if (!empty($record['dispensation_protocol_number'])): ?>
+                        • Prot. No: <strong><?php echo h($record['dispensation_protocol_number']); ?></strong>
+                    <?php endif; ?>
+                    <?php if (!empty($record['dispensation_date'])): ?>
+                        • Granted: <?php echo format_certificate_date($record['dispensation_date']); ?>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
             <div class="heirloom-only" style="display: none; margin-top: 10px; font-family: 'Cinzel', serif; font-size: 13px; color: var(--navy); border-top: 1px solid rgba(212, 175, 55, 0.2); padding-top: 10px;">
                 <span style="color: #d4af37; font-weight: 700;"><?php echo strtoupper($t['canonical_ref']); ?>:</span> M-<?php echo h(str_pad($record['marriage_id'], 5, '0', STR_PAD_LEFT)); ?> &nbsp; | &nbsp; 

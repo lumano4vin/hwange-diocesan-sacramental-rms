@@ -105,6 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $impediments = $_POST['impediments_noted'] ?? '';
         $dispensations = $_POST['dispensations_required'] ?? '';
+        $disp_prot = upper($_POST['dispensation_protocol_number'] ?? '');
+        $disp_granted = isset($_POST['dispensation_granted']) ? 1 : 0;
+        $bap_cert_groom = ($_POST['bap_cert_date_groom'] ?? '') ?: null;
+        $bap_cert_bride = ($_POST['bap_cert_date_bride'] ?? '') ?: null;
+
         $notes = $_POST['notes'] ?? '';
         $status = $_POST['status'] ?? 'Draft';
         $priest_user_id = $_SESSION['user_id'];
@@ -121,19 +126,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             groom_free_to_marry, bride_free_to_marry, groom_previous_marriage, bride_previous_marriage,
                             consent_unity, consent_indissolubility, consent_procreation,
                             banns_date_1, banns_date_2, banns_date_3, banns_parish_id,
-                            impediments_noted, dispensations_required, status, notes
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            impediments_noted, dispensations_required, status, notes,
+                            bap_cert_date_groom, bap_cert_date_bride, dispensation_protocol_number, dispensation_granted
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 
                 db_query($sql, [
                     $groom_id, $bride_id, $parish_id, $priest_user_id, $investigation_date,
                     $groom_free, $bride_free, $groom_prev, $bride_prev,
                     $c_unity, $c_indissolubility, $c_procreation,
                     $b_date1, $b_date2, $b_date3, $b_parish,
-                    $impediments, $dispensations, $status, $notes
+                    $impediments, $dispensations, $status, $notes,
+                    $bap_cert_groom, $bap_cert_bride, $disp_prot, $disp_granted
                 ]);
                 
                 $new_id = db_lastInsertId();
-                log_audit($_SESSION['user_id'], 'CREATE', 'prenuptial_investigations', $new_id, "Completed PNI for Groom ID $groom_id and Bride ID $bride_id");
+                log_audit($_SESSION['user_id'], 'CREATE', 'prenuptial_investigations', $new_id, "Completed PNI for Groom ID $groom_id and Bride ID $bride_id (Chancery Prot: $disp_prot)");
                 
                 set_flash("Prenuptial Investigation (PNI) record has been saved successfully.");
                 redirect("marriage_pni_list.php");
@@ -224,6 +231,16 @@ $header_subtitle = "Canonical investigation of parties intending to contract Hol
                                     <div class="sacrament-item" id="groom_baptism"></div>
                                     <div class="sacrament-item" id="groom_confirmation"></div>
                                 </div>
+
+                                <div class="form-group" style="margin-top: 1.25rem;">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                        Groom's Baptism Certificate Issue Date (Can. 1068: Valid within 6 Months)
+                                    </label>
+                                    <input type="date" name="bap_cert_date_groom" id="bap_cert_date_groom" class="input-field" onchange="validateCertAge(this, 'groom-cert-warn')">
+                                    <div id="groom-cert-warn" style="display: none; color: #f59e0b; font-size: 0.75rem; margin-top: 4px; font-weight: 600;">
+                                        ⚠️ Canonical Warning: Certificate is older than 6 months. An updated baptismal extract is canonically required under Canon 1068.
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Unregistered Groom Bio Details -->
@@ -305,6 +322,16 @@ $header_subtitle = "Canonical investigation of parties intending to contract Hol
                                 <div id="bride_sacraments" class="sacrament-preview" style="margin-top: 1rem; font-size: 0.8rem; display: none;">
                                     <div class="sacrament-item" id="bride_baptism"></div>
                                     <div class="sacrament-item" id="bride_confirmation"></div>
+                                </div>
+
+                                <div class="form-group" style="margin-top: 1.25rem;">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                        Bride's Baptism Certificate Issue Date (Can. 1068: Valid within 6 Months)
+                                    </label>
+                                    <input type="date" name="bap_cert_date_bride" id="bap_cert_date_bride" class="input-field" onchange="validateCertAge(this, 'bride-cert-warn')">
+                                    <div id="bride-cert-warn" style="display: none; color: #f59e0b; font-size: 0.75rem; margin-top: 4px; font-weight: 600;">
+                                        ⚠️ Canonical Warning: Certificate is older than 6 months. An updated baptismal extract is canonically required under Canon 1068.
+                                    </div>
                                 </div>
                             </div>
 
@@ -438,7 +465,7 @@ $header_subtitle = "Canonical investigation of parties intending to contract Hol
 
                         <div class="form-section" style="margin-bottom: 3rem;">
                             <h3 style="font-family: 'Outfit'; color: var(--accent); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                                <ion-icon name="alert-circle-outline"></ion-icon> Impediments & Dispensations
+                                <ion-icon name="alert-circle-outline"></ion-icon> Impediments & Dispensations (Can. 1071–1090)
                             </h3>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                                 <div class="form-group">
@@ -446,8 +473,21 @@ $header_subtitle = "Canonical investigation of parties intending to contract Hol
                                     <textarea name="impediments_noted" class="input-field" rows="3" placeholder="Describe any impediments found or write 'NONE'"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Dispensations Required (e.g. Mixed Marriage)</label>
-                                    <textarea name="dispensations_required" class="input-field" rows="3" placeholder="List dispensations granted by the Chancery"></textarea>
+                                    <label class="form-label">Dispensations Required (e.g. Mixed Religion Can. 1124, Disparity of Cult Can. 1086)</label>
+                                    <textarea name="dispensations_required" class="input-field" rows="3" placeholder="List dispensations required or granted by the Chancery"></textarea>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                                <div class="form-group">
+                                    <label class="form-label">Chancery Protocol / Decree Number (if granted)</label>
+                                    <input type="text" name="dispensation_protocol_number" class="input-field force-caps" placeholder="e.g. HW/DISP/2026/042">
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 28px;">
+                                    <label style="display: flex; align-items: center; gap: 10px; color: white; cursor: pointer; font-size: 0.9rem;">
+                                        <input type="checkbox" name="dispensation_granted" value="1" style="accent-color: var(--accent); width: 18px; height: 18px;">
+                                        Dispensation formally granted by Local Ordinary
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -525,6 +565,22 @@ $header_subtitle = "Canonical investigation of parties intending to contract Hol
                         confirmationDiv.innerHTML = `<span style="color: #ef4444;">✘ No Confirmation Record Found</span>`;
                     }
                 });
+        }
+
+        function validateCertAge(input, warnId) {
+            const warn = document.getElementById(warnId);
+            if (!warn || !input.value) {
+                if (warn) warn.style.display = 'none';
+                return;
+            }
+            const certDate = new Date(input.value);
+            const now = new Date();
+            const diffMonths = (now.getFullYear() - certDate.getFullYear()) * 12 + (now.getMonth() - certDate.getMonth());
+            if (diffMonths > 6 || (diffMonths === 6 && now.getDate() > certDate.getDate())) {
+                warn.style.display = 'block';
+            } else {
+                warn.style.display = 'none';
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {

@@ -49,6 +49,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $page_number = upper($_POST['page_number'] ?? '');
     $entry_number = upper($_POST['entry_number'] ?? '');
 
+    // Canonical Dispensations (Can. 1071-1090)
+    $dispensation_type = $_POST['dispensation_type'] ?? '';
+    $dispensation_prot = upper($_POST['dispensation_protocol_number'] ?? '');
+    $dispensation_date = $_POST['dispensation_date'] ?: null;
+    $dispensation_by   = upper($_POST['dispensation_granted_by'] ?? '');
+    $dispensation_notes = $_POST['dispensation_notes'] ?? '';
+
     $error = '';
 
     // Handle Unregistered Groom
@@ -120,13 +127,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $diocese_id = $primary_diocese['diocese_id'] ?? 1;
             
             try {
-                $sql = "INSERT INTO marriages (groom_person_id, bride_person_id, parish_id, pni_id, date_of_marriage, officiant, witnesses_names, civil_record_number, register_book_number, page_number, entry_number, verification_hash, guid, diocese_id) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO marriages (groom_person_id, bride_person_id, parish_id, pni_id, date_of_marriage, officiant, witnesses_names, civil_record_number, register_book_number, page_number, entry_number, verification_hash, guid, diocese_id, dispensation_type, dispensation_protocol_number, dispensation_date, dispensation_granted_by, dispensation_notes) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 
-                db_query($sql, [$groom_id, $bride_id, $parish_id, $pni_id, $date_of_marriage, $officiant, $witnesses, $civil_record, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id]);
+                db_query($sql, [$groom_id, $bride_id, $parish_id, $pni_id, $date_of_marriage, $officiant, $witnesses, $civil_record, $register_book, $page_number, $entry_number, $verification_hash, $guid, $diocese_id, $dispensation_type, $dispensation_prot, $dispensation_date, $dispensation_by, $dispensation_notes]);
                 
                 $new_id = db_lastInsertId();
-                log_audit($_SESSION['user_id'], 'CREATE', 'marriages', $new_id, "Registered marriage for groom_id: $groom_id, bride_id: $bride_id");
+                log_audit($_SESSION['user_id'], 'CREATE', 'marriages', $new_id, "Registered marriage for groom_id: $groom_id, bride_id: $bride_id with dispensation: $dispensation_type");
                 
                 set_flash("Matrimonial record has been successfully registered.");
                 redirect("marriage_list.php");
@@ -390,6 +397,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="form-group">
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Civil Record No. (Optional)</label>
                                     <input type="text" name="civil_record_number" class="force-caps" placeholder="e.g. MRG/2026/012" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Canonical Dispensations & Chancery Permissions (Can. 1071–1090) -->
+                        <div class="form-section" style="margin-bottom: 3rem;">
+                            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; color: #f472b6; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                                <ion-icon name="shield-checkmark-outline"></ion-icon> Canonical Dispensations & Chancery Protocol (Can. 1071–1090)
+                            </h3>
+                            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                <div class="form-group">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Dispensation / Permission Category</label>
+                                    <select name="dispensation_type" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                        <option value="">None Required (Both Catholic, No Impediments)</option>
+                                        <option value="Mixed Religion (Can. 1124)">Permission for Mixed Religion (Can. 1124)</option>
+                                        <option value="Disparity of Cult (Can. 1086)">Dispensation from Disparity of Cult (Can. 1086)</option>
+                                        <option value="Canonical Form (Can. 1127)">Dispensation from Canonical Form (Can. 1127 §2)</option>
+                                        <option value="Consanguinity / Affinity (Can. 1078)">Dispensation from Impediment: Consanguinity / Affinity (Can. 1078)</option>
+                                        <option value="Sanatio in Radice (Can. 1161)">Radical Sanation / Sanatio in Radice (Can. 1161)</option>
+                                        <option value="Other Chancery Dispensation">Other Chancery Dispensation</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Chancery Protocol / Decree No.</label>
+                                    <input type="text" name="dispensation_protocol_number" class="force-caps" placeholder="e.g. HW/DISP/2026/014" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <div class="form-group">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Date Granted</label>
+                                    <input type="date" name="dispensation_date" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Granted By</label>
+                                    <input type="text" name="dispensation_granted_by" placeholder="e.g. Bishop of Hwange / Vicar General" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
                                 </div>
                             </div>
                         </div>

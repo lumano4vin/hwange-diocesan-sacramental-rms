@@ -184,6 +184,27 @@ $modules = [
         <main class="main-content">
             <?php include 'includes/header.php'; ?>
             <div class="content-body" style="padding: 1.5rem 0;">
+                <!-- Canonical Instrument Actions -->
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; background: linear-gradient(135deg, rgba(30, 58, 138, 0.25), rgba(15, 23, 42, 0.4)); border: 1px solid rgba(56, 189, 248, 0.2); padding: 1.25rem 1.5rem; border-radius: 16px; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px;">
+                            <ion-icon name="shield-checkmark-outline" style="color: #38bdf8;"></ion-icon>
+                            Canonical Instruments & Diocesan Archive Returns
+                        </div>
+                        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">
+                            Official dual-mode status inquiries (Can. 1068) and annual authenticated duplicate register returns (Can. 535 §4).
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <a href="sacraments/canonical_inquiry.php" class="btn" style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.8rem; padding: 0.5rem 1rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
+                            <ion-icon name="document-text-outline"></ion-icon> Canonical Inquiry / Status Cert
+                        </a>
+                        <a href="sacraments/annual_register_export.php" class="btn" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #f59e0b; font-size: 0.8rem; padding: 0.5rem 1rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
+                            <ion-icon name="archive-outline"></ion-icon> Annual Register Returns (Can. 535 §4)
+                        </a>
+                    </div>
+                </div>
+
                 <div class="sacrament-grid">
                     <?php foreach ($modules as $mod): ?>
                         <div class="sacrament-card" onclick="window.location.href='<?php echo $mod['list_url']; ?>'" style="cursor: pointer;">

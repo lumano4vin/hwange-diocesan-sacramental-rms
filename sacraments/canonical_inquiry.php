@@ -837,6 +837,8 @@ if ($person) {
                 <?php if ($person && !empty($person['guid'])): ?>
                     • GUID: <?php echo h($person['guid']); ?>
                 <?php endif; ?>
+                <br>
+                <span style="font-style: italic;">CANONICAL NOTICE (Can. 1068): For matrimonial preparation, this canonical extract is valid for six (6) months from the date of issue.</span>
             </div>
         </div>
 

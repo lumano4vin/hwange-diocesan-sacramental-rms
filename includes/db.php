@@ -396,7 +396,7 @@ function db_add_column_if_missing($pdo, $table, $column_def) {
 
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
 // Wrapped in a function and gated by PRAGMA user_version so it does not lock SQLite on every page load
-if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 4);
+if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 5);
 
 function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS receptions (
@@ -669,6 +669,39 @@ function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS deaneries (
         deanery_id INTEGER PRIMARY KEY AUTOINCREMENT,
         deanery_name VARCHAR(100) NOT NULL UNIQUE
+    )");
+
+    // Canonical Requirements Update (CIC 1983)
+    // 1. Conditional Baptism & Christian Witness & Marginal Notations (Can. 869, 874, 535 §2)
+    db_add_column_if_missing($pdo, 'baptisms', 'is_conditional INTEGER DEFAULT 0');
+    db_add_column_if_missing($pdo, 'baptisms', 'christian_witness TEXT DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'baptisms', 'marginal_notations TEXT DEFAULT NULL');
+
+    // 2. Marriage Canonical Dispensations & Chancery Protocol (Can. 1071, 1078, 1124, 1086, 1127)
+    db_add_column_if_missing($pdo, 'marriages', 'dispensation_type VARCHAR(100) DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'marriages', 'dispensation_protocol_number VARCHAR(100) DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'marriages', 'dispensation_date DATE DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'marriages', 'dispensation_granted_by VARCHAR(150) DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'marriages', 'dispensation_notes TEXT DEFAULT NULL');
+
+    // 3. Prenuptial Investigation (PNI) 6-Month Certificate Verification & Chancery Protocol
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'bap_cert_date_groom DATE DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'bap_cert_date_bride DATE DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'dispensation_protocol_number VARCHAR(100) DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'prenuptial_investigations', 'dispensation_granted INTEGER DEFAULT 0');
+
+    // 4. Annual Parochial Register Archive Returns (Can. 535 §4)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS annual_register_returns (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        return_year INTEGER NOT NULL,
+        sacrament_type VARCHAR(50) NOT NULL,
+        total_records INTEGER DEFAULT 0,
+        compiled_by INTEGER,
+        compiled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(30) DEFAULT 'Submitted',
+        canonical_attestation TEXT,
+        FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
 
     if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {

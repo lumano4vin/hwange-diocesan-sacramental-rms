@@ -29,6 +29,37 @@ $lang = $_GET['lang'] ?? 'en';
 $t = get_certificate_text($lang);
 $verify_urls = get_certificate_verification_url('baptism', $id, $record['verification_hash'] ?? '', $record['guid'] ?? '');
 
+$person_id = $record['person_id'];
+
+// Can. 535 §2: Fetch canonical marginal notations (Confirmation, Marriage, Holy Orders, etc.)
+$conf_notation = db_fetch("
+    SELECT c.*, pa.parish_name 
+    FROM confirmations c 
+    JOIN parishes pa ON c.parish_id = pa.parish_id 
+    WHERE c.person_id = ? 
+    ORDER BY c.date_of_confirmation ASC LIMIT 1
+", [$person_id]);
+
+$marr_notation = db_fetch("
+    SELECT m.*, pa.parish_name,
+           g.first_name as g_first, g.last_name as g_last,
+           b.first_name as b_first, b.last_name as b_last
+    FROM marriages m
+    JOIN parishes pa ON m.parish_id = pa.parish_id
+    JOIN parishioners g ON m.groom_person_id = g.person_id
+    JOIN parishioners b ON m.bride_person_id = b.person_id
+    WHERE m.groom_person_id = ? OR m.bride_person_id = ?
+    ORDER BY m.date_of_marriage ASC LIMIT 1
+", [$person_id, $person_id]);
+
+$orders_notation = db_fetch("
+    SELECT op.*, pa.parish_name 
+    FROM ordinations_professions op 
+    JOIN parishes pa ON op.parish_id = pa.parish_id 
+    WHERE op.person_id = ? 
+    ORDER BY op.event_date ASC LIMIT 1
+", [$person_id]);
+
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>">
@@ -419,7 +450,12 @@ $verify_urls = get_certificate_verification_url('baptism', $id, $record['verific
             <?php if ($lang == 'en'): ?>
                 <p style="margin-top: 15px;"><?php echo $t['solemnly_received']; ?></p>
             <?php endif; ?>
-            <div class="sacrament-declaration"><?php echo $t['baptized']; ?></div>
+            <div class="sacrament-declaration">
+                <?php echo $t['baptized']; ?>
+                <?php if (!empty($record['is_conditional'])): ?>
+                    <span style="font-size: 0.55em; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 800; display: block; margin-top: 2px;">[ SUB CONDITIONE • CANON 869 ]</span>
+                <?php endif; ?>
+            </div>
 
             <p><?php echo $t['in_parish']; ?></p>
             <div class="field-value">
@@ -448,6 +484,11 @@ $verify_urls = get_certificate_verification_url('baptism', $id, $record['verific
                     <span class="field-label"><?php echo $t['godparents']; ?></span>
                     <div style="font-family: 'Cinzel', serif; font-weight: 700; color: var(--navy); border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;">
                         <?php echo h($record['godparents'] ?: '-'); ?>
+                        <?php if (!empty($record['christian_witness'])): ?>
+                            <span style="font-size: 0.85em; font-weight: 500; color: #64748b; font-family: 'Inter', sans-serif; margin-left: 8px;">
+                                • Christian Witness (Can. 874 §2): <?php echo h($record['christian_witness']); ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -455,6 +496,39 @@ $verify_urls = get_certificate_verification_url('baptism', $id, $record['verific
             <div style="margin-top: 20px;">
                 <span class="field-label"><?php echo $t['minister']; ?></span>
                 <div class="field-value" style="min-width: 400px;"><?php echo h($record['minister']); ?></div>
+            </div>
+
+            <!-- Can. 535 §2: Canonical Marginal Notations (Adnotationes) -->
+            <div class="marginal-notations-box" style="margin-top: 8px; border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 6px; padding: 5px 10px; background: rgba(255, 255, 255, 0.55); font-size: 10.5px; text-align: left;">
+                <div style="font-family: 'Cinzel', serif; font-weight: 700; font-size: 9.5px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; display: flex; justify-content: space-between;">
+                    <span>CANONICAL MARGINAL NOTATIONS (CAN. 535 §2)</span>
+                    <span style="font-family: 'Inter', sans-serif; font-size: 8.5px; color: #64748b; font-weight: 600;">STATUS ANIMARUM</span>
+                </div>
+                <div style="color: var(--navy); line-height: 1.35;">
+                    <?php 
+                    $has_notation = false;
+                    if ($conf_notation) {
+                        $has_notation = true;
+                        echo "<div>• <strong>Confirmation:</strong> " . format_certificate_date($conf_notation['date_of_confirmation']) . " at " . h($conf_notation['parish_name']) . " (Reg: " . h($conf_notation['entry_number'] ?: 'C-'.$conf_notation['confirmation_id']) . ")</div>";
+                    }
+                    if ($marr_notation) {
+                        $has_notation = true;
+                        $spouse = ($marr_notation['groom_person_id'] == $person_id) ? trim($marr_notation['b_first'].' '.$marr_notation['b_last']) : trim($marr_notation['g_first'].' '.$marr_notation['g_last']);
+                        echo "<div>• <strong>Holy Matrimony:</strong> to " . h($spouse) . " on " . format_certificate_date($marr_notation['date_of_marriage']) . " at " . h($marr_notation['parish_name']) . " (Reg: " . h($marr_notation['certificate_number'] ?: $marr_notation['entry_number']) . ")</div>";
+                    }
+                    if ($orders_notation) {
+                        $has_notation = true;
+                        echo "<div>• <strong>Holy Orders / Religious Profession:</strong> " . h($orders_notation['record_type']) . " on " . format_certificate_date($orders_notation['event_date']) . " at " . h($orders_notation['parish_name']) . "</div>";
+                    }
+                    if (!empty($record['marginal_notations'])) {
+                        $has_notation = true;
+                        echo "<div>• " . h($record['marginal_notations']) . "</div>";
+                    }
+                    if (!$has_notation) {
+                        echo "<div style='color: #475569; font-style: italic;'>No marginal notations recorded in this register. Canonical Freedom to Marry (Status Liber) verified pursuant to Canon 1068.</div>";
+                    }
+                    ?>
+                </div>
             </div>
 
             <div class="heirloom-only" style="display: none; margin-top: 10px; font-family: 'Cinzel', serif; font-size: 13px; color: var(--navy); border-top: 1px solid rgba(212, 175, 55, 0.2); padding-top: 10px;">
@@ -509,6 +583,9 @@ $verify_urls = get_certificate_verification_url('baptism', $id, $record['verific
         <div class="canonical-meta heirloom-hide">
             <?php echo $t['canonical_ref']; ?>: <?php echo h($record['entry_number'] ?: 'B-'.str_pad($record['baptism_id'], 4, '0', STR_PAD_LEFT)); ?> | Book: <?php echo h($record['register_book_number'] ?: 'I'); ?> | Page: <?php echo h($record['page_number'] ?: '-'); ?> <br>
             <strong>GUID:</strong> <span style="font-family: monospace;"><?php echo $record['guid']; ?></span> <br>
+            <span style="font-style: italic; color: #64748b; font-size: 9px; display: block; margin-top: 2px;">
+                CANONICAL NOTICE (Can. 1068): For matrimonial investigation, this canonical certificate is valid for six (6) months from the date of issue.
+            </span>
             © <?php echo get_diocese_branding(); ?> - Zimbabwe Catholic Records Exchange (ZCRE)
         </div>
     </div>

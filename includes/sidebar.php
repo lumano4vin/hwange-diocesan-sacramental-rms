@@ -131,6 +131,12 @@ require_once 'version.php';
                     <span>Parish Report Builder</span>
                 </a>
             </li>
+            <li class="<?php echo ($current_page == 'annual_register_export.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>sacraments/annual_register_export.php">
+                    <ion-icon name="archive-outline" style="color: #f59e0b;"></ion-icon>
+                    <span>Annual Register Returns</span>
+                </a>
+            </li>
 
             <?php
             // Communication Hub Badge
