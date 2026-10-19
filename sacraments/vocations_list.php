@@ -13,13 +13,23 @@ require_login();
 $header_title = "Vocations & Holy Orders";
 $header_subtitle = "Canonical registry of Ordinations and Perpetual Religious Professions.";
 
-// Fetch all vocation records from the unified table
+// Fetch vocation records (Parish-isolated for non-admins)
+$params = [];
+$filter_sql = "";
+if (!is_admin()) {
+    $parish_filter = get_parish_filter($params, 'v');
+    if (!empty($parish_filter)) {
+        $filter_sql = " WHERE " . ltrim($parish_filter, ' AND ');
+    }
+}
+
 $records = db_fetchAll("
     SELECT v.*, p.first_name, p.last_name 
     FROM ordinations_professions v 
     JOIN parishioners p ON v.person_id = p.person_id 
+    $filter_sql
     ORDER BY v.event_date DESC
-");
+", $params);
 
 // Split into Orders and Professions for the UI
 $orders = array_filter($records, function($r) {

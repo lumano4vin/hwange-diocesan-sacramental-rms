@@ -13,10 +13,17 @@ require_login();
 $header_title = "Matrimonial Registry";
 $header_subtitle = "Viewing all canonical marriage records in the Diocese.";
 
-// Search logic
+// Search logic and Parish Isolation
 $search = $_GET['search'] ?? '';
 $params = [];
-$where = "";
+$where_clauses = [];
+
+if (!is_admin()) {
+    $parish_filter_sql = get_parish_filter($params, 'm');
+    if (!empty($parish_filter_sql)) {
+        $where_clauses[] = ltrim($parish_filter_sql, ' AND ');
+    }
+}
 
 if ($search) {
     $clean_search = trim($search);
@@ -43,10 +50,12 @@ if ($search) {
             $params[] = "%$term%";
         }
         
-        $where = " WHERE ($groom_match OR $bride_match OR pa.parish_name LIKE ?)";
+        $where_clauses[] = "($groom_match OR $bride_match OR pa.parish_name LIKE ?)";
         $params[] = "%$search%";
     }
 }
+
+$where = !empty($where_clauses) ? " WHERE " . implode(" AND ", $where_clauses) : "";
 
 // Fetch records with parish details and groom/bride baptism links
 $records = db_fetchAll("

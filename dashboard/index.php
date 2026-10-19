@@ -213,7 +213,14 @@ $needs_backup = ($days_since_backup >= 7);
 // 3. Today at a Glance Stats
 $today = date('Y-m-d');
 $week_ago = date('Y-m-d', strtotime('-7 days'));
-$today_count = db_fetch("SELECT COUNT(*) as count FROM audit_logs WHERE DATE(created_at) = ? AND action_type = 'CREATE'", [$today])['count'] ?? 0;
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+$is_admin_or_chancellor = ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'chancellor');
+
+if ($is_admin_or_chancellor || empty($user_parish_id)) {
+    $today_count = db_fetch("SELECT COUNT(*) as count FROM audit_logs WHERE DATE(created_at) = ? AND action_type = 'CREATE'", [$today])['count'] ?? 0;
+} else {
+    $today_count = db_fetch("SELECT COUNT(*) as count FROM audit_logs WHERE DATE(created_at) = ? AND action_type = 'CREATE' AND (user_id = ? OR parish_id = ?)", [$today, $_SESSION['user_id'], $user_parish_id])['count'] ?? 0;
+}
 
 // 4. Pending Verification Queue (Authorized Roles Only)
 $pending_count = 0;
@@ -221,50 +228,88 @@ $can_verify_global = ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'ch
 $pending_queue = [];
 
 if ($can_verify_global) {
-    $sql_drafts = "
-        SELECT SUM(c) as total FROM (
-            SELECT COUNT(*) as c FROM baptisms WHERE status = 'Draft' UNION ALL
-            SELECT COUNT(*) as c FROM marriages WHERE status = 'Draft' UNION ALL
-            SELECT COUNT(*) as c FROM confirmations WHERE status = 'Draft' UNION ALL
-            SELECT COUNT(*) as c FROM deaths WHERE status = 'Draft' UNION ALL
-            SELECT COUNT(*) as c FROM ordinations_professions WHERE status = 'Draft' UNION ALL
-            SELECT COUNT(*) as c FROM receptions WHERE status = 'Draft'
-        ) t
-    ";
-    $pending_count = db_fetch($sql_drafts)['total'] ?? 0;
-    
-    if ($_SESSION['role'] === 'admin') {
-        $pending_count += db_fetch("SELECT COUNT(*) as count FROM communications WHERE status = 'Pending'")['count'] ?? 0;
-    }
+    if ($is_admin_or_chancellor || empty($user_parish_id)) {
+        $sql_drafts = "
+            SELECT SUM(c) as total FROM (
+                SELECT COUNT(*) as c FROM baptisms WHERE status = 'Draft' UNION ALL
+                SELECT COUNT(*) as c FROM marriages WHERE status = 'Draft' UNION ALL
+                SELECT COUNT(*) as c FROM confirmations WHERE status = 'Draft' UNION ALL
+                SELECT COUNT(*) as c FROM deaths WHERE status = 'Draft' UNION ALL
+                SELECT COUNT(*) as c FROM ordinations_professions WHERE status = 'Draft' UNION ALL
+                SELECT COUNT(*) as c FROM receptions WHERE status = 'Draft'
+            ) t
+        ";
+        $pending_count = db_fetch($sql_drafts)['total'] ?? 0;
+        
+        if ($_SESSION['role'] === 'admin') {
+            $pending_count += db_fetch("SELECT COUNT(*) as count FROM communications WHERE status = 'Pending'")['count'] ?? 0;
+        }
 
+        if ($pending_count > 0) {
+            $sql_queue = "
+                SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'view_baptism.php' as link
+                FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id WHERE b.status = 'Draft'
+                UNION ALL
+                SELECT 'Marriage' as type, m.marriage_id as id, CONCAT(p1.first_name, ' & ', p2.first_name) as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
+                FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id WHERE m.status = 'Draft'
+                UNION ALL
+                SELECT 'Profession of Faith' as type, r.reception_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, r.date_of_reception as date, pr.parish_name, 'view_reception.php' as link
+                FROM receptions r JOIN parishioners p ON r.person_id = p.person_id JOIN parishes pr ON r.parish_id = pr.parish_id WHERE r.status = 'Draft'
+                " . (($_SESSION['role'] === 'admin') ? "
+                UNION ALL
+                SELECT 'Mission Query' as type, c.comm_id as id, u.full_name as name, c.created_at as date, pr.parish_name, '../admin/communications.php' as link
+                FROM communications c JOIN users u ON c.sender_id = u.user_id JOIN parishes pr ON c.parish_id = pr.parish_id WHERE c.status = 'Pending'
+                " : "") . "
+                ORDER BY date DESC LIMIT 5";
+            $pending_queue = db_fetchAll($sql_queue);
+        }
+    } else {
+        $sql_drafts = "
+            SELECT SUM(c) as total FROM (
+                SELECT COUNT(*) as c FROM baptisms WHERE status = 'Draft' AND parish_id = ? UNION ALL
+                SELECT COUNT(*) as c FROM marriages WHERE status = 'Draft' AND parish_id = ? UNION ALL
+                SELECT COUNT(*) as c FROM confirmations WHERE status = 'Draft' AND parish_id = ? UNION ALL
+                SELECT COUNT(*) as c FROM deaths WHERE status = 'Draft' AND parish_id = ? UNION ALL
+                SELECT COUNT(*) as c FROM ordinations_professions WHERE status = 'Draft' AND parish_id = ? UNION ALL
+                SELECT COUNT(*) as c FROM receptions WHERE status = 'Draft' AND parish_id = ?
+            ) t
+        ";
+        $pending_count = db_fetch($sql_drafts, [$user_parish_id, $user_parish_id, $user_parish_id, $user_parish_id, $user_parish_id, $user_parish_id])['total'] ?? 0;
 
-    if ($pending_count > 0) {
-        $sql_queue = "
-            SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'view_baptism.php' as link
-            FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id WHERE b.status = 'Draft'
-            UNION ALL
-            SELECT 'Marriage' as type, m.marriage_id as id, CONCAT(p1.first_name, ' & ', p2.first_name) as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
-            FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id WHERE m.status = 'Draft'
-            UNION ALL
-            SELECT 'Profession of Faith' as type, r.reception_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, r.date_of_reception as date, pr.parish_name, 'view_reception.php' as link
-            FROM receptions r JOIN parishioners p ON r.person_id = p.person_id JOIN parishes pr ON r.parish_id = pr.parish_id WHERE r.status = 'Draft'
-            " . (($_SESSION['role'] === 'admin') ? "
-            UNION ALL
-            SELECT 'Mission Query' as type, c.comm_id as id, u.full_name as name, c.created_at as date, pr.parish_name, '../admin/communications.php' as link
-            FROM communications c JOIN users u ON c.sender_id = u.user_id JOIN parishes pr ON c.parish_id = pr.parish_id WHERE c.status = 'Pending'
-            " : "") . "
-            ORDER BY date DESC LIMIT 5";
-        $pending_queue = db_fetchAll($sql_queue);
+        if ($pending_count > 0) {
+            $sql_queue = "
+                SELECT 'Baptism' as type, b.baptism_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, b.date_of_baptism as date, pr.parish_name, 'view_baptism.php' as link
+                FROM baptisms b JOIN parishioners p ON b.person_id = p.person_id JOIN parishes pr ON b.parish_id = pr.parish_id WHERE b.status = 'Draft' AND b.parish_id = ?
+                UNION ALL
+                SELECT 'Marriage' as type, m.marriage_id as id, CONCAT(p1.first_name, ' & ', p2.first_name) as name, m.date_of_marriage as date, pr.parish_name, 'view_marriage.php' as link
+                FROM marriages m JOIN parishioners p1 ON m.groom_person_id = p1.person_id JOIN parishioners p2 ON m.bride_person_id = p2.person_id JOIN parishes pr ON m.parish_id = pr.parish_id WHERE m.status = 'Draft' AND m.parish_id = ?
+                UNION ALL
+                SELECT 'Profession of Faith' as type, r.reception_id as id, CONCAT(p.first_name, ' ', p.last_name) as name, r.date_of_reception as date, pr.parish_name, 'view_reception.php' as link
+                FROM receptions r JOIN parishioners p ON r.person_id = p.person_id JOIN parishes pr ON r.parish_id = pr.parish_id WHERE r.status = 'Draft' AND r.parish_id = ?
+                ORDER BY date DESC LIMIT 5";
+            $pending_queue = db_fetchAll($sql_queue, [$user_parish_id, $user_parish_id, $user_parish_id]);
+        }
     }
 }
 
-$recent_logs = db_fetchAll("
-    SELECT a.*, u.full_name 
-    FROM audit_logs a 
-    JOIN users u ON a.user_id = u.user_id 
-    ORDER BY a.created_at DESC 
-    LIMIT 5
-");
+if ($is_admin_or_chancellor || empty($user_parish_id)) {
+    $recent_logs = db_fetchAll("
+        SELECT a.*, u.full_name 
+        FROM audit_logs a 
+        JOIN users u ON a.user_id = u.user_id 
+        ORDER BY a.created_at DESC 
+        LIMIT 5
+    ");
+} else {
+    $recent_logs = db_fetchAll("
+        SELECT a.*, u.full_name 
+        FROM audit_logs a 
+        JOIN users u ON a.user_id = u.user_id 
+        WHERE a.user_id = ? OR a.parish_id = ?
+        ORDER BY a.created_at DESC 
+        LIMIT 5
+    ", [$_SESSION['user_id'], $user_parish_id]);
+}
 
 // 5. Last User Activity (To remind where they left off)
 $last_user_activity = db_fetch("

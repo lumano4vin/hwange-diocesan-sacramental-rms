@@ -13,10 +13,17 @@ require_login();
 $header_title = "First Holy Communion Registry";
 $header_subtitle = "Viewing all canonical first communion records in the Diocese.";
 
-// Search logic
+// Search logic and Parish Isolation
 $search = $_GET['search'] ?? '';
 $params = [];
-$where = "";
+$where_clauses = [];
+
+if (!is_admin()) {
+    $parish_filter_sql = get_parish_filter($params, 'c');
+    if (!empty($parish_filter_sql)) {
+        $where_clauses[] = ltrim($parish_filter_sql, ' AND ');
+    }
+}
 
 if ($search) {
     $clean_search = trim($search);
@@ -30,11 +37,13 @@ if ($search) {
     }
     if (!empty($term_conditions)) {
         $name_cond = "(" . implode(" AND ", $term_conditions) . ")";
-        $where = " WHERE ($name_cond OR pa.parish_name LIKE ? OR c.minister LIKE ?)";
+        $where_clauses[] = "($name_cond OR pa.parish_name LIKE ? OR c.minister LIKE ?)";
         $params[] = "%$search%";
         $params[] = "%$search%";
     }
 }
+
+$where = !empty($where_clauses) ? " WHERE " . implode(" AND ", $where_clauses) : "";
 
 // Fetch records with parish details
 $records = db_fetchAll("

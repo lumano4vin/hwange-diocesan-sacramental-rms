@@ -13,17 +13,31 @@ require_login();
 $header_title = "Sacramental Hub";
 $header_subtitle = "Unified access to all canonical records and registries.";
 
-// Fetch counts for badges
-$counts = [
-    'baptisms' => db_fetch("SELECT COUNT(*) as count FROM baptisms")['count'] ?? 0,
-    'confirmations' => db_fetch("SELECT COUNT(*) as count FROM confirmations")['count'] ?? 0,
-    'marriages' => db_fetch("SELECT COUNT(*) as count FROM marriages")['count'] ?? 0,
-    'communions' => db_fetch("SELECT COUNT(*) as count FROM first_holy_communions")['count'] ?? 0,
-    'ordinations' => db_fetch("SELECT COUNT(*) as count FROM ordinations_professions")['count'] ?? 0,
-    'receptions' => db_fetch("SELECT COUNT(*) as count FROM receptions")['count'] ?? 0,
-    'deaths' => db_fetch("SELECT COUNT(*) as count FROM deaths")['count'] ?? 0,
-    'pni' => db_fetch("SELECT COUNT(*) as count FROM prenuptial_investigations")['count'] ?? 0,
-];
+// Fetch counts for badges (Parish-Aware for non-admins)
+$user_parish_id = $_SESSION['parish_id'] ?? null;
+if (is_admin() || empty($user_parish_id)) {
+    $counts = [
+        'baptisms' => db_fetch("SELECT COUNT(*) as count FROM baptisms")['count'] ?? 0,
+        'confirmations' => db_fetch("SELECT COUNT(*) as count FROM confirmations")['count'] ?? 0,
+        'marriages' => db_fetch("SELECT COUNT(*) as count FROM marriages")['count'] ?? 0,
+        'communions' => db_fetch("SELECT COUNT(*) as count FROM first_holy_communions")['count'] ?? 0,
+        'ordinations' => db_fetch("SELECT COUNT(*) as count FROM ordinations_professions")['count'] ?? 0,
+        'receptions' => db_fetch("SELECT COUNT(*) as count FROM receptions")['count'] ?? 0,
+        'deaths' => db_fetch("SELECT COUNT(*) as count FROM deaths")['count'] ?? 0,
+        'pni' => db_fetch("SELECT COUNT(*) as count FROM prenuptial_investigations")['count'] ?? 0,
+    ];
+} else {
+    $counts = [
+        'baptisms' => db_fetch("SELECT COUNT(*) as count FROM baptisms WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+        'confirmations' => db_fetch("SELECT COUNT(*) as count FROM confirmations WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+        'marriages' => db_fetch("SELECT COUNT(*) as count FROM marriages WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+        'communions' => db_fetch("SELECT COUNT(*) as count FROM first_holy_communions WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+        'ordinations' => db_fetch("SELECT COUNT(*) as count FROM ordinations_professions WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+        'receptions' => db_fetch("SELECT COUNT(*) as count FROM receptions WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+        'deaths' => db_fetch("SELECT COUNT(*) as count FROM deaths WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+        'pni' => db_fetch("SELECT COUNT(*) as count FROM prenuptial_investigations WHERE parish_id = ?", [$user_parish_id])['count'] ?? 0,
+    ];
+}
 
 // Define sacramental modules
 $modules = [
