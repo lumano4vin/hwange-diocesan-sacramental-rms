@@ -502,7 +502,7 @@ $verify_urls = get_certificate_verification_url('communion', $id, $record['verif
 
             <div style="margin-top: 25px;">
                 <span class="field-label"><?php echo $t['minister']; ?></span>
-                <div class="field-value" style="min-width: 400px;"><?php echo h($record['minister_name'] ?: 'Parish Priest'); ?></div>
+                <div class="field-value" style="min-width: 400px;"><?php echo h($record['minister_name'] ?: 'Parish/Mission Priest'); ?></div>
             </div>
             <div class="heirloom-only" style="display: none; margin-top: 10px; font-family: 'Cinzel', serif; font-size: 13px; color: var(--navy); border-top: 1px solid rgba(212, 175, 55, 0.2); padding-top: 10px;">
                 <span style="color: #d4af37; font-weight: 700;"><?php echo strtoupper($t['canonical_ref']); ?>:</span> FHC-<?php echo h(str_pad($record['communion_id'], 4, '0', STR_PAD_LEFT)); ?> &nbsp; | &nbsp; 

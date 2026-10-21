@@ -510,7 +510,7 @@ $verify_urls = get_certificate_verification_url('burial', $id, $record['verifica
 
             <div style="margin-top: 15px;">
                 <span class="field-label"><?php echo $t['officiant']; ?></span>
-                <div class="field-value" style="min-width: 400px;"><?php echo h($record['minister'] ?: 'Parish Priest'); ?></div>
+                <div class="field-value" style="min-width: 400px;"><?php echo h($record['minister'] ?: 'Parish/Mission Priest'); ?></div>
             </div>
 
             <div class="heirloom-only" style="display: none; margin-top: 10px; font-family: 'Cinzel', serif; font-size: 13px; color: var(--navy); border-top: 1px solid rgba(212, 175, 55, 0.2); padding-top: 10px;">

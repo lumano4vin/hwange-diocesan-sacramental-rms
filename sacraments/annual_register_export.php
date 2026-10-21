@@ -786,7 +786,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             <!-- Parish Selector (Enabled for Admin/Chancellor) -->
             <?php if ($is_admin): ?>
                 <select name="parish_id" class="control-select" onchange="this.form.submit()">
-                    <option value="0" <?php echo $selected_parish_id == 0 ? 'selected' : ''; ?>>-- All Diocesan Parishes (Consolidated) --</option>
+                    <option value="0" <?php echo $selected_parish_id == 0 ? 'selected' : ''; ?>>-- All Diocesan Parishes/Missions (Consolidated) --</option>
                     <?php foreach ($parishes as $p): ?>
                         <option value="<?php echo $p['parish_id']; ?>" <?php echo $selected_parish_id == $p['parish_id'] ? 'selected' : ''; ?>>
                             <?php echo h($p['parish_name']); ?>
@@ -795,7 +795,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 </select>
             <?php else: ?>
                 <span style="font-size: 0.85rem; font-weight: 600; color: #38bdf8;">
-                    <ion-icon name="business-outline"></ion-icon> <?php echo h($current_parish['parish_name'] ?? 'My Parish'); ?>
+                    <ion-icon name="business-outline"></ion-icon> <?php echo h($current_parish['parish_name'] ?? 'My Parish/Mission'); ?>
                 </span>
                 <input type="hidden" name="parish_id" value="<?php echo $selected_parish_id; ?>">
             <?php endif; ?>
@@ -1162,13 +1162,13 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 ad normam Canonis 535 §4 Codicis Iuris Canonici ad Archivum Dioecesanum transmittendum.&rdquo;
             </p>
             <p style="font-size: 0.75rem; color: #64748b; margin-top: -1.25rem; margin-bottom: 2rem; font-style: italic;">
-                (I, the undersigned Parish Priest / Administrator, hereby solemnly certify that the sacramental inscriptions herein contained faithfully and accurately correspond with the original entries preserved in the Parochial Registers for the canonical year <?php echo $selected_year; ?>, and are transmitted to the Diocesan Curial Archives in compliance with Canon 535 §4.)
+                (I, the undersigned Parish/Mission Priest / Administrator, hereby solemnly certify that the sacramental inscriptions herein contained faithfully and accurately correspond with the original entries preserved in the Parochial Registers for the canonical year <?php echo $selected_year; ?>, and are transmitted to the Diocesan Curial Archives in compliance with Canon 535 §4.)
             </p>
 
             <div class="attestation-signatures">
                 <div class="sig-block">
                     <div class="sig-line"></div>
-                    <div class="sig-caption">Parish Priest / Rector</div>
+                    <div class="sig-caption">Parish/Mission Priest / Rector</div>
                     <div class="sig-sub">
                         <?php echo h($existing_attestation['attested_by'] ?? $user_full_name); ?><br>
                         Date: <?php echo h($existing_attestation['attested_date'] ?? date('d/m/Y')); ?>
@@ -1177,9 +1177,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
                 <div class="sig-block">
                     <div class="seal-box">
-                        Locus Sigilli<br>[Parish Seal]
+                        Locus Sigilli<br>[Parish/Mission Seal]
                     </div>
-                    <div class="sig-caption">Parish Seal</div>
+                    <div class="sig-caption">Parish/Mission Seal</div>
                     <div class="sig-sub">Impressum Paroeciae</div>
                 </div>
 

@@ -170,9 +170,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <input type="text" name="celebrant_superior" value="<?php echo h($record['celebrant_superior']); ?>" class="input-field">
                                 </div>
                                 <div class="form-group">
-                                    <label>Parish / Place of Event *</label>
+                                    <label>Parish / Mission / Place of Event *</label>
                                     <select name="parish_id" required class="input-field">
-                                        <option value="">-- Select Parish --</option>
+                                        <option value="">-- Select Parish/Mission --</option>
                                         <?php foreach ($parishes as $pa): ?>
                                             <option value="<?php echo $pa['parish_id']; ?>" <?php echo $record['parish_id'] == $pa['parish_id'] ? 'selected' : ''; ?>><?php echo h($pa['parish_name']); ?></option>
                                         <?php endforeach; ?>

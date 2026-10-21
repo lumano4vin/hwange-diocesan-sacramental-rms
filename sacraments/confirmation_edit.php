@@ -135,9 +135,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Parish of Confirmation *</label>
+                                    <label>Parish/Mission of Confirmation *</label>
                                     <select name="parish_id" required class="input-field">
-                                        <option value="">-- Select Parish --</option>
+                                        <option value="">-- Select Parish/Mission --</option>
                                         <?php foreach ($parishes as $pa): ?>
                                             <option value="<?php echo $pa['parish_id']; ?>" <?php echo $record['parish_id'] == $pa['parish_id'] ? 'selected' : ''; ?>><?php echo h($pa['parish_name']); ?></option>
                                         <?php endforeach; ?>

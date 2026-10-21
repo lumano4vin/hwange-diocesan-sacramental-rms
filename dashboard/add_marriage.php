@@ -167,7 +167,7 @@ if (preg_match('/(.*?)(\d+)$/', $last_entry, $matches)) {
                                     $options_json = htmlspecialchars(json_encode($parish_options), ENT_QUOTES, 'UTF-8');
                                     ?>
                                     <div class="form-group">
-                                        <label>Parish of Celebration</label>
+                                        <label>Parish/Mission of Celebration</label>
                                         <div class="searchable-select-container">
                                             <?php 
                                             $user_parish_id = $_SESSION['parish_id'] ?? '';
@@ -181,7 +181,7 @@ if (preg_match('/(.*?)(\d+)$/', $last_entry, $matches)) {
                                             $is_user_admin = is_admin();
                                             ?>
                                             <input type="text" class="searchable-input" 
-                                                   placeholder="<?php echo $is_user_admin ? 'Type to search Parish...' : h($user_parish_name); ?>" 
+                                                   placeholder="<?php echo $is_user_admin ? 'Type to search Parish/Mission...' : h($user_parish_name); ?>" 
                                                    value="<?php echo $is_user_admin ? '' : h($user_parish_name); ?>"
                                                    data-options='<?php echo $options_json; ?>'
                                                    autocomplete="off" required 

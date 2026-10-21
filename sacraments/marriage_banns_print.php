@@ -78,16 +78,16 @@ if (!$record) die("Record not found.");
             <div class="party-box">
                 <strong>GROOM:</strong> <?php echo h($record['g_first'] . ' ' . $record['g_last']); ?><br>
                 <strong>Son of:</strong> <?php echo h($record['g_father'] ?: '---'); ?> and <?php echo h($record['g_mother'] ?: '---'); ?><br>
-                <strong>Parish:</strong> <?php echo h($record['home_parish']); ?>
+                <strong>Parish/Mission:</strong> <?php echo h($record['home_parish']); ?>
             </div>
 
             <div class="party-box">
                 <strong>BRIDE:</strong> <?php echo h($record['b_first'] . ' ' . $record['b_last']); ?><br>
                 <strong>Daughter of:</strong> <?php echo h($record['b_father'] ?: '---'); ?> and <?php echo h($record['b_mother'] ?: '---'); ?><br>
-                <strong>Parish:</strong> <?php echo h($record['home_parish']); ?>
+                <strong>Parish/Mission:</strong> <?php echo h($record['home_parish']); ?>
             </div>
 
-            <p>If anyone knows of any canonical impediment why these two persons should not be joined in Holy Matrimony, they are bound in conscience to reveal the same to the Parish Priest as soon as possible.</p>
+            <p>If anyone knows of any canonical impediment why these two persons should not be joined in Holy Matrimony, they are bound in conscience to reveal the same to the Parish/Mission Priest as soon as possible.</p>
         </div>
 
         <div class="banns-grid">
@@ -111,9 +111,9 @@ if (!$record) die("Record not found.");
         <div class="footer">
             <div style="display: flex; flex-direction: column; gap: 40px;">
                 <div class="sig-line">Date of Issue</div>
-                <div class="sig-line">Parish Priest / Deacon</div>
+                <div class="sig-line">Parish/Mission Priest / Deacon</div>
             </div>
-            <div class="seal-spot">L.S.<br>(Parish Seal)</div>
+            <div class="seal-spot">L.S.<br>(Parish/Mission Seal)</div>
         </div>
 
         <div style="margin-top: 40px; text-align: center; font-size: 8pt; color: #666; border-top: 1px solid #eee; padding-top: 10px;">

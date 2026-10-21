@@ -86,9 +86,9 @@ $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY pa
                     </div>
                     
                     <div class="filter-group">
-                        <label>Parish</label>
+                        <label>Parish / Mission</label>
                         <select name="parish_id" onchange="this.form.submit()">
-                            <option value="">All Parishes</option>
+                            <option value="">All Parishes / Missions</option>
                             <?php foreach($parishes as $p): ?>
                                 <option value="<?php echo $p['parish_id']; ?>" <?php echo $parish_filter == $p['parish_id'] ? 'selected' : ''; ?>>
                                     <?php echo h($p['parish_name']); ?>

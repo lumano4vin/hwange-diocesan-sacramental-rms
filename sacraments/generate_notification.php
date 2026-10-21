@@ -166,14 +166,14 @@ if ($type === 'Marriage') {
         </div>
 
         <div class="to-line">
-            <p><strong>TO:</strong> The Reverend Parish Priest / Administrator<br>
-            <strong>PARISH:</strong> <?= e($parishioner['place_of_baptism'] ?: 'Parish of Baptism') ?><br>
+            <p><strong>TO:</strong> The Reverend Parish/Mission Priest / Administrator<br>
+            <strong>PARISH / MISSION:</strong> <?= e($parishioner['place_of_baptism'] ?: 'Parish/Mission of Baptism') ?><br>
             <strong>SUBJECT:</strong> Notification of Sacramental Act (Can. 535 §2)</p>
         </div>
 
         <div class="content-body">
             <p>Dear Father,</p>
-            <p>In accordance with the requirements of Canon Law, I am writing to notify you that the following person, who was baptized at your parish, has received the Sacrament of <strong><?= e($type) ?></strong> as detailed below:</p>
+            <p>In accordance with the requirements of Canon Law, I am writing to notify you that the following person, who was baptized at your parish/mission, has received the Sacrament of <strong><?= e($type) ?></strong> as detailed below:</p>
 
             <div class="info-grid">
                 <span class="label">Full Name:</span>
@@ -193,7 +193,7 @@ if ($type === 'Marriage') {
                 <span class="label">Date of Sacrament:</span>
                 <span><?= formatDate($sacrament_data['date_of_marriage'] ?? $sacrament_data['date_of_confirmation'] ?? '') ?></span>
 
-                <span class="label">Place / Parish:</span>
+                <span class="label">Place / Parish / Mission:</span>
                 <span><?= e($sacrament_data['parish_name'] ?? '') ?></span>
 
                 <?php if ($type === 'Marriage'): ?>
@@ -211,7 +211,7 @@ if ($type === 'Marriage') {
             <p>With Every Best Wish,</p>
             <div class="sig-block">
                 <div class="sig-line">
-                    <strong>Parish Priest / Secretary</strong><br>
+                    <strong>Parish/Mission Priest / Secretary</strong><br>
                     Date: <?= date('d M Y') ?>
                 </div>
             </div>

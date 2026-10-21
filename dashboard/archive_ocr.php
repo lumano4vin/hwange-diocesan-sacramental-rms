@@ -164,7 +164,7 @@ require_role('admin');
                             <div class="form-group" style="grid-column: span 2;">
                                 <label style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; display: block;">Parish / Mission of Origin</label>
                                 <select name="parish_id" id="t-parish" class="input-field" style="width: 100%;" required>
-                                    <option value="">Select Parish...</option>
+                                    <option value="">Select Parish / Mission...</option>
                                     <?php 
                                     $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY parish_name");
                                     foreach($parishes as $p) echo "<option value='{$p['parish_id']}'>".h($p['parish_name'])."</option>";

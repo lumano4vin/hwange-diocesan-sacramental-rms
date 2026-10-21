@@ -839,14 +839,14 @@ if ($person) {
                 <?php else: ?>
                     <div class="qr-cell" id="qr-container" style="min-width: 80px;">
                         <div style="width: 58px; height: 58px; border: 1px dashed #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #94a3b8; font-family: 'Inter', sans-serif; margin: 0 auto;">
-                            PARISH STAMP
+                            PARISH/MISSION STAMP
                         </div>
                     </div>
                 <?php endif; ?>
 
                 <div class="signature-cell">
                     <div class="sig-line"></div>
-                    <div class="sig-title">Parish Priest / Rector</div>
+                    <div class="sig-title">Parish/Mission Priest / Rector</div>
                     <div style="font-size: 10px; color: #64748b; font-family: 'Inter', sans-serif; margin-top: 3px;">
                         Diocese of Hwange, Zimbabwe
                     </div>

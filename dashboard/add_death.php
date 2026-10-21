@@ -142,7 +142,7 @@ try {
                         $is_admin = ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'chancellor');
                         ?>
                         <div class="form-group" style="margin-top: 1.25rem;">
-                            <label>Parish of Origin / Funeral</label>
+                            <label>Parish / Mission of Origin / Funeral</label>
                             <?php if ($is_admin): 
                                 $parish_options = array_map(function($p) {
                                     return ['value' => (string)$p['parish_id'], 'text' => $p['parish_name']];
@@ -150,7 +150,7 @@ try {
                                 $options_json = htmlspecialchars(json_encode($parish_options), ENT_QUOTES, 'UTF-8');
                             ?>
                             <div class="searchable-select-container">
-                                <input type="text" class="searchable-input" placeholder="Type to search Parish..." 
+                                <input type="text" class="searchable-input" placeholder="Type to search Parish/Mission..." 
                                        data-options='<?php echo $options_json; ?>'
                                        autocomplete="off" required>
                                 <input type="hidden" name="parish_id" id="parish_id" value="" required>

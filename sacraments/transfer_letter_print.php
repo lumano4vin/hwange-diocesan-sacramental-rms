@@ -226,14 +226,14 @@ if (!$record) die("Parishioner record not found.");
 
             <p>To the best of our knowledge, they are a practicing Catholic in good standing, free from canonical censures, and are fully eligible for the purpose of: <strong><?php echo h($reason); ?></strong>.</p>
             
-            <p>If you require any further information or clarification, please do not hesitate to contact our parish office.</p>
+            <p>If you require any further information or clarification, please do not hesitate to contact our parish/mission office.</p>
 
             <p>Sincerely in Christ,</p>
         </div>
 
         <div class="signature-block">
             <div class="seal-space">
-                Parish Seal
+                Parish/Mission Seal
             </div>
             <div class="signature-line-box">
                 <div class="signature-line"></div>

@@ -100,8 +100,8 @@ if (isset($_GET['mark_done'])) {
         </div>
 
         <div class="recipient">
-            To the Reverend Parish Priest,<br>
-            <strong><?php echo h($bap_parish ?: '[Enter Parish Name]'); ?></strong><br>
+            To the Reverend Parish/Mission Priest,<br>
+            <strong><?php echo h($bap_parish ?: '[Enter Parish/Mission Name]'); ?></strong><br>
             Catholic Church.
         </div>
 
@@ -111,9 +111,9 @@ if (isset($_GET['mark_done'])) {
 
         <div class="content">
             <p>Reverend and Dear Father,</p>
-            <p>In accordance with the requirements of Canon Law, I hereby notify you that the following person, who is recorded as having been baptized in your Parish, has contracted Holy Matrimony in this Parish.</p>
+            <p>In accordance with the requirements of Canon Law, I hereby notify you that the following person, who is recorded as having been baptized in your Parish/Mission, has contracted Holy Matrimony in this Parish/Mission.</p>
             
-            <p>Please ensure that a notation of this marriage is entered in the Baptismal Register of your Parish alongside the original entry of baptism.</p>
+            <p>Please ensure that a notation of this marriage is entered in the Baptismal Register of your Parish/Mission alongside the original entry of baptism.</p>
 
             <table class="data-table">
                 <tr>
@@ -156,10 +156,10 @@ if (isset($_GET['mark_done'])) {
 
         <div class="footer">
             <div class="signature-block">
-                Parish Priest / Administrator
+                Parish/Mission Priest / Administrator
             </div>
             <div style="width: 120px; height: 120px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 8pt; color: #ccc; border-radius: 50%;">
-                Parish Seal
+                Parish/Mission Seal
             </div>
         </div>
 

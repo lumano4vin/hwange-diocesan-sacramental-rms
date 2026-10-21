@@ -84,8 +84,8 @@ if (isset($_GET['mark_done'])) {
         </div>
 
         <div class="recipient">
-            To the Reverend Parish Priest,<br>
-            <strong><?php echo h($record['bap_parish'] ?: ($record['place_of_baptism'] ?: '[Enter Parish Name]')); ?></strong><br>
+            To the Reverend Parish/Mission Priest,<br>
+            <strong><?php echo h($record['bap_parish'] ?: ($record['place_of_baptism'] ?: '[Enter Parish/Mission Name]')); ?></strong><br>
             Catholic Church.
         </div>
 
@@ -95,7 +95,7 @@ if (isset($_GET['mark_done'])) {
 
         <div class="content">
             <p>Reverend and Dear Father,</p>
-            <p>I am writing to inform you of the death of the following person, who was baptized in your Parish. Please make the appropriate notation in your Baptismal Register.</p>
+            <p>I am writing to inform you of the death of the following person, who was baptized in your Parish/Mission. Please make the appropriate notation in your Baptismal Register.</p>
 
             <table class="data-table">
                 <tr>
@@ -108,7 +108,7 @@ if (isset($_GET['mark_done'])) {
                 </tr>
                 <tr>
                     <td class="label">Baptism Ref:</td>
-                    <td><?php echo (!empty($record['b_book']) || !empty($record['b_page'])) ? "Book: " . h($record['b_book']) . ", Page: " . h($record['b_page']) . ", Entry: " . h($record['b_entry']) : "Baptised Externally / Record Held at " . h($record['place_of_baptism'] ?: 'Parish of Baptism'); ?></td>
+                    <td><?php echo (!empty($record['b_book']) || !empty($record['b_page'])) ? "Book: " . h($record['b_book']) . ", Page: " . h($record['b_page']) . ", Entry: " . h($record['b_entry']) : "Baptised Externally / Record Held at " . h($record['place_of_baptism'] ?: 'Parish/Mission of Baptism'); ?></td>
                 </tr>
                 <tr>
                     <td class="label">Date of Death:</td>
@@ -135,10 +135,10 @@ if (isset($_GET['mark_done'])) {
 
         <div class="footer">
             <div class="signature-block">
-                Parish Priest / Administrator
+                Parish/Mission Priest / Administrator
             </div>
             <div style="width: 120px; height: 120px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 8pt; color: #ccc; border-radius: 50%;">
-                Parish Seal
+                Parish/Mission Seal
             </div>
         </div>
     </div>

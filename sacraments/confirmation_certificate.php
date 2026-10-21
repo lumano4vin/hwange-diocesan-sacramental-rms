@@ -538,7 +538,7 @@ $verify_urls = get_certificate_verification_url('confirmation', $id, $record['ve
                     </div>
                 </a>
                 <div class="signature-line" style="margin-top: 15px; margin-bottom: 6px;"></div>
-                <div style="font-size: 13px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;"><?php echo $t['priest'] ?? 'Parish Priest'; ?></div>
+                <div style="font-size: 13px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;"><?php echo $t['priest'] ?? 'Parish/Mission Priest'; ?></div>
                 <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;"><?php echo $t['date_issue'] ?? 'Date'; ?>: <?php echo date('d M Y'); ?></div>
                 <div class="heirloom-only" style="display: none; font-size: 8px; color: #cbd5e1; margin-top: 3px; font-family: monospace; letter-spacing: 0.5px;">GUID: <?php echo $record['guid']; ?></div>
             </div>

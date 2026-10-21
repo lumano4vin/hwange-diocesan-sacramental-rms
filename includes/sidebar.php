@@ -52,7 +52,7 @@ require_once 'version.php';
             <li class="<?php echo ($current_page == 'parishes.php' || $current_page == 'add_parish.php' || $current_page == 'edit_parish.php') ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>admin/parishes.php">
                     <ion-icon name="business-outline"></ion-icon>
-                    <span>Parishes</span>
+                    <span>Parishes / Missions</span>
                 </a>
             </li>
             <?php if ($is_admin): ?>
@@ -128,7 +128,7 @@ require_once 'version.php';
             <li class="<?php echo $current_page == 'parish_reports.php' ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>dashboard/parish_reports.php">
                     <ion-icon name="document-text-outline" style="color: var(--accent);"></ion-icon>
-                    <span>Parish Report Builder</span>
+                    <span>Parish / Mission Reports</span>
                 </a>
             </li>
             <li class="<?php echo ($current_page == 'annual_register_export.php') ? 'active' : ''; ?>">

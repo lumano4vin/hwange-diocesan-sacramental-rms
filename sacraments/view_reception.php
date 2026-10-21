@@ -106,7 +106,7 @@ $header_subtitle = "Profession of Faith & Reception into Full Communion";
                                     </p>
                                 </div>
                                 <div class="detail-item">
-                                    <label style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Parish of Reception</label>
+                                    <label style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Parish/Mission of Reception</label>
                                     <p style="color: white; font-weight: 600;"><?php echo h($record['parish_name']); ?></p>
                                 </div>
                             </div>

@@ -76,7 +76,7 @@ try {
             <!-- Mismatch / Warning Banners -->
             <div id="banner-no-baptism" class="alert-banner" style="display:none; background: rgba(245,158,11,0.1); border: 1px solid #f59e0b; color: #f59e0b; border-radius: 0.75rem; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: none;">
                 <ion-icon name="warning-outline" style="font-size: 1.3rem; vertical-align: middle;"></ion-icon>
-                <strong>No Baptism Record Found</strong> — This candidate has no linked baptism in the diocesan registry. The confirmation will still be saved, but no canonical baptismal notation will be generated. Please verify with the candidate's parish of baptism.
+                <strong>No Baptism Record Found</strong> — This candidate has no linked baptism in the diocesan registry. The confirmation will still be saved, but no canonical baptismal notation will be generated. Please verify with the candidate's parish/mission of baptism.
             </div>
 
             <div id="banner-new-person" class="alert-banner" style="display:none; background: rgba(56,189,248,0.1); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 0.75rem; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: none;">
@@ -164,7 +164,7 @@ try {
                                 $is_admin = ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'chancellor');
                                 ?>
                                 <div class="form-group">
-                                    <label>Parish of Celebration</label>
+                                    <label>Parish/Mission of Celebration</label>
                                     <?php if ($is_admin): 
                                         $parish_options = array_map(function($p) {
                                             return ['value' => (string)$p['parish_id'], 'text' => $p['parish_name']];
@@ -172,7 +172,7 @@ try {
                                         $options_json = htmlspecialchars(json_encode($parish_options), ENT_QUOTES, 'UTF-8');
                                     ?>
                                     <div class="searchable-select-container">
-                                        <input type="text" class="searchable-input" placeholder="Type to search Parish..." 
+                                        <input type="text" class="searchable-input" placeholder="Type to search Parish/Mission..." 
                                                data-options='<?php echo $options_json; ?>'
                                                autocomplete="off" required>
                                         <input type="hidden" name="parish_id" id="parish_id" value="" required>

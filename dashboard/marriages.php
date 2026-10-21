@@ -120,9 +120,9 @@ $marriages = db_fetchAll($sql, $params);
                     </div>
 
                     <div class="filter-group">
-                        <label>Parish</label>
+                        <label>Parish / Mission</label>
                         <select name="parish" onchange="this.form.submit()">
-                            <option value="">All Parishes</option>
+                            <option value="">All Parishes / Missions</option>
                             <?php foreach($parishes_list as $p): ?>
                                 <option value="<?php echo $p['parish_id']; ?>" <?php echo $parish_filter == $p['parish_id'] ? 'selected' : ''; ?>>
                                     <?php echo h($p['parish_name']); ?>

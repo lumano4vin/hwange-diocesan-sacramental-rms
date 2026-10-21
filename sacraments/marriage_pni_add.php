@@ -453,9 +453,9 @@ $header_subtitle = "Canonical investigation of parties intending to contract Hol
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Parish where Banns are Published</label>
+                                <label class="form-label">Parish / Mission where Banns are Published</label>
                                 <select name="banns_parish_id" class="input-field">
-                                    <option value="">-- Select Parish --</option>
+                                    <option value="">-- Select Parish / Mission --</option>
                                     <?php foreach ($parishes as $pa): ?>
                                         <option value="<?php echo $pa['parish_id']; ?>"><?php echo h($pa['parish_name']); ?></option>
                                     <?php endforeach; ?>

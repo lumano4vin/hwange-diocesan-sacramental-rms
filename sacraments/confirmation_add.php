@@ -182,9 +182,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">Candidate not listed? Select "New / Unregistered Candidate" above to enter their details directly.</p>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Parish of Celebration *</label>
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Parish/Mission of Celebration *</label>
                                     <select name="parish_id" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
-                                        <option value="">-- Select Parish --</option>
+                                        <option value="">-- Select Parish/Mission --</option>
                                         <?php foreach ($parishes as $pa): ?>
                                             <option value="<?php echo $pa['parish_id']; ?>" <?php echo (isset($_SESSION['parish_id']) && $_SESSION['parish_id'] == $pa['parish_id']) ? 'selected' : ''; ?>><?php echo h($pa['parish_name']); ?></option>
                                         <?php endforeach; ?>

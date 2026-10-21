@@ -112,7 +112,7 @@ $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY pa
                         $parish_options = array_map(function($p) {
                             return ['value' => (string)$p['parish_id'], 'text' => $p['parish_name']];
                         }, $parishes);
-                        array_unshift($parish_options, ['value' => '', 'text' => 'Chancery (All Parishes)']);
+                        array_unshift($parish_options, ['value' => '', 'text' => 'Chancery (All Parishes / Missions)']);
                         $options_json = htmlspecialchars(json_encode($parish_options), ENT_QUOTES, 'UTF-8');
                         ?>
                         <div class="form-group">
@@ -120,7 +120,7 @@ $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY pa
                             <div class="searchable-select-container">
                                 <input type="text" class="searchable-input" placeholder="Type to search Parish or Mission..." 
                                        data-options='<?php echo $options_json; ?>'
-                                       autocomplete="off" value="Chancery (All Parishes)">
+                                       autocomplete="off" value="Chancery (All Parishes / Missions)">
                                 <input type="hidden" name="parish_id" id="parish_id" value="">
                                 <div class="search-select-results"></div>
                             </div>

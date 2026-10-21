@@ -486,7 +486,7 @@ $verify_urls = get_certificate_verification_url('ordination', $id, $record['veri
             <?php endif; ?>
             <div class="sacrament-declaration"><?php echo h($title_display); ?></div>
 
-            <p><?php echo $t['in_parish'] ?? 'in the Parish of'; ?></p>
+            <p><?php echo $t['in_parish'] ?? 'in the Parish/Mission of'; ?></p>
             <div class="field-value">
                 <?php echo h($record['place'] ?: $record['parish_name']); ?>
             </div>

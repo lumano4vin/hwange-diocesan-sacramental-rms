@@ -128,7 +128,7 @@ if (!is_admin() && !empty($_SESSION['parish_id'])) {
                             <?php if (is_admin()): ?>
                             <div style="flex: 1; min-width: 180px;">
                                 <select name="parish_id" onchange="this.form.submit()" style="width: 100%; padding: 0.85rem 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 1rem; color: white; font-weight: 600;">
-                                    <option value="">All Parishes (Diocesan-Wide)</option>
+                                    <option value="">All Parishes / Missions (Diocesan-Wide)</option>
                                     <?php foreach ($all_parishes as $p_item): ?>
                                         <option value="<?php echo $p_item['parish_id']; ?>" <?php echo ($selected_parish_id == $p_item['parish_id']) ? 'selected' : ''; ?>>
                                             <?php echo h($p_item['parish_name']); ?>

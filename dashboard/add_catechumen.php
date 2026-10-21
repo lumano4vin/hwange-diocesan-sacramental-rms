@@ -59,9 +59,9 @@ $user_parish = $_SESSION['parish_id'];
                                 <input type="date" name="dob" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label>Parish *</label>
+                                <label>Parish / Mission *</label>
                                 <select name="parish_id" class="form-control" required <?php echo $user_parish ? 'disabled' : ''; ?>>
-                                    <option value="">Select Parish...</option>
+                                    <option value="">Select Parish / Mission...</option>
                                     <?php foreach ($parishes as $p): ?>
                                         <option value="<?php echo $p['parish_id']; ?>" <?php echo ($user_parish == $p['parish_id']) ? 'selected' : ''; ?>>
                                             <?php echo h($p['parish_name']); ?>

@@ -97,7 +97,7 @@ $header_subtitle = "Detailed canonical view for " . h($record['first_name'] . ' 
 
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                                     <div>
-                                        <span style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Parish of Confirmation</span>
+                                        <span style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Parish/Mission of Confirmation</span>
                                         <span style="font-size: 1.1rem; color: white;"><?php echo h($record['parish_name']); ?></span>
                                     </div>
                                     <div>
