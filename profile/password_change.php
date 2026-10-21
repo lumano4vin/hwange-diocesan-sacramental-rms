@@ -82,6 +82,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Update Password</button>
+            <div style="text-align: center; margin-top: 1.25rem;">
+                <a href="../dashboard/index.php" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none; font-weight: 500;">
+                    Remind Me Later &bull; Continue to Dashboard &rarr;
+                </a>
+            </div>
         </form>
     </div>
     <script src="../assets/js/main.js?v=1.6.2"></script>

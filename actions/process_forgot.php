@@ -14,8 +14,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('../forgot_password.php?status=empty');
     }
 
-    // Check if user exists
-    $user = db_fetch("SELECT user_id FROM users WHERE username = ?", [$username]);
+    // Resilient user lookup
+    $clean_input = strtolower($username);
+    $clean_no_domain = preg_replace('/@hwangediocese\.org$/i', '', $clean_input);
+    $with_underscore = str_replace('.', '_', $clean_no_domain);
+    $with_dot = str_replace('_', '.', $clean_no_domain);
+
+    $aliases = [
+        'nicolas_mnkamba' => 'nicolas_nkamba',
+        'nicolas.mnkamba' => 'nicolas_nkamba',
+        'mnkamba' => 'nicolas_nkamba',
+        'nkamba' => 'nicolas_nkamba',
+        'tshongokwe' => 'albert_mudenda',
+        'albert_mudenda' => 'Tshongokwe',
+        'albert.mudenda' => 'Tshongokwe',
+        'linus_dube' => 'linos_dube',
+        'linus.dube' => 'linos_dube',
+        'timothy_peacock' => 'tim_peacock',
+        'timothy.peacock' => 'tim_peacock',
+    ];
+
+    $candidates = array_unique(array_filter([
+        $username,
+        $clean_input,
+        $clean_no_domain,
+        $with_underscore,
+        $with_dot,
+        $aliases[$clean_input] ?? null,
+        $aliases[$clean_no_domain] ?? null,
+        $aliases[$with_underscore] ?? null,
+        $aliases[$with_dot] ?? null,
+    ]));
+
+    $placeholders = implode(',', array_fill(0, count($candidates), '?'));
+    $sql = "SELECT user_id FROM users WHERE 
+        LOWER(username) IN ($placeholders) 
+        OR LOWER(email) IN ($placeholders) 
+        OR LOWER(REPLACE(username, '.', '_')) IN ($placeholders) 
+        OR LOWER(REPLACE(username, '_', '.')) IN ($placeholders) 
+        LIMIT 1";
+
+    $params = array_map('strtolower', array_merge($candidates, $candidates, $candidates, $candidates));
+    $user = db_fetch($sql, $params);
 
     if ($user) {
         // Generate secure token

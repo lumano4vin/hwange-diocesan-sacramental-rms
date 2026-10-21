@@ -14,9 +14,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($email) {
         $pdo = getDB();
-        // Check if user exists with this email
-        $stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
+        // Check if user exists with this email or username
+        $clean_input = strtolower(trim($email));
+        $clean_no_domain = preg_replace('/@hwangediocese\.org$/i', '', $clean_input);
+        $with_underscore = str_replace('.', '_', $clean_no_domain);
+        $with_dot = str_replace('_', '.', $clean_no_domain);
+
+        $stmt = $pdo->prepare("SELECT user_id FROM users WHERE 
+            LOWER(email) = ? OR LOWER(username) = ? 
+            OR LOWER(email) = ? OR LOWER(username) = ? 
+            OR LOWER(REPLACE(username, '.', '_')) = ? 
+            OR LOWER(REPLACE(username, '_', '.')) = ? 
+            LIMIT 1");
+        $stmt->execute([$clean_input, $clean_input, $clean_no_domain, $clean_no_domain, $with_underscore, $with_dot]);
         $user_id = $stmt->fetchColumn();
         
         if ($user_id) {
@@ -68,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php else: ?>
             <form method="POST">
                 <div class="input-group">
-                    <label>Registered Email</label>
-                    <input type="email" name="email" required placeholder="name@hwangediocese.org">
+                    <label>Registered Email or Username</label>
+                    <input type="text" name="email" required placeholder="username or email" autocapitalize="none" autocorrect="off" spellcheck="false">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">File Reset Request</button>
             </form>

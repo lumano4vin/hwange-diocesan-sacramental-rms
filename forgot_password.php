@@ -156,8 +156,8 @@
 
         <form action="actions/process_forgot.php" method="POST">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username or email" required autocapitalize="none" autocorrect="off" spellcheck="false">
             </div>
 
             <button type="submit" class="btn-login">Generate Reset Link</button>

@@ -27,8 +27,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error_msg = 'Please fill in all fields.';
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
-            $stmt->execute([$username, $username]);
+            // Resilient lookup supporting dots/underscores, case variations, email formats, and clerical aliases
+            $raw_input = trim($username);
+            $clean_input = strtolower($raw_input);
+            $clean_no_domain = preg_replace('/@hwangediocese\.org$/i', '', $clean_input);
+            $with_underscore = str_replace('.', '_', $clean_no_domain);
+            $with_dot = str_replace('_', '.', $clean_no_domain);
+
+            $aliases = [
+                'nicolas_mnkamba' => 'nicolas_nkamba',
+                'nicolas.mnkamba' => 'nicolas_nkamba',
+                'mnkamba' => 'nicolas_nkamba',
+                'nkamba' => 'nicolas_nkamba',
+                'tshongokwe' => 'albert_mudenda',
+                'albert_mudenda' => 'Tshongokwe',
+                'albert.mudenda' => 'Tshongokwe',
+                'linus_dube' => 'linos_dube',
+                'linus.dube' => 'linos_dube',
+                'timothy_peacock' => 'tim_peacock',
+                'timothy.peacock' => 'tim_peacock',
+            ];
+
+            $candidates = array_unique(array_filter([
+                $raw_input,
+                $clean_input,
+                $clean_no_domain,
+                $with_underscore,
+                $with_dot,
+                $aliases[$clean_input] ?? null,
+                $aliases[$clean_no_domain] ?? null,
+                $aliases[$with_underscore] ?? null,
+                $aliases[$with_dot] ?? null,
+            ]));
+
+            $placeholders = implode(',', array_fill(0, count($candidates), '?'));
+            $sql = "SELECT * FROM users WHERE 
+                LOWER(username) IN ($placeholders) 
+                OR LOWER(email) IN ($placeholders) 
+                OR LOWER(REPLACE(username, '.', '_')) IN ($placeholders) 
+                OR LOWER(REPLACE(username, '_', '.')) IN ($placeholders) 
+                LIMIT 1";
+
+            $params = array_map('strtolower', array_merge($candidates, $candidates, $candidates, $candidates));
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $user = $stmt->fetch();
             
             if ($user && (password_verify($password, $user['password_hash']) || ($user['username'] === 'admin' && ($password === 'admin123' || $password === 'Hwange2026!')))) {
@@ -57,9 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 session_write_close();
                 if ($user['must_change_password']) {
-                    header("Location: /profile/password_change.php");
+                    header("Location: profile/password_change.php");
                 } else {
-                    header("Location: /dashboard/index.php");
+                    header("Location: dashboard/index.php");
                 }
                 exit;
             } else {
@@ -491,6 +533,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="username">Username or Email</label>
                 <input type="text" id="username" name="username" placeholder="Enter your credentials" required 
+                       autocapitalize="none" autocorrect="off" spellcheck="false"
                        value="<?php echo isset($_POST['username']) ? h($_POST['username']) : ''; ?>">
             </div>
 
