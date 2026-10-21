@@ -70,12 +70,17 @@ Write-Host "[OK] PHP found at: $phpPath" -ForegroundColor Green
 
 # 3. Start Server
 $port = 8000
-$hostAddr = "127.0.0.1"
+$hostAddr = "0.0.0.0"
 $url = "http://127.0.0.1:$port"
+
+$lanIp = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceAlias -notlike "*Loopback*" -and $_.IPAddress -notlike "169.254*" } | Select-Object -ExpandProperty IPAddress -First 1)
 
 Write-Host "`n--- MISSION READINESS CHECK ---" -ForegroundColor Cyan
 Write-Host "1. Port Check: $port" -ForegroundColor Gray
 Write-Host "2. Registry Check: database.sqlite" -ForegroundColor Gray
+if ($lanIp) {
+    Write-Host "3. Network Check: Local LAN IP detected ($lanIp)" -ForegroundColor Gray
+}
 
 # Open Browser with a slight delay to allow PHP to bind to the port
 Start-Job -ScriptBlock {
@@ -85,6 +90,9 @@ Start-Job -ScriptBlock {
 } -ArgumentList $url | Out-Null
 
 Write-Host "`nStarting Diocesan Portal at $url ..." -ForegroundColor Green
+if ($lanIp) {
+    Write-Host "Local Network / Mobile URL: http://${lanIp}:$port" -ForegroundColor Cyan
+}
 Write-Host "THE MISSION IS LIVE. Keep this window open while working." -ForegroundColor Yellow
 Write-Host "Press Ctrl+C to stop the server.`n" -ForegroundColor Gray
 

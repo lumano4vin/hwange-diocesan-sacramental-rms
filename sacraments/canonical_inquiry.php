@@ -559,6 +559,27 @@ if ($person) {
             text-align: center;
         }
 
+        .qr-cell #qrcode {
+            background: #ffffff;
+            padding: 4px;
+            border-radius: 6px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #cbd5e1;
+            margin-bottom: 4px;
+        }
+
+        .qr-cell #qrcode canvas, .qr-cell #qrcode img {
+            display: block;
+            width: 72px;
+            height: 72px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+
         .signature-cell {
             text-align: center;
             min-width: 200px;
@@ -899,16 +920,24 @@ if ($person) {
         // Initialize QR code if verify_urls available
         <?php if ($verify_urls): ?>
         (function() {
-            var qrTarget = document.getElementById("qrcode");
-            if (qrTarget && typeof QRCode !== 'undefined') {
-                new QRCode(qrTarget, {
-                    text: <?php echo json_encode($verify_urls['qr_url']); ?>,
-                    width: 58,
-                    height: 58,
-                    colorDark : "#0f172a",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.M
-                });
+            function renderQR() {
+                var qrTarget = document.getElementById("qrcode");
+                if (qrTarget && typeof QRCode !== 'undefined') {
+                    qrTarget.innerHTML = '';
+                    new QRCode(qrTarget, {
+                        text: <?php echo json_encode($verify_urls['qr_url']); ?>,
+                        width: 256,
+                        height: 256,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.M
+                    });
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener("DOMContentLoaded", renderQR);
+            } else {
+                renderQR();
             }
         })();
         <?php endif; ?>

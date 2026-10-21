@@ -1002,19 +1002,25 @@ function get_certificate_verification_url($type, $id, $hash = '', $guid = '') {
     $host_only = explode(':', $current_host)[0];
     $is_local = in_array($host_only, ['localhost', '127.0.0.1', '::1']);
     
-    // For QR codes on physical printed certificates, default to the live public portal so smartphones can resolve it anywhere:
-    $public_base = 'https://hwange-diocesan-sacramental-rms.vercel.app';
+    // Configurable public base URL (fallback to Vercel production portal)
+    $configured_base = getenv('RMS_PUBLIC_BASE_URL') ?: (getenv('VERIFICATION_BASE_URL') ?: '');
+    $public_base = !empty($configured_base) ? rtrim($configured_base, '/') : 'https://hwange-diocesan-sacramental-rms.vercel.app';
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ? 'https://' : 'http://';
     
     $base_for_qr = $is_local ? $public_base : ($protocol . $current_host);
     $base_for_click = $protocol . $current_host;
     
-    $params = [
-        'type' => $type,
-        'id'   => $id
-    ];
-    if (!empty($hash)) $params['hash'] = $hash;
-    if (!empty($guid)) $params['guid'] = $guid;
+    // Optimize QR code data payload for fast smartphone camera detection:
+    // If $guid is provided, it is globally unique and significantly reduces the QR matrix size for rapid recognition.
+    $params = [];
+    if (!empty($guid)) {
+        $params['guid'] = $guid;
+        if (!empty($type)) $params['type'] = $type;
+    } else {
+        $params['type'] = $type;
+        $params['id']   = $id;
+        if (!empty($hash)) $params['hash'] = $hash;
+    }
     $query = http_build_query($params);
     
     return [

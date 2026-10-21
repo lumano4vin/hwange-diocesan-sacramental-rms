@@ -114,7 +114,22 @@ $verify_urls = get_certificate_verification_url('confirmation', $id, $record['ve
             .footer { margin-top: auto !important; padding-top: 4px !important; }
             .seal { width: 70px !important; height: 70px !important; font-size: 7.5px !important; padding: 4px !important; }
             .signature-block { width: 220px !important; }
-            .signature-block #qrcode canvas, .signature-block #qrcode img { width: 48px !important; height: 48px !important; }
+            .signature-block #qrcode { 
+                background: #ffffff !important; 
+                padding: 3px !important; 
+                border: 1px solid #cbd5e1 !important; 
+                border-radius: 4px !important; 
+                box-shadow: none !important; 
+                display: inline-flex !important; 
+                margin-bottom: 3px !important; 
+            }
+            .signature-block #qrcode canvas, .signature-block #qrcode img { 
+                width: 72px !important; 
+                height: 72px !important; 
+                image-rendering: -webkit-optimize-contrast !important; 
+                image-rendering: crisp-edges !important; 
+                image-rendering: pixelated !important; 
+            }
             .signature-line { margin-top: 6px !important; margin-bottom: 2px !important; }
             .signature-label { font-size: 10.5px !important; }
             .canonical-meta { font-size: 7.5px !important; line-height: 1.2 !important; margin-top: 4px !important; }
@@ -325,6 +340,27 @@ $verify_urls = get_certificate_verification_url('confirmation', $id, $record['ve
             width: 250px;
         }
 
+        .signature-block #qrcode {
+            background: #ffffff;
+            padding: 6px;
+            border-radius: 8px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            margin-bottom: 6px;
+        }
+
+        .signature-block #qrcode canvas, .signature-block #qrcode img {
+            display: block;
+            width: 90px;
+            height: 90px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+
         .signature-line {
             border-top: 2px solid var(--red);
             margin-top: 40px;
@@ -510,19 +546,27 @@ $verify_urls = get_certificate_verification_url('confirmation', $id, $record['ve
  </div>
 
         <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                var qrContainer = document.getElementById("qrcode");
-                if (qrContainer && typeof QRCode !== 'undefined') {
-                    new QRCode(qrContainer, {
-                        text: <?php echo json_encode($verify_urls['qr_url']); ?>,
-                        width: 64,
-                        height: 64,
-                        colorDark : "#0f172a",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.M
-                    });
+            (function() {
+                function renderQR() {
+                    var qrContainer = document.getElementById("qrcode");
+                    if (qrContainer && typeof QRCode !== 'undefined') {
+                        qrContainer.innerHTML = '';
+                        new QRCode(qrContainer, {
+                            text: <?php echo json_encode($verify_urls['qr_url']); ?>,
+                            width: 256,
+                            height: 256,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.M
+                        });
+                    }
                 }
-            });
+                if (document.readyState === 'loading') {
+                    document.addEventListener("DOMContentLoaded", renderQR);
+                } else {
+                    renderQR();
+                }
+            })();
         </script>
         
         <div class="canonical-meta heirloom-hide">
