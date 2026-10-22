@@ -275,7 +275,13 @@ require_once 'version.php';
                 </div>
                 </div>
 
-                <div style="margin-top: 1.25rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                <div style="margin-top: 1rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.75rem;">
+                    <a href="<?php echo $base; ?>Hwange_Diocesan_Sacramental_RMS_Manual.pdf" target="_blank" download style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.65rem; color: #38bdf8; text-decoration: none; font-weight: 700; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); padding: 5px 10px; border-radius: 6px; width: 85%;">
+                        <ion-icon name="book-outline" style="font-size: 0.85rem;"></ion-icon> User Manual (.pdf)
+                    </a>
+                </div>
+
+                <div style="margin-top: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.75rem;">
                     <p style="font-size: 0.65rem; color: var(--accent); margin: 0 0 5px 0; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Authorized</p>
                     <p style="font-size: 0.6rem; color: var(--text-muted); margin: 0; font-weight: 600; line-height: 1.4;">Licensed for the Catholic Diocese of Hwange. <br> &copy; 2026 LumSystems Architecture.</p>
                     <div style="margin-top: 0.6rem; display: flex; justify-content: center; gap: 0.4rem; opacity: 0.7;">

@@ -179,6 +179,16 @@ $user_role = ucfirst($_SESSION['role']);
                                     Download Archive (.sqlite)
                                 </a>
                             </div>
+                            <div class="info-item" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <label style="color: #38bdf8; font-weight: 700;">System Usage & Operational Manual</label>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Comprehensive pastoral and canonical user manual (PDF) covering registries, PNI, handovers, and backups.</p>
+                                </div>
+                                <a href="../Hwange_Diocesan_Sacramental_RMS_Manual.pdf" target="_blank" download class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.6rem 1.2rem; font-size: 0.85rem; text-decoration: none; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+                                    <ion-icon name="book-outline"></ion-icon>
+                                    Download Manual (.pdf)
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
