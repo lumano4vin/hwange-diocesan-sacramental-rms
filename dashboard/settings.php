@@ -184,7 +184,7 @@ $user_role = ucfirst($_SESSION['role']);
                                     <label style="color: #38bdf8; font-weight: 700;">System Usage & Operational Manual</label>
                                     <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Comprehensive pastoral and canonical user manual (PDF) covering registries, PNI, handovers, and backups.</p>
                                 </div>
-                                <a href="../Hwange_Diocesan_Sacramental_RMS_Manual.pdf" target="_blank" download class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.6rem 1.2rem; font-size: 0.85rem; text-decoration: none; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+                                <a href="../download_manual.php" target="_blank" download class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.6rem 1.2rem; font-size: 0.85rem; text-decoration: none; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
                                     <ion-icon name="book-outline"></ion-icon>
                                     Download Manual (.pdf)
                                 </a>

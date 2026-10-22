@@ -31,8 +31,26 @@ if (file_exists($file) && is_file($file)) {
         require $file;
         exit();
     } else {
-        // For static files
-        return false;
+        // Stream static files directly
+        $mimes = [
+            'pdf' => 'application/pdf',
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'svg' => 'image/svg+xml',
+            'css' => 'text/css',
+            'js' => 'application/javascript',
+            'json' => 'application/json',
+            'html' => 'text/html; charset=UTF-8'
+        ];
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        $content_type = $mimes[$ext] ?? 'application/octet-stream';
+        header("Content-Type: $content_type");
+        header("Content-Length: " . filesize($file));
+        header("Content-Disposition: inline; filename=\"" . basename($file) . "\"");
+        header("Cache-Control: public, max-age=86400");
+        readfile($file);
+        exit();
     }
 } else {
     // Check if the route is for index.php at root

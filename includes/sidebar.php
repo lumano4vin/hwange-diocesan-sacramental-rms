@@ -276,7 +276,7 @@ require_once 'version.php';
                 </div>
 
                 <div style="margin-top: 1rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.75rem;">
-                    <a href="<?php echo $base; ?>Hwange_Diocesan_Sacramental_RMS_Manual.pdf" target="_blank" download style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.65rem; color: #38bdf8; text-decoration: none; font-weight: 700; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); padding: 5px 10px; border-radius: 6px; width: 85%;">
+                    <a href="<?php echo $base; ?>download_manual.php" target="_blank" download style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.65rem; color: #38bdf8; text-decoration: none; font-weight: 700; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); padding: 5px 10px; border-radius: 6px; width: 85%;">
                         <ion-icon name="book-outline" style="font-size: 0.85rem;"></ion-icon> User Manual (.pdf)
                     </a>
                 </div>
