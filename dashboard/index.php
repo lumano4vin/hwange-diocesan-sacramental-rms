@@ -219,7 +219,7 @@ $is_admin_or_chancellor = ($_SESSION['role'] === 'admin' || $_SESSION['role'] ==
 if ($is_admin_or_chancellor || empty($user_parish_id)) {
     $today_count = db_fetch("SELECT COUNT(*) as count FROM audit_logs WHERE DATE(created_at) = ? AND action_type = 'CREATE'", [$today])['count'] ?? 0;
 } else {
-    $today_count = db_fetch("SELECT COUNT(*) as count FROM audit_logs WHERE DATE(created_at) = ? AND action_type = 'CREATE' AND (user_id = ? OR parish_id = ?)", [$today, $_SESSION['user_id'], $user_parish_id])['count'] ?? 0;
+    $today_count = db_fetch("SELECT COUNT(*) as count FROM audit_logs a JOIN users u ON a.user_id = u.user_id WHERE DATE(a.created_at) = ? AND a.action_type = 'CREATE' AND (a.user_id = ? OR u.parish_id = ?)", [$today, $_SESSION['user_id'], $user_parish_id])['count'] ?? 0;
 }
 
 // 4. Pending Verification Queue (Authorized Roles Only)
@@ -305,7 +305,7 @@ if ($is_admin_or_chancellor || empty($user_parish_id)) {
         SELECT a.*, u.full_name 
         FROM audit_logs a 
         JOIN users u ON a.user_id = u.user_id 
-        WHERE a.user_id = ? OR a.parish_id = ?
+        WHERE a.user_id = ? OR u.parish_id = ?
         ORDER BY a.created_at DESC 
         LIMIT 5
     ", [$_SESSION['user_id'], $user_parish_id]);
