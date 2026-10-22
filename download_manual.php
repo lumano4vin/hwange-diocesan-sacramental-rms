@@ -4,6 +4,7 @@
  * User Manual PDF Streamer
  */
 
+// 1. Check if the physical PDF file exists on disk
 $candidate_paths = [
     __DIR__ . '/Hwange_Diocesan_Sacramental_RMS_Manual.pdf',
     __DIR__ . '/docs/Hwange_Diocesan_Sacramental_RMS_Manual.pdf',
@@ -30,7 +31,27 @@ if ($pdf_file) {
     exit();
 }
 
-// Fallback to HTML version if PDF binary was stripped in serverless bundling
+// 2. Resilient Fallback: Stream directly from embedded binary PHP data
+$embedded_file = __DIR__ . '/includes/manual_pdf_data.php';
+if (!file_exists($embedded_file)) {
+    $embedded_file = dirname(__DIR__) . '/includes/manual_pdf_data.php';
+}
+
+if (file_exists($embedded_file)) {
+    require_once $embedded_file;
+    if (function_exists('get_embedded_manual_pdf_bytes')) {
+        $bytes = get_embedded_manual_pdf_bytes();
+        header('Content-Type: application/pdf');
+        header('Content-Length: ' . strlen($bytes));
+        header('Content-Disposition: inline; filename="Hwange_Diocesan_Sacramental_RMS_Manual.pdf"');
+        header('Cache-Control: public, max-age=86400');
+        header('Accept-Ranges: bytes');
+        echo $bytes;
+        exit();
+    }
+}
+
+// 3. Fallback to HTML version
 $html_paths = [
     __DIR__ . '/docs/Hwange_Diocesan_Sacramental_RMS_Manual.html',
     dirname(__DIR__) . '/docs/Hwange_Diocesan_Sacramental_RMS_Manual.html',
