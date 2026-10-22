@@ -8,11 +8,43 @@ require_once '../includes/functions.php';
 
 require_login();
 
-$id = $_GET['id'] ?? null;
+$id = $_GET['id'] ?? $_GET['person_id'] ?? $_GET['parishioner_id'] ?? null;
 $destination = $_GET['destination'] ?? 'To Whom It May Concern';
 $reason = $_GET['reason'] ?? 'General Reference';
 
-if (!$id) die("Parishioner ID required.");
+if (empty($id)) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Parishioner ID Required - Hwange RMS</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+        <style>
+            body { margin: 0; padding: 2rem; background: #0f172a; color: white; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
+            .error-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 2.5rem; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+            h2 { font-family: 'Outfit', sans-serif; margin: 0 0 0.75rem 0; color: #f87171; font-size: 1.5rem; }
+            p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin: 0 0 2rem 0; }
+            .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+            .btn { padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; text-decoration: none; cursor: pointer; border: none; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; }
+            .btn-primary { background: #1e3a8a; color: white; }
+            .btn-secondary { background: rgba(255,255,255,0.1); color: #cbd5e1; }
+        </style>
+    </head>
+    <body>
+        <div class="error-card">
+            <h2>Parishioner ID Required</h2>
+            <p>To preview or print a Letter of Good Standing, please select a parishioner from the directory.</p>
+            <div class="btn-group">
+                <a href="../dashboard/letters.php" class="btn btn-primary">Return to Directory</a>
+                <button onclick="window.close()" class="btn btn-secondary">Close Tab</button>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 // Fetch parishioner and their baptismal details
 $record = db_fetch("
@@ -26,7 +58,39 @@ $record = db_fetch("
     WHERE p.person_id = ?
 ", [$id]);
 
-if (!$record) die("Parishioner record not found.");
+if (!$record) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Record Not Found - Hwange RMS</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+        <style>
+            body { margin: 0; padding: 2rem; background: #0f172a; color: white; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
+            .error-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 2.5rem; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+            h2 { font-family: 'Outfit', sans-serif; margin: 0 0 0.75rem 0; color: #f87171; font-size: 1.5rem; }
+            p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin: 0 0 2rem 0; }
+            .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+            .btn { padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; text-decoration: none; cursor: pointer; border: none; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; }
+            .btn-primary { background: #1e3a8a; color: white; }
+            .btn-secondary { background: rgba(255,255,255,0.1); color: #cbd5e1; }
+        </style>
+    </head>
+    <body>
+        <div class="error-card">
+            <h2>Record Not Found</h2>
+            <p>The requested parishioner canonical profile could not be located in the diocesan database.</p>
+            <div class="btn-group">
+                <a href="../dashboard/letters.php" class="btn btn-primary">Return to Directory</a>
+                <button onclick="window.close()" class="btn btn-secondary">Close Tab</button>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 ?>
 <!DOCTYPE html>

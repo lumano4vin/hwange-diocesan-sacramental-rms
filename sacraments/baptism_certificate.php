@@ -131,11 +131,21 @@ $orders_notation = db_fetch("
                 margin: 2px 0 !important;
                 font-size: 17px !important;
             }
-            .header { margin-bottom: 4px !important; }
+            .header { margin-bottom: 6px !important; }
             .diocese-name { font-size: 20px !important; letter-spacing: 2px !important; }
             .diocese-sub { font-size: 10px !important; letter-spacing: 2px !important; margin-top: 1px !important; }
             .certificate-title { font-size: 34px !important; margin: 2px 0 !important; line-height: 1.1 !important; }
-            .content { font-size: 13.5px !important; line-height: 1.25 !important; }
+            .content { 
+                font-size: 13.5px !important; 
+                line-height: 1.25 !important; 
+                flex: 1 1 auto !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                margin: auto 0 !important;
+                width: 100% !important;
+            }
             .content p { margin: 4px 0 !important; }
             .field-value { font-size: 18px !important; padding-bottom: 2px !important; min-width: 260px !important; }
             .field-label { font-size: 9.5px !important; margin-top: 5px !important; letter-spacing: 1.5px !important; }
@@ -324,9 +334,20 @@ $orders_notation = db_fetch("
             text-align: center;
             position: relative;
             z-index: 1;
-            line-height: 1.3;
+            line-height: 1.35;
             font-size: 16px;
             color: #334155;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: auto 0;
+            width: 100%;
+        }
+
+        .content p {
+            margin: 6px 0;
         }
 
         .field-label {
@@ -605,7 +626,7 @@ $orders_notation = db_fetch("
             </div>
         </div>
 
-        <div class="footer" style="margin-top: 15px;">
+        <div class="footer">
             <div class="seal-container">
                 <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 4px solid #d4b34d; box-shadow: 0 0 0 2px #895c17, 0 10px 25px rgba(0,0,0,0.3), 0 0 40px rgba(212,179,77,0.2); margin-bottom: 10px; display: inline-flex; align-items: center; justify-content: center; background: #fff;">
                     <img src="../assets/img/seal.png" alt="Diocese Seal" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.20);">

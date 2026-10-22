@@ -130,6 +130,7 @@ foreach ($parishes as $p) {
                                                     $priest = db_fetch("SELECT full_name FROM users WHERE user_id = ?", [$p['priest_in_charge_id']]);
                                                     $pastor_name = $priest['full_name'] ?? 'Vacant / Not Assigned';
                                                 }
+                                                $pastor_name = str_ireplace(['Mnkmba', 'Mnkamba'], 'Nkamba', $pastor_name);
                                             ?>
                                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                                 <span style="color: white; font-weight: 700; font-size: 0.9rem;"><?php echo h($pastor_name); ?></span>

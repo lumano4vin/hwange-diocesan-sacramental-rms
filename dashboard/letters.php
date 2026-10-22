@@ -52,6 +52,73 @@ $parishioners = db_fetchAll($sql, $params);
         .letter-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
         .letter-info h3 { margin: 0 0 0.25rem 0; font-family: 'Outfit'; color: white; }
         .letter-info p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 1.5rem;
+            box-sizing: border-box;
+        }
+        .modal.active {
+            display: flex !important;
+        }
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            position: relative;
+            color: white;
+            box-sizing: border-box;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            font-weight: 700;
+        }
+        .modal-close {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted, #94a3b8);
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .modal-close:hover {
+            color: white;
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
     </style>
 </head>
 <body class="dashboard-body">
@@ -102,7 +169,11 @@ $parishioners = db_fetchAll($sql, $params);
                                 <a href="../sacraments/canonical_inquiry.php?person_id=<?php echo $p['person_id']; ?>" class="btn btn-secondary" style="padding: 0.5rem 0.9rem; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                                     <ion-icon name="ribbon-outline"></ion-icon> Status Extract / Inquiry
                                 </a>
-                                <button onclick="openLetterModal(<?php echo $p['person_id']; ?>, '<?php echo h(addslashes($p['first_name'] . ' ' . $p['last_name'])); ?>')" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                <button type="button" class="btn btn-primary btn-open-letter" 
+                                        data-id="<?php echo $p['person_id']; ?>" 
+                                        data-name="<?php echo htmlspecialchars($p['first_name'] . ' ' . $p['last_name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        onclick="openLetterModal(<?php echo $p['person_id']; ?>, '<?php echo htmlspecialchars($p['first_name'] . ' ' . $p['last_name'], ENT_QUOTES, 'UTF-8'); ?>')"
+                                        style="padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer;">
                                     <ion-icon name="document-text-outline"></ion-icon> Letter of Standing
                                 </button>
                             </div>
@@ -119,21 +190,21 @@ $parishioners = db_fetchAll($sql, $params);
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>Generate Letter of Standing</h2>
-                <button class="modal-close" onclick="document.getElementById('letterModal').classList.remove('active')"><ion-icon name="close-outline"></ion-icon></button>
+                <button type="button" class="modal-close" onclick="closeLetterModal()"><ion-icon name="close-outline"></ion-icon></button>
             </div>
-            <form action="../sacraments/transfer_letter_print.php" method="GET" target="_blank">
-                <input type="hidden" name="id" id="modal_person_id">
+            <form action="../sacraments/transfer_letter_print.php" method="GET" target="_blank" onsubmit="return validateLetterForm()">
+                <input type="hidden" name="id" id="modal_person_id" required>
                 
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Generating canonical letter for: <strong id="modal_person_name" style="color: white;"></strong></p>
 
-                <div class="form-group">
-                    <label>Destination (To Whom It May Concern)</label>
-                    <input type="text" name="destination" class="form-control" placeholder="e.g. The Parish Priest, St. Mary's Parish, Bulawayo" required>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-size: 0.85rem; font-weight: 600;">Destination (To Whom It May Concern) *</label>
+                    <input type="text" name="destination" class="form-control" placeholder="e.g. The Parish Priest, St. Mary's Parish, Bulawayo" required style="width: 100%; box-sizing: border-box;">
                 </div>
 
-                <div class="form-group">
-                    <label>Purpose / Reason</label>
-                    <select name="reason" class="form-control" required>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-size: 0.85rem; font-weight: 600;">Purpose / Reason *</label>
+                    <select name="reason" class="form-control" required style="width: 100%; box-sizing: border-box;">
                         <option value="Transfer of Membership">Transfer of Membership (Relocation)</option>
                         <option value="Marriage Preparation">Marriage Preparation</option>
                         <option value="Godparent Sponsor Eligibility">Godparent / Sponsor Eligibility</option>
@@ -141,9 +212,9 @@ $parishioners = db_fetchAll($sql, $params);
                     </select>
                 </div>
 
-                <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('letterModal').classList.remove('active')">Cancel</button>
-                    <button type="submit" class="btn btn-primary" onclick="setTimeout(() => document.getElementById('letterModal').classList.remove('active'), 500)">
+                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeLetterModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" onclick="setTimeout(closeLetterModal, 600)">
                         <ion-icon name="print-outline"></ion-icon> Preview & Print
                     </button>
                 </div>
@@ -154,10 +225,45 @@ $parishioners = db_fetchAll($sql, $params);
     <script src="../assets/js/main.js?v=1.6.2"></script>
     <script>
         function openLetterModal(personId, personName) {
-            document.getElementById('modal_person_id').value = personId;
-            document.getElementById('modal_person_name').innerText = personName;
-            document.getElementById('letterModal').classList.add('active');
+            var idInput = document.getElementById('modal_person_id');
+            var nameSpan = document.getElementById('modal_person_name');
+            var modal = document.getElementById('letterModal');
+            if (idInput) idInput.value = personId;
+            if (nameSpan) nameSpan.textContent = personName;
+            if (modal) {
+                modal.classList.add('active');
+                var destInput = modal.querySelector('input[name="destination"]');
+                if (destInput) {
+                    setTimeout(function() { destInput.focus(); }, 100);
+                }
+            }
         }
+
+        function closeLetterModal() {
+            var modal = document.getElementById('letterModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function validateLetterForm() {
+            var id = document.getElementById('modal_person_id').value;
+            if (!id) {
+                alert('Please select a parishioner first.');
+                return false;
+            }
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var modal = document.getElementById('letterModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) closeLetterModal();
+                });
+            }
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeLetterModal();
+            });
+        });
     </script>
 </body>
 </html>

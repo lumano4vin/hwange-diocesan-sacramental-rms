@@ -7,10 +7,21 @@
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
 
-// Only admins and chancellors can access the data vault
-require_role('admin');
+// Clergy & Administrators can access the data vault
+require_login();
+$user_role = strtolower($_SESSION['role'] ?? '');
+if (!in_array($user_role, ['admin', 'priest', 'mission_admin', 'chancellor'])) {
+    die("Access denied. Authorized clergy and administrators only.");
+}
 
-$db_file = dirname(__DIR__) . '/database.sqlite';
+$db_file = $GLOBALS['rms_sqlite_path'] ?? '';
+if (empty($db_file) || !file_exists($db_file)) {
+    $db_file = dirname(__DIR__) . '/database.sqlite';
+}
+if (!file_exists($db_file)) {
+    $db_file = dirname(__DIR__) . '/data/fallback.sqlite';
+}
+
 $db_size = file_exists($db_file) ? filesize($db_file) : 0;
 $db_size_mb = number_format($db_size / 1048576, 2);
 $db_last_modified = file_exists($db_file) ? date('d M Y H:i:s', filemtime($db_file)) : 'N/A';

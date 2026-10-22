@@ -9,8 +9,11 @@ require_once '../includes/functions.php';
 // Protect the page
 require_login();
 
-$id = $_GET['id'] ?? null;
-if (!$id) die("Parishioner ID required.");
+$id = $_GET['id'] ?? $_GET['person_id'] ?? $_GET['parishioner_id'] ?? null;
+if (!$id) {
+    header("Location: " . BASE_URL . "parishioners/index.php");
+    exit;
+}
 
 // Fetch Parishioner details with parish info
 $parishioner = db_fetch("
@@ -20,7 +23,10 @@ $parishioner = db_fetch("
     WHERE p.person_id = ?
 ", [$id]);
 
-if (!$parishioner) die("Parishioner not found in the archives.");
+if (!$parishioner) {
+    header("Location: " . BASE_URL . "parishioners/index.php");
+    exit;
+}
 
 // Fetch Sacramental Records
 $baptism = db_fetch("SELECT b.*, pa.parish_name FROM baptisms b JOIN parishes pa ON b.parish_id = pa.parish_id WHERE b.person_id = ?", [$id]);

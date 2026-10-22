@@ -55,6 +55,12 @@ try {
     // Get Tarcius user ID
     $tarcius_id = db_fetch("SELECT user_id FROM users WHERE username = ?", [$tarcius_username])['user_id'];
 
+    // 2.1 Canonical Harmonization for Fr. Nicolas Nkamba (All Souls - Binga)
+    db_query("UPDATE users SET full_name = 'Fr. Nicolas Nkamba', username = 'nicolas_nkamba', email = REPLACE(REPLACE(email, 'mnkmba', 'nkamba'), 'mnkamba', 'nkamba') WHERE full_name LIKE '%Mnkmba%' OR full_name LIKE '%Mnkamba%' OR username LIKE '%mnkmba%' OR username LIKE '%mnkamba%'");
+    db_query("UPDATE parish_assignments SET priest_name_manual = 'Fr. Nicolas Nkamba' WHERE priest_name_manual LIKE '%Mnkmba%' OR priest_name_manual LIKE '%Mnkamba%'");
+    db_query("UPDATE parishes SET priest_in_charge_id = 18 WHERE parish_id = 16");
+    echo "[SUCCESS] Harmonized canonical records for Fr. Nicolas Nkamba.\n";
+
     // 3. Sync parish_assignments for all priests where parish_id is set
     echo "\n[INFO] Synchronizing parish assignments...\n";
     $priests = db_fetchAll("SELECT user_id, username, full_name, role, parish_id FROM users WHERE role = 'priest' AND parish_id IS NOT NULL");

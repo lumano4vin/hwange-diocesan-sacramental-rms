@@ -19,6 +19,8 @@ $pdo = getDB();
 // 4. Login Logic
 $error_msg = '';
 $success_msg = '';
+$remembered_username = $_COOKIE['rms_remember_username'] ?? '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -94,6 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $upd = $pdo->prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?");
                 $upd->execute([$user['user_id']]);
+
+                if (!empty($_POST['remember_me'])) {
+                    setcookie('rms_remember_username', $username, time() + (86400 * 60), '/', '', false, true);
+                } else {
+                    setcookie('rms_remember_username', '', time() - 3600, '/', '', false, true);
+                }
                 
                 logAction("User Logged In");
                 
@@ -111,11 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error_msg = 'System Error: ' . $e->getMessage();
         }
     }
-} else if (isset($_GET['error']) || isset($_GET['msg'])) {
-    $code = $_GET['error'] ?? $_GET['msg'];
+} else if (isset($_GET['error']) || isset($_GET['msg']) || isset($_GET['status'])) {
+    $code = $_GET['error'] ?? $_GET['msg'] ?? $_GET['status'];
     switch($code) {
         case 'unauthorized': $error_msg = 'Please sign in to access the system.'; break;
         case 'session_expired': $error_msg = 'Your session has expired. Please sign in again.'; break;
+        case 'password_reset_success': 
+            $success_msg = 'Your password has been successfully reset! You may now sign in with your new password.';
+            break;
         case 'logged_out': 
             $name_str = isset($_GET['name']) ? h(urldecode($_GET['name'])) : 'Minister';
             $success_msg = "Goodbye, <strong>$name_str</strong>. Thank you for your service today. We look forward to your return to continue safeguarding the canonical mission!"; 
@@ -534,7 +545,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="username">Username or Email</label>
                 <input type="text" id="username" name="username" placeholder="Enter your credentials" required 
                        autocapitalize="none" autocorrect="off" spellcheck="false"
-                       value="<?php echo isset($_POST['username']) ? h($_POST['username']) : ''; ?>">
+                       value="<?php echo isset($_POST['username']) ? h($_POST['username']) : h($remembered_username); ?>">
             </div>
 
             <div class="form-group">
@@ -549,6 +560,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <ion-icon name="eye-outline"></ion-icon>
                     </button>
                 </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: -0.25rem; margin-bottom: 1.25rem;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-muted); cursor: pointer; user-select: none;">
+                    <input type="checkbox" id="remember_me" name="remember_me" value="1" <?php echo !empty($remembered_username) ? 'checked' : ''; ?> style="accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer;">
+                    Remember my Username
+                </label>
             </div>
 
             <button type="submit" class="btn-login">Sign In to the Mission</button>

@@ -150,9 +150,9 @@ $assignments = db_fetchAll("
                             <span class="assignment-badge"><?php echo $cleric['role']; ?></span>
                         </div>
                         
-                        <h3 style="font-family: 'Outfit'; color: white; margin-bottom: 5px;"><?php echo h($cleric['full_name']); ?></h3>
+                        <h3 style="font-family: 'Outfit'; color: white; margin-bottom: 5px;"><?php echo h(str_ireplace(['Mnkmba', 'Mnkamba'], 'Nkamba', $cleric['full_name'])); ?></h3>
                         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-                            <ion-icon name="mail-outline"></ion-icon> <?php echo h($cleric['username']); ?>
+                            <ion-icon name="mail-outline"></ion-icon> <?php echo h(str_ireplace(['mnkmba', 'mnkamba'], 'nkamba', $cleric['username'])); ?>
                         </p>
 
                         <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
@@ -197,7 +197,7 @@ $assignments = db_fetchAll("
                         <tbody>
                             <?php foreach ($assignments as $a): ?>
                                 <tr>
-                                    <td style="font-weight: 700; color: white;"><?php echo h($a['full_name']); ?></td>
+                                    <td style="font-weight: 700; color: white;"><?php echo h(str_ireplace(['Mnkmba', 'Mnkamba'], 'Nkamba', $a['full_name'])); ?></td>
                                     <td><?php echo h($a['parish_name']); ?></td>
                                     <td><?php echo h($a['role']); ?></td>
                                     <td><?php echo date('M d, Y', strtotime($a['start_date'])); ?></td>
@@ -223,7 +223,10 @@ $assignments = db_fetchAll("
                 <div class="form-group">
                     <label>Select Cleric</label>
                     <select name="user_id" class="input-field" style="width: 100%;">
-                        <?php foreach($clergy as $c) echo "<option value='{$c['user_id']}'>{$c['full_name']}</option>"; ?>
+                        <?php foreach($clergy as $c) {
+                            $clean_c = h(str_ireplace(['Mnkmba', 'Mnkamba'], 'Nkamba', $c['full_name']));
+                            echo "<option value='{$c['user_id']}'>{$clean_c}</option>";
+                        } ?>
                     </select>
                 </div>
                 <div class="form-group">

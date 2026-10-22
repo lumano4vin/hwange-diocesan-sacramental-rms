@@ -9,10 +9,35 @@ require_once '../includes/functions.php';
 
 require_login();
 
-$parishioner_id = $_GET['parishioner_id'] ?? null;
+$parishioner_id = $_GET['parishioner_id'] ?? $_GET['person_id'] ?? $_GET['id'] ?? null;
 $type = $_GET['type'] ?? 'Marriage';
 
-if (!$parishioner_id) die("Parishioner ID required.");
+if (!$parishioner_id) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Record Not Specified - Catholic Diocese of Hwange</title>
+        <link rel="stylesheet" href="../assets/css/style.css">
+        <style>
+            body { background: #f1f5f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Cinzel', 'Trajan Pro', serif; margin: 0; padding: 20px; }
+            .card { background: #fff; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); padding: 40px; max-width: 480px; text-align: center; border-top: 5px solid #800020; }
+            .card h2 { color: #800020; margin-top: 0; }
+            .btn { display: inline-block; padding: 10px 20px; background: #800020; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h2>Parishioner Not Specified</h2>
+            <p style="color: #64748b; font-family: sans-serif; line-height: 1.5;">A valid parishioner ID must be provided to generate a sacramental notification.</p>
+            <a href="../parishioners/index.php" class="btn">Return to Parishioner Directory</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 $pdo = getDB();
 
@@ -26,7 +51,32 @@ $stmt = $pdo->prepare("
 $stmt->execute([$parishioner_id]);
 $parishioner = $stmt->fetch();
 
-if (!$parishioner) die("Parishioner not found.");
+if (!$parishioner) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Record Not Found - Catholic Diocese of Hwange</title>
+        <link rel="stylesheet" href="../assets/css/style.css">
+        <style>
+            body { background: #f1f5f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Cinzel', 'Trajan Pro', serif; margin: 0; padding: 20px; }
+            .card { background: #fff; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); padding: 40px; max-width: 480px; text-align: center; border-top: 5px solid #800020; }
+            .card h2 { color: #800020; margin-top: 0; }
+            .btn { display: inline-block; padding: 10px 20px; background: #800020; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h2>Record Not Found</h2>
+            <p style="color: #64748b; font-family: sans-serif; line-height: 1.5;">The requested parishioner record could not be found in the diocesan archives.</p>
+            <a href="../parishioners/index.php" class="btn">Return to Parishioner Directory</a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 // Fetch Sacrament Data (Marriage, Confirmation, etc.)
 $sacrament_data = [];

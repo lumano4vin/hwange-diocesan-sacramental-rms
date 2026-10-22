@@ -103,19 +103,49 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
                 margin: 2px 0 !important;
                 font-size: 17px !important;
             }
-            .header { margin-bottom: 4px !important; }
-            .diocese-name { font-size: 20px !important; letter-spacing: 2px !important; }
+            .header { margin-bottom: 8px !important; }
+            .diocese-name { font-size: 21px !important; letter-spacing: 2px !important; }
             .diocese-sub { font-size: 10px !important; letter-spacing: 2px !important; margin-top: 1px !important; }
-            .certificate-title { font-size: 34px !important; margin: 2px 0 !important; line-height: 1.1 !important; }
-            .content { font-size: 13.5px !important; line-height: 1.25 !important; }
-            .content p { margin: 4px 0 !important; }
-            .field-value { font-size: 18px !important; padding-bottom: 2px !important; min-width: 260px !important; }
-            .field-label { font-size: 9.5px !important; margin-top: 5px !important; letter-spacing: 1.5px !important; }
-            .sacrament-declaration { font-size: 20px !important; margin: 4px 0 !important; letter-spacing: 1.5px !important; }
-            .details-grid { gap: 6px 15px !important; margin-top: 6px !important; }
+            .certificate-title { font-size: 36px !important; margin: 4px 0 !important; line-height: 1.15 !important; }
+            .content { 
+                font-size: 14px !important; 
+                line-height: 1.35 !important; 
+                flex: 1 1 auto !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                margin: auto 0 !important;
+                width: 100% !important;
+            }
+            .content p { margin: 5px 0 !important; }
+            .couple-display {
+                margin: 8px auto !important;
+                padding: 10px 16px !important;
+                width: 100% !important;
+                max-width: 580px !important;
+                box-sizing: border-box !important;
+            }
+            .field-value { font-size: 19px !important; padding-bottom: 2px !important; min-width: 280px !important; }
+            .field-label { font-size: 9.5px !important; margin-top: 4px !important; letter-spacing: 1.5px !important; }
+            .sacrament-declaration { font-size: 21px !important; margin: 5px 0 !important; letter-spacing: 1.5px !important; }
+            .details-grid { 
+                gap: 8px 30px !important; 
+                margin: 12px auto 0 auto !important; 
+                width: 100% !important;
+                max-width: 560px !important;
+                box-sizing: border-box !important;
+            }
             .details-grid div div { font-size: 14px !important; padding-bottom: 2px !important; }
-            .dispensation-box { margin-top: 4px !important; padding: 4px 8px !important; font-size: 9.5px !important; }
-            .footer { margin-top: auto !important; padding-top: 4px !important; }
+            .dispensation-box { 
+                margin: 6px auto 0 auto !important; 
+                padding: 4px 8px !important; 
+                font-size: 9.5px !important; 
+                width: 100% !important;
+                max-width: 560px !important;
+                box-sizing: border-box !important;
+            }
+            .footer { margin-top: auto !important; padding-top: 6px !important; }
             .seal { width: 70px !important; height: 70px !important; font-size: 7.5px !important; padding: 4px !important; }
             .signature-block { width: 220px !important; }
             .signature-block #qrcode { 
@@ -276,27 +306,40 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
             text-align: center;
             position: relative;
             z-index: 1;
-            line-height: 1.25;
+            line-height: 1.35;
             font-size: 15px;
             color: #334155;
-            flex-grow: 1;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: auto 0;
+            width: 100%;
+        }
+
+        .content p {
+            margin: 6px 0;
         }
 
         .couple-display {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            margin: 10px 0;
-            padding: 10px;
+            gap: 6px;
+            margin: 12px auto;
+            padding: 12px 24px;
             background: rgba(124, 45, 18, 0.02);
             border-radius: 15px;
+            width: 100%;
+            max-width: 660px;
+            box-sizing: border-box;
         }
 
         .field-label {
             color: #94a3b8;
             font-size: 11px;
             display: block;
-            margin-top: 10px;
+            margin-top: 6px;
             text-transform: uppercase;
             font-weight: 800;
             letter-spacing: 2px;
@@ -318,7 +361,7 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
             font-size: 24px;
             font-weight: 900;
             color: var(--maroon);
-            margin: 10px 0;
+            margin: 8px 0;
             text-transform: uppercase;
             letter-spacing: 3px;
         }
@@ -326,9 +369,19 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
         .details-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 10px;
+            gap: 15px 30px;
+            margin: 16px auto 0 auto;
             text-align: center;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+
+        .dispensation-box {
+            max-width: 600px;
+            width: 100%;
+            margin: 10px auto 0 auto;
+            box-sizing: border-box;
         }
 
         .footer {
@@ -338,6 +391,7 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
             align-items: flex-end;
             position: relative;
             z-index: 1;
+            width: 100%;
         }
 
         .seal {
@@ -537,7 +591,7 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
             </div>
 
             <?php if (!empty($record['dispensation_type'])): ?>
-                <div style="margin-top: 10px; font-size: 11px; color: var(--navy); font-family: 'Cinzel', serif; background: rgba(212, 175, 55, 0.1); border: 1px dashed rgba(212, 175, 55, 0.4); border-radius: 4px; padding: 4px 8px;">
+                <div class="dispensation-box" style="margin-top: 10px; font-size: 11px; color: var(--navy); font-family: 'Cinzel', serif; background: rgba(212, 175, 55, 0.1); border: 1px dashed rgba(212, 175, 55, 0.4); border-radius: 4px; padding: 4px 8px;">
                     <span style="color: var(--gold); font-weight: 700;">CANONICAL DISPENSATION:</span> 
                     <?php echo h($record['dispensation_type']); ?> 
                     <?php if (!empty($record['dispensation_protocol_number'])): ?>
@@ -563,7 +617,7 @@ $verify_urls = get_certificate_verification_url('marriage', $id, $record['verifi
             </div>
         </div>
 
-        <div class="footer" style="margin-top: 15px;">
+        <div class="footer">
 
             <div class="seal-container" style="text-align: center;">
                 <div style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 4px solid #d4b34d; box-shadow: 0 0 0 2px #895c17, 0 10px 25px rgba(0,0,0,0.3), 0 0 40px rgba(212,179,77,0.2); margin-bottom: 8px; display: inline-flex; align-items: center; justify-content: center; background: #fff;">

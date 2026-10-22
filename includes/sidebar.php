@@ -167,12 +167,18 @@ require_once 'version.php';
                     <span>Financial Stewardship</span>
                 </a>
             </li>
+            <?php endif; ?>
+
+            <?php if (in_array(strtolower($_SESSION['role']), ['admin', 'priest', 'mission_admin', 'chancellor'])): ?>
             <li class="<?php echo $current_page == 'backup_vault.php' ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>dashboard/backup_vault.php">
                     <ion-icon name="server-outline" style="color: #38bdf8;"></ion-icon>
                     <span>Data Vault (Backups)</span>
                 </a>
             </li>
+            <?php endif; ?>
+
+            <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'chancellor'): ?>
             <li class="<?php echo $current_page == 'users.php' ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>admin/users_list.php">
                     <ion-icon name="shield-checkmark-outline"></ion-icon>

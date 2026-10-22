@@ -91,7 +91,7 @@ $header_subtitle = "Chronological timeline of spiritual leadership and handovers
                             <div style="width: 45%; <?php echo $is_even ? 'text-align: right;' : 'order: 2;'; ?>">
                                 <div class="card bg-card" style="padding: 1.5rem; border-radius: 1.5rem; border: 1px solid <?php echo $item['status'] == 'Active' ? 'var(--accent)' : 'rgba(255,255,255,0.05)'; ?>; position: relative;">
                                     <div style="font-size: 0.7rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;"><?php echo h($item['role']); ?></div>
-                                    <h3 style="font-family: 'Outfit'; color: white; margin: 0 0 10px 0; font-size: 1.25rem;"><?php echo h($item['priest_name_manual']); ?></h3>
+                                    <h3 style="font-family: 'Outfit'; color: white; margin: 0 0 10px 0; font-size: 1.25rem;"><?php echo h(str_ireplace(['Mnkmba', 'Mnkamba'], 'Nkamba', $item['priest_name_manual'])); ?></h3>
                                     <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;"><?php echo $item['notes']; ?></p>
                                     
                                     <?php if ($item['status'] == 'Active'): ?>

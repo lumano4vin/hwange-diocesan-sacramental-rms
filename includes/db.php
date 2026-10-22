@@ -396,7 +396,7 @@ function db_add_column_if_missing($pdo, $table, $column_def) {
 
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
 // Wrapped in a function and gated by PRAGMA user_version so it does not lock SQLite on every page load
-if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 5);
+if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 7);
 
 function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS receptions (
@@ -704,6 +704,32 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
 
+    // Canonical Clergy Harmonization: Fr. Nicolas Mnkmba / Mnkamba -> Fr. Nicolas Nkamba across all tables
+    try {
+        $pdo->exec("UPDATE users SET full_name = 'Fr. Nicolas Nkamba', username = 'nicolas_nkamba', email = REPLACE(REPLACE(email, 'mnkmba', 'nkamba'), 'mnkamba', 'nkamba') WHERE full_name LIKE '%Mnkmba%' OR full_name LIKE '%Mnkamba%' OR username LIKE '%mnkmba%' OR username LIKE '%mnkamba%'");
+        $pdo->exec("UPDATE parish_assignments SET priest_name_manual = 'Fr. Nicolas Nkamba' WHERE priest_name_manual LIKE '%Mnkmba%' OR priest_name_manual LIKE '%Mnkamba%'");
+        $pdo->exec("UPDATE parishes SET priest_in_charge_id = 18 WHERE parish_id = 16 AND (priest_in_charge_id IS NULL OR priest_in_charge_id = 0)");
+
+        $sacrament_cols = [
+            'baptisms' => 'minister',
+            'confirmations' => 'minister',
+            'first_holy_communions' => 'minister',
+            'marriages' => 'officiant',
+            'receptions' => 'minister',
+            'deaths' => 'minister',
+            'ordinations_professions' => 'ordaining_bishop',
+            'parish_handovers' => 'notes',
+            'parish_assignments' => 'notes',
+            'clergy_profiles' => 'full_canonical_name',
+            'annual_register_returns' => 'canonical_attestation'
+        ];
+        foreach ($sacrament_cols as $t => $col) {
+            try {
+                $pdo->exec("UPDATE `$t` SET `$col` = REPLACE(REPLACE(`$col`, 'Mnkmba', 'Nkamba'), 'Mnkamba', 'Nkamba') WHERE `$col` LIKE '%Mnkmba%' OR `$col` LIKE '%Mnkamba%'");
+            } catch (Exception $e) {}
+        }
+    } catch (Exception $e) {}
+
     if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
         $pdo->exec("PRAGMA user_version = " . RMS_SCHEMA_VERSION);
     }
@@ -882,9 +908,56 @@ if (isset($pdo)) {
                 INDEX idx_expires (expires_at)
             ) ENGINE=InnoDB");
         }
+
+        // Harmonize clergy names automatically on any boot/request
+        rms_harmonize_canonical_names($pdo);
     } catch (Exception $e) {
         // Silently log or ignore if DB is locked
     }
+}
+
+function rms_harmonize_canonical_names($pdo) {
+    static $executed = false;
+    if ($executed || !$pdo) return;
+    $executed = true;
+
+    try {
+        // Fast pre-check: see if legacy spelling exists in users or parish_assignments
+        $needs_fix = false;
+        $chk1 = $pdo->query("SELECT 1 FROM users WHERE full_name LIKE '%Mnkmba%' OR full_name LIKE '%Mnkamba%' OR username LIKE '%mnkmba%' OR username LIKE '%mnkamba%' LIMIT 1");
+        if ($chk1 && $chk1->fetch()) $needs_fix = true;
+
+        if (!$needs_fix) {
+            $chk2 = $pdo->query("SELECT 1 FROM parish_assignments WHERE priest_name_manual LIKE '%Mnkmba%' OR priest_name_manual LIKE '%Mnkamba%' LIMIT 1");
+            if ($chk2 && $chk2->fetch()) $needs_fix = true;
+        }
+
+        if ($needs_fix) {
+            $pdo->exec("UPDATE users SET full_name = 'Fr. Nicolas Nkamba', username = 'nicolas_nkamba', email = REPLACE(REPLACE(email, 'mnkmba', 'nkamba'), 'mnkamba', 'nkamba') WHERE full_name LIKE '%Mnkmba%' OR full_name LIKE '%Mnkamba%' OR username LIKE '%mnkmba%' OR username LIKE '%mnkamba%'");
+            $pdo->exec("UPDATE parish_assignments SET priest_name_manual = 'Fr. Nicolas Nkamba' WHERE priest_name_manual LIKE '%Mnkmba%' OR priest_name_manual LIKE '%Mnkamba%'");
+            $pdo->exec("UPDATE parishes SET priest_in_charge_id = 18 WHERE parish_id = 16 AND (priest_in_charge_id IS NULL OR priest_in_charge_id = 0)");
+
+            $sacrament_cols = [
+                'baptisms' => 'minister',
+                'confirmations' => 'minister',
+                'first_holy_communions' => 'minister',
+                'marriages' => 'officiant',
+                'receptions' => 'minister',
+                'deaths' => 'minister',
+                'ordinations_professions' => 'ordaining_bishop',
+                'parish_handovers' => 'notes',
+                'parish_assignments' => 'notes',
+                'clergy_profiles' => 'full_canonical_name',
+                'annual_register_returns' => 'canonical_attestation'
+            ];
+            foreach ($sacrament_cols as $t => $col) {
+                try {
+                    $pdo->exec("UPDATE `$t` SET `$col` = REPLACE(REPLACE(`$col`, 'Mnkmba', 'Nkamba'), 'Mnkamba', 'Nkamba') WHERE `$col` LIKE '%Mnkmba%' OR `$col` LIKE '%Mnkamba%'");
+                } catch (Exception $e) {}
+            }
+            $GLOBALS['rms_db_dirty'] = true;
+        }
+    } catch (Exception $e) {}
 }
 
 // Register the Database Session Handler if PDO exists

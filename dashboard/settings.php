@@ -169,6 +169,16 @@ $user_role = ucfirst($_SESSION['role']);
                                 <label>Root Path</label>
                                 <span style="font-size: 0.8rem;"><?php echo __DIR__; ?></span>
                             </div>
+                            <div class="info-item" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <label style="color: var(--accent); font-weight: 700;">Offline Database Archive</label>
+                                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Download a complete binary backup of the canonical database to your local drive or USB stick.</p>
+                                </div>
+                                <a href="../actions/backup.php" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.6rem 1.2rem; font-size: 0.85rem; text-decoration: none;">
+                                    <ion-icon name="cloud-download-outline"></ion-icon>
+                                    Download Archive (.sqlite)
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

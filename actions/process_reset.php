@@ -32,9 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Update password and clear token
         db_query(
-            "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE user_id = ?",
+            "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL, must_change_password = 0 WHERE user_id = ?",
             [$password_hash, $user['user_id']]
         );
+        $GLOBALS['rms_db_dirty'] = true;
 
         // Success: Redirect to login with success message
         redirect("../dashboard/index.php?status=password_reset_success");
