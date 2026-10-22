@@ -118,6 +118,16 @@ $is_verified = ($record['status'] === 'Verified');
                     </button>
                     <?php endif; ?>
 
+                    <a href="../sacraments/generate_notification.php?parishioner_id=<?php echo $record['groom_person_id']; ?>&type=Marriage&marriage_id=<?php echo $id; ?>" class="btn btn-secondary" target="_blank" title="Notify Groom's Parish of Baptism (Can. 1122)" style="background: rgba(56, 189, 248, 0.12) !important; color: #38bdf8 !important; border: 1px solid rgba(56, 189, 248, 0.35) !important; font-weight: 700; text-decoration: none;">
+                        <ion-icon name="mail-outline"></ion-icon>
+                        Groom Baptism Notice
+                    </a>
+
+                    <a href="../sacraments/generate_notification.php?parishioner_id=<?php echo $record['bride_person_id']; ?>&type=Marriage&marriage_id=<?php echo $id; ?>" class="btn btn-secondary" target="_blank" title="Notify Bride's Parish of Baptism (Can. 1122)" style="background: rgba(244, 114, 182, 0.12) !important; color: #f472b6 !important; border: 1px solid rgba(244, 114, 182, 0.35) !important; font-weight: 700; text-decoration: none;">
+                        <ion-icon name="mail-outline"></ion-icon>
+                        Bride Baptism Notice
+                    </a>
+
                     <a href="marriages.php" class="btn btn-secondary" style="background: #334155 !important; color: #ffffff !important; border: 1px solid #475569 !important; font-weight: 700 !important; text-decoration: none !important;">
                         <ion-icon name="arrow-back-outline" style="color: #ffffff !important;"></ion-icon>
                         Back to List
@@ -169,12 +179,22 @@ $is_verified = ($record['status'] === 'Verified');
                                     <label>Full Name</label>
                                     <span><?php echo h($record['g_first'] . ' ' . $record['g_last']); ?></span>
                                 </div>
+                                <div style="margin-top: 0.75rem;">
+                                    <a href="../sacraments/generate_notification.php?parishioner_id=<?php echo $record['groom_person_id']; ?>&type=Marriage&marriage_id=<?php echo $id; ?>" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border-radius: 6px;">
+                                        <ion-icon name="mail-outline"></ion-icon> Notice to Parish of Baptism (Can. 1122)
+                                    </a>
+                                </div>
                             </div>
                             <div class="info-group">
                                 <h4 style="color: #db2777; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Bride</h4>
                                 <div class="info-item">
                                     <label>Full Name</label>
                                     <span><?php echo h($record['b_first'] . ' ' . $record['b_last']); ?></span>
+                                </div>
+                                <div style="margin-top: 0.75rem;">
+                                    <a href="../sacraments/generate_notification.php?parishioner_id=<?php echo $record['bride_person_id']; ?>&type=Marriage&marriage_id=<?php echo $id; ?>" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border-radius: 6px;">
+                                        <ion-icon name="mail-outline"></ion-icon> Notice to Parish of Baptism (Can. 1122)
+                                    </a>
                                 </div>
                             </div>
                         </div>

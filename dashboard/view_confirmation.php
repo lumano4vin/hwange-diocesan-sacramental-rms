@@ -113,6 +113,11 @@ $is_verified = ($record['status'] === 'Verified');
                     </a>
                     <?php endif; ?>
 
+                    <a href="../sacraments/generate_notification.php?parishioner_id=<?php echo $record['person_id']; ?>&type=Confirmation&confirmation_id=<?php echo $id; ?>" class="btn btn-secondary" target="_blank" title="Notify Parish of Baptism (Can. 895)" style="background: rgba(56, 189, 248, 0.12) !important; color: #38bdf8 !important; border: 1px solid rgba(56, 189, 248, 0.35) !important; font-weight: 700; text-decoration: none;">
+                        <ion-icon name="mail-outline"></ion-icon>
+                        Baptism Notification Slip (Can. 895)
+                    </a>
+
                     <a href="confirmations.php" class="btn btn-secondary" style="background: #334155 !important; color: white !important; border: 1px solid #475569 !important; font-weight: 700; text-decoration: none;">
                         <ion-icon name="arrow-back-outline"></ion-icon>
                         Return to List

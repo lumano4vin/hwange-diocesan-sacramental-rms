@@ -3,6 +3,31 @@
    Mobile Responsiveness Audit Layer 
 */
 
+/* Mobile Drawer Backdrop */
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.sidebar-backdrop.active {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
 @media (max-width: 1024px) {
     .dashboard-layout {
         grid-template-columns: 1fr !important;
@@ -20,7 +45,7 @@
     }
     
     .sidebar.mobile-active {
-        left: 0;
+        left: 0 !important;
     }
     
     /* Ensure the existing toggle button in the header is used for mobile */

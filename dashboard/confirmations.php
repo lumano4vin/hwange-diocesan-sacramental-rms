@@ -185,6 +185,9 @@ $confirmations = db_fetchAll($sql, $params);
                                         <a href="../sacraments/confirmation_certificate.php?id=<?php echo $row['confirmation_id']; ?>&print=true" class="action-btn" title="Print Certificate" target="_blank">
                                             <ion-icon name="print-outline"></ion-icon>
                                         </a>
+                                        <a href="../sacraments/generate_notification.php?parishioner_id=<?php echo $row['person_id']; ?>&type=Confirmation&confirmation_id=<?php echo $row['confirmation_id']; ?>" class="action-btn" title="Baptism Notification Slip (Can. 895)" target="_blank">
+                                            <ion-icon name="mail-outline"></ion-icon>
+                                        </a>
                                         <?php endif; ?>
 
                                         <?php if (has_record_permission($row, 'edit')): ?>

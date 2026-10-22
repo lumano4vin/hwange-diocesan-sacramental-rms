@@ -45,9 +45,30 @@ $incoming_handovers = db_fetchAll("
     WHERE h.incoming_priest_id = ? AND h.status IN ('Pending', 'Signed_Off')
 ", [$user_id]);
 
-$header_title = "Canonical Handover Hub";
-$header_subtitle = "Managing mission transitions and accountability transfers.";
+$user_role = $_SESSION['role'] ?? 'viewer';
+$is_admin = in_array($user_role, ['admin', 'chancellor']);
 
+// Fetch Completed Handovers (Historical Archive)
+$completed_handovers = db_fetchAll("
+    SELECT h.*, p.parish_name, u1.full_name as outgoing_name, u2.full_name as incoming_name 
+    FROM parish_handovers h 
+    JOIN parishes p ON h.parish_id = p.parish_id 
+    LEFT JOIN users u1 ON h.outgoing_priest_id = u1.user_id 
+    LEFT JOIN users u2 ON h.incoming_priest_id = u2.user_id 
+    WHERE (h.outgoing_priest_id = ? OR h.incoming_priest_id = ? OR ? = 1) AND h.status = 'Completed'
+    ORDER BY h.incoming_accept_date DESC LIMIT 15
+", [$user_id, $user_id, $is_admin ? 1 : 0]);
+
+$header_title = "Canonical Handover Hub";
+$header_subtitle = "Managing mission transitions, register inventories, and accountability transfers (Can. 535 §5).";
+ob_start();
+if ($is_admin): ?>
+    <a href="../admin/handover.php" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+        <ion-icon name="swap-horizontal-outline"></ion-icon>
+        Initiate Canonical Handover
+    </a>
+<?php endif;
+$additional_header_actions = ob_get_clean();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -135,6 +156,54 @@ $header_subtitle = "Managing mission transitions and accountability transfers.";
                         <?php endforeach; endif; ?>
                     </div>
 
+                </div>
+
+                <!-- Historical Archive of Completed Transitions -->
+                <div style="margin-top: 3rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="color: white; font-family: 'Outfit'; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <ion-icon name="archive-outline" style="color: #10b981;"></ion-icon>
+                            Archived Canonical Transitions (Can. 535 §5)
+                        </h3>
+                    </div>
+                    <?php if (empty($completed_handovers)): ?>
+                        <div class="card" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                            No archived transitions found.
+                        </div>
+                    <?php else: ?>
+                        <div class="card bg-card" style="padding: 0; overflow: hidden; border-radius: 16px;">
+                            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <th style="padding: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Parish / Mission</th>
+                                        <th style="padding: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Outgoing Priest</th>
+                                        <th style="padding: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Incoming Priest</th>
+                                        <th style="padding: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Handover Date</th>
+                                        <th style="padding: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Status</th>
+                                        <th style="padding: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted);">Registry Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($completed_handovers as $ch): ?>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                                        <td style="padding: 1rem; font-weight: 700; color: white;"><?php echo h($ch['parish_name']); ?></td>
+                                        <td style="padding: 1rem; color: #cbd5e1;"><?php echo h($ch['outgoing_name'] ?: 'Not Stated'); ?></td>
+                                        <td style="padding: 1rem; color: #38bdf8; font-weight: 600;"><?php echo h($ch['incoming_name'] ?: 'Not Stated'); ?></td>
+                                        <td style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;"><?php echo date('d M Y', strtotime($ch['incoming_accept_date'] ?: $ch['handover_date'])); ?></td>
+                                        <td style="padding: 1rem;">
+                                            <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
+                                                <ion-icon name="checkmark-circle-outline" style="vertical-align: middle;"></ion-icon> Completed
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; max-width: 250px;">
+                                            <?php echo h($ch['registry_status_notes'] ?: 'Parochial registers & inventory transferred.'); ?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
             </div>

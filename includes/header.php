@@ -57,7 +57,7 @@ $base = get_base_url();
 
 <header class="content-header">
     <div class="welcome-text" style="display: flex; align-items: center; gap: 1.5rem;">
-        <button type="button" class="toggle-btn" id="sidebar-toggle" onclick="toggleMobileMenu()" title="Toggle Menu" style="margin-right: 0.5rem; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); color: var(--accent); width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer;">
+        <button type="button" class="toggle-btn" id="sidebar-toggle" title="Toggle Menu" aria-label="Toggle Navigation Menu" style="margin-right: 0.5rem; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); color: var(--accent); width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer;">
             <ion-icon name="menu-outline"></ion-icon>
         </button>
         <img src="<?php echo $base . $DIOCESE_LOGO; ?>" alt="Diocese Logo" style="width: 50px; height: 50px; object-fit: contain; border-radius: 50%; background: white; padding: 3px; border: 2px solid var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
@@ -196,15 +196,38 @@ $base = get_base_url();
         <?php endif; ?>
 
     </div>
-    <link rel="stylesheet" href="<?php echo $base; ?>assets/css/responsive.css?v=1.0">
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileMenu()"></div>
+    <link rel="stylesheet" href="<?php echo $base; ?>assets/css/responsive.css?v=1.2">
     <script>
         function toggleMobileMenu() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('mobile-active');
-            
-            // Log for audit if needed
-            console.log('Mobile menu toggled');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (!sidebar) return;
+            const isMobile = window.innerWidth <= 1024;
+            if (isMobile) {
+                sidebar.classList.toggle('mobile-active');
+                if (backdrop) {
+                    backdrop.classList.toggle('active', sidebar.classList.contains('mobile-active'));
+                }
+            } else {
+                const appLayout = document.getElementById('app-layout');
+                if (appLayout) {
+                    appLayout.classList.toggle('collapsed');
+                    localStorage.setItem('sidebar-collapsed', appLayout.classList.contains('collapsed'));
+                }
+            }
         }
+
+        function closeMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar) sidebar.classList.remove('mobile-active');
+            if (backdrop) backdrop.classList.remove('active');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeMobileMenu();
+        });
     </script>
 </header>
 

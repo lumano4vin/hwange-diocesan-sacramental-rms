@@ -189,6 +189,9 @@ $marriages = db_fetchAll($sql, $params);
                                         <a href="../sacraments/marriage_certificate.php?id=<?php echo $row['marriage_id']; ?>&print=true" class="action-btn" title="Print Certificate" target="_blank">
                                             <ion-icon name="print-outline"></ion-icon>
                                         </a>
+                                        <a href="../sacraments/generate_notification.php?parishioner_id=<?php echo $row['groom_person_id']; ?>&type=Marriage&marriage_id=<?php echo $row['marriage_id']; ?>" class="action-btn" title="Groom Baptism Notification (Can. 1122)" target="_blank">
+                                            <ion-icon name="mail-outline"></ion-icon>
+                                        </a>
                                         <?php endif; ?>
 
                                         <?php if (has_record_permission($row, 'edit')): ?>

@@ -76,16 +76,34 @@ function initHwangeRMS() {
         // Initial icon state
         updateToggleIcon(appLayout.classList.contains('collapsed'));
 
-        sidebarToggle.addEventListener('click', () => {
-            appLayout.classList.toggle('collapsed');
-            const isCollapsed = appLayout.classList.contains('collapsed');
-            
-            // Update icon
-            updateToggleIcon(isCollapsed);
-            
-            // Save state
-            localStorage.setItem('sidebar-collapsed', isCollapsed);
+        sidebarToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const isMobile = window.innerWidth <= 1024;
+
+            if (isMobile && sidebar) {
+                sidebar.classList.toggle('mobile-active');
+                if (backdrop) {
+                    backdrop.classList.toggle('active', sidebar.classList.contains('mobile-active'));
+                }
+            } else {
+                appLayout.classList.toggle('collapsed');
+                const isCollapsed = appLayout.classList.contains('collapsed');
+                updateToggleIcon(isCollapsed);
+                localStorage.setItem('sidebar-collapsed', isCollapsed);
+            }
         });
+
+        // Close mobile sidebar when clicking backdrop on small screens
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', () => {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.remove('mobile-active');
+                backdrop.classList.remove('active');
+            });
+        }
     }
 
     // --- Universal Autocomplete System ---

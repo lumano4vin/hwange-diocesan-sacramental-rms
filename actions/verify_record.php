@@ -20,9 +20,9 @@ if (empty($type) || empty($id)) {
 $tables = [
     'baptism' => ['table' => 'baptisms', 'pk' => 'baptism_id', 'redirect' => 'view_baptism.php'],
     'marriage' => ['table' => 'marriages', 'pk' => 'marriage_id', 'redirect' => 'view_marriage.php'],
-    'confirmation' => ['table' => 'confirmations', 'pk' => 'confirmation_id', 'redirect' => 'confirmations.php'], // Assuming view page or list
-    'death' => ['table' => 'deaths', 'pk' => 'death_id', 'redirect' => 'deaths.php'],
-    'ordination' => ['table' => 'ordinations_professions', 'pk' => 'record_id', 'redirect' => 'ordinations.php']
+    'confirmation' => ['table' => 'confirmations', 'pk' => 'confirmation_id', 'redirect' => 'view_confirmation.php'],
+    'death' => ['table' => 'deaths', 'pk' => 'death_id', 'redirect' => 'view_death.php'],
+    'ordination' => ['table' => 'ordinations_professions', 'pk' => 'record_id', 'redirect' => 'view_ordination.php']
 ];
 
 if (!isset($tables[$type])) {

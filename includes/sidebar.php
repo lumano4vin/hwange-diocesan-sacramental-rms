@@ -137,6 +137,12 @@ require_once 'version.php';
                     <span>Annual Register Returns</span>
                 </a>
             </li>
+            <li class="<?php echo ($current_page == 'handover_hub.php' || $current_page == 'handover.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/handover_hub.php">
+                    <ion-icon name="swap-horizontal-outline" style="color: #38bdf8;"></ion-icon>
+                    <span>Mission Transitions</span>
+                </a>
+            </li>
 
             <?php
             // Communication Hub Badge

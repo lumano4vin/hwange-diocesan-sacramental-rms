@@ -78,30 +78,61 @@ if (!$parishioner) {
     exit;
 }
 
+$marriage_id = isset($_GET['marriage_id']) ? (int)$_GET['marriage_id'] : 0;
+$confirmation_id = isset($_GET['confirmation_id']) ? (int)$_GET['confirmation_id'] : 0;
+
 // Fetch Sacrament Data (Marriage, Confirmation, etc.)
 $sacrament_data = [];
 if ($type === 'Marriage') {
-    $stmt = $pdo->prepare("
-        SELECT m.*, pa.parish_name, h.first_name as h_first, h.last_name as h_last, w.first_name as w_first, w.last_name as w_last
-        FROM marriages m
-        JOIN parishes pa ON m.parish_id = pa.parish_id
-        JOIN parishioners h ON m.groom_person_id = h.person_id
-        JOIN parishioners w ON m.bride_person_id = w.person_id
-        WHERE m.groom_person_id = ? OR m.bride_person_id = ?
-        ORDER BY m.date_of_marriage DESC LIMIT 1
-    ");
-    $stmt->execute([$parishioner_id, $parishioner_id]);
-    $sacrament_data = $stmt->fetch();
+    if ($marriage_id > 0) {
+        $stmt = $pdo->prepare("
+            SELECT m.*, pa.parish_name, h.first_name as h_first, h.last_name as h_last, w.first_name as w_first, w.last_name as w_last
+            FROM marriages m
+            JOIN parishes pa ON m.parish_id = pa.parish_id
+            JOIN parishioners h ON m.groom_person_id = h.person_id
+            JOIN parishioners w ON m.bride_person_id = w.person_id
+            WHERE m.marriage_id = ? AND (m.groom_person_id = ? OR m.bride_person_id = ?)
+            LIMIT 1
+        ");
+        $stmt->execute([$marriage_id, $parishioner_id, $parishioner_id]);
+        $sacrament_data = $stmt->fetch();
+    }
+    if (!$sacrament_data) {
+        $stmt = $pdo->prepare("
+            SELECT m.*, pa.parish_name, h.first_name as h_first, h.last_name as h_last, w.first_name as w_first, w.last_name as w_last
+            FROM marriages m
+            JOIN parishes pa ON m.parish_id = pa.parish_id
+            JOIN parishioners h ON m.groom_person_id = h.person_id
+            JOIN parishioners w ON m.bride_person_id = w.person_id
+            WHERE m.groom_person_id = ? OR m.bride_person_id = ?
+            ORDER BY m.date_of_marriage DESC LIMIT 1
+        ");
+        $stmt->execute([$parishioner_id, $parishioner_id]);
+        $sacrament_data = $stmt->fetch();
+    }
 } elseif ($type === 'Confirmation') {
-    $stmt = $pdo->prepare("
-        SELECT c.*, pa.parish_name
-        FROM confirmations c
-        JOIN parishes pa ON c.parish_id = pa.parish_id
-        WHERE c.person_id = ?
-        ORDER BY c.date_of_confirmation DESC LIMIT 1
-    ");
-    $stmt->execute([$parishioner_id]);
-    $sacrament_data = $stmt->fetch();
+    if ($confirmation_id > 0) {
+        $stmt = $pdo->prepare("
+            SELECT c.*, pa.parish_name
+            FROM confirmations c
+            JOIN parishes pa ON c.parish_id = pa.parish_id
+            WHERE c.confirmation_id = ? AND c.person_id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$confirmation_id, $parishioner_id]);
+        $sacrament_data = $stmt->fetch();
+    }
+    if (!$sacrament_data) {
+        $stmt = $pdo->prepare("
+            SELECT c.*, pa.parish_name
+            FROM confirmations c
+            JOIN parishes pa ON c.parish_id = pa.parish_id
+            WHERE c.person_id = ?
+            ORDER BY c.date_of_confirmation DESC LIMIT 1
+        ");
+        $stmt->execute([$parishioner_id]);
+        $sacrament_data = $stmt->fetch();
+    }
 }
 
 ?>
@@ -190,9 +221,14 @@ if ($type === 'Marriage') {
             margin-top: 40px;
         }
 
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+
         @media print {
             body { background: white; padding: 0; }
-            .document-container { box-shadow: none; margin: 0; }
+            .document-container { box-shadow: none; margin: 0 auto; width: 100%; min-height: auto; padding: 10mm 15mm; }
             .no-print { display: none; }
         }
 
