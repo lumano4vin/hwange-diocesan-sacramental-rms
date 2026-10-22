@@ -8,11 +8,15 @@
   "routes": [
     {
       "src": "/Hwange_Diocesan_Sacramental_RMS_Manual.pdf",
-      "dest": "/download_manual.php"
+      "dest": "/api/index.php"
+    },
+    {
+      "src": "/download_manual.php",
+      "dest": "/api/index.php"
     },
     {
       "src": "/manual",
-      "dest": "/download_manual.php"
+      "dest": "/api/index.php"
     },
     {
       "src": "/$",

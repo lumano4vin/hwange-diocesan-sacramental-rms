@@ -19,6 +19,12 @@ if (strpos($path, '..') !== false) {
 $base_dir = dirname(__DIR__);
 $file = $base_dir . $path;
 
+if ($path === '/Hwange_Diocesan_Sacramental_RMS_Manual.pdf' || $path === '/manual' || $path === '/download_manual.php') {
+    chdir($base_dir);
+    require $base_dir . '/download_manual.php';
+    exit();
+}
+
 // If it's a directory, look for index.php inside it
 if (file_exists($file) && is_dir($file)) {
     $file = rtrim($file, '/') . '/index.php';
