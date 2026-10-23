@@ -48,8 +48,21 @@ $header_subtitle = "Manage and respond to canonical queries and mission requests
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Communication Center - Admin - Hwange Diocesan RMS</title>
     <link rel="stylesheet" href="../assets/css/style.css?v=1.6">
+    <link rel="stylesheet" href="../assets/css/responsive.css?v=1.3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+        .message-grid-columns {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 0;
+        }
+        @media (max-width: 800px) {
+            .message-grid-columns {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
 </head>
 <body class="dashboard-body">
 
@@ -88,7 +101,7 @@ $header_subtitle = "Manage and respond to canonical queries and mission requests
                             $status_class = strtolower(str_replace(' ', '-', $msg['status']));
                         ?>
                             <div class="card bg-card message-item <?php echo $msg['status'] == 'Pending' ? 'pending-glow' : ''; ?>" style="padding: 0; border-radius: 1.5rem; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 0;">
+                                <div class="message-grid-columns">
                                     
                                     <!-- Sender Info Pane -->
                                     <div style="padding: 1.5rem; background: rgba(255,255,255,0.02); border-right: 1px solid rgba(255,255,255,0.05);">

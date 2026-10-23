@@ -1511,10 +1511,20 @@ select.input-field {
     transition: opacity 0.25s ease;
 }
 
-.modal.active {
+.modal.active,
+.modal[style*="display: flex"],
+.modal[style*="display:block"],
+.modal[style*="display: block"] {
     display: flex !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+}
+
+.modal[style*="display: none"],
+.modal[style*="display:none"] {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .modal-content {
