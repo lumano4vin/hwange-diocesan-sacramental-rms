@@ -1507,12 +1507,14 @@ select.input-field {
     padding: 1.5rem;
     box-sizing: border-box;
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.25s ease;
 }
 
 .modal.active {
     display: flex !important;
     opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 .modal-content {

@@ -82,6 +82,10 @@ $orders_notation = db_fetch("
         }
 
         @media print {
+            *, *:before, *:after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
             .no-print, .theme-selector { display: none !important; }
             html, body {
                 background: white !important;
@@ -91,20 +95,23 @@ $orders_notation = db_fetch("
                 height: 297mm !important;
                 max-height: 297mm !important;
                 overflow: hidden !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
             }
             .certificate-container { 
-                margin: 10mm auto !important; 
+                margin: 0 auto !important; 
                 box-shadow: none !important; 
-                width: 186mm !important; 
-                height: 274mm !important; 
-                max-height: 274mm !important;
+                width: 190mm !important; 
+                max-width: 190mm !important; 
+                height: 280mm !important; 
+                max-height: 280mm !important;
                 box-sizing: border-box !important;
                 padding: 6mm 10mm 4mm 10mm !important; 
                 overflow: hidden !important;
                 page-break-inside: avoid !important;
+                page-break-before: avoid !important;
                 page-break-after: avoid !important;
+                break-inside: avoid !important;
+                break-before: avoid !important;
+                break-after: avoid !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
@@ -201,6 +208,21 @@ $orders_notation = db_fetch("
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+
+        .certificate-container.pdf-generation {
+            margin: 0 !important;
+            padding: 20px 40px !important;
+            box-shadow: none !important;
+            transform: none !important;
+            width: 794px !important;
+            min-width: 794px !important;
+            max-width: 794px !important;
+            height: 1120px !important;
+            min-height: 1120px !important;
+            max-height: 1120px !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
         }
 
         /* Gold Leaf Theme */
@@ -753,18 +775,36 @@ $orders_notation = db_fetch("
     <script>
         function downloadPDF() {
             const element = document.querySelector('.certificate-container');
+            if (!element) return;
+            element.classList.add('pdf-generation');
+            <?php 
+                $safe_name = trim(($record['first_name'] ?? '') . '_' . ($record['last_name'] ?? ''));
+                $pdf_filename = 'Baptism_Certificate_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $safe_name) . '.pdf';
+            ?>
             const opt = {
                 margin:       0,
-                filename:     'certificate.pdf',
+                filename:     <?php echo json_encode($pdf_filename); ?>,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollY: 0, 
+                    scrollX: 0,
+                    width: 794,
+                    height: 1120,
+                    windowWidth: 794
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             
-            // Add a temporary class to fix any layout issues during PDF generation
-            element.classList.add('pdf-generation');
-            
-            html2pdf().set(opt).from(element).save().then(() => {
+            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
+                while (pdf.internal.getNumberOfPages() > 1) {
+                    pdf.deletePage(pdf.internal.getNumberOfPages());
+                }
+            }).save().then(() => {
+                element.classList.remove('pdf-generation');
+            }).catch((err) => {
+                console.error('PDF generation error:', err);
                 element.classList.remove('pdf-generation');
             });
         }

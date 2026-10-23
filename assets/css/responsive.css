@@ -28,6 +28,17 @@
     pointer-events: auto !important;
 }
 
+/* Prevent unwanted horizontal viewport overflow */
+html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+.dashboard-layout, .main-content {
+    max-width: 100vw;
+    box-sizing: border-box;
+}
+
 @media (max-width: 1024px) {
     .dashboard-layout {
         grid-template-columns: 1fr !important;
@@ -71,16 +82,38 @@
         padding: 1.5rem !important;
     }
     
-    .header-content {
+    .content-header, .header-content {
         flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 1rem;
+        align-items: stretch !important;
+        gap: 1.25rem !important;
+    }
+
+    .content-header .welcome-text {
+        width: 100% !important;
+    }
+
+    .header-right {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 0.75rem !important;
     }
     
-    .btn {
+    .btn:not(.header-right .btn):not(.modal .btn):not(.cleric-card .btn):not(.view-toggle):not(.dropdown-container .btn):not(.action-bar .btn):not(.toolbar-actions .btn) {
         width: 100% !important;
         justify-content: center !important;
-        padding: 1rem !important;
+        padding: 0.85rem 1rem !important;
+    }
+
+    .header-right .btn,
+    .modal .btn,
+    .cleric-card .btn,
+    .view-toggle,
+    .dropdown-container .btn,
+    .action-bar .btn,
+    .toolbar-actions .btn {
+        width: auto !important;
+        padding: 0.6rem 1rem !important;
     }
     
     .data-table-container {

@@ -176,16 +176,21 @@ if ($person) {
                 print-color-adjust: exact !important;
             }
             .canonical-sheet { 
-                margin: 6mm auto !important; 
+                margin: 0 auto !important; 
                 box-shadow: none !important; 
                 width: 198mm !important; 
+                max-width: 198mm !important;
                 height: 284mm !important; 
                 max-height: 284mm !important;
                 box-sizing: border-box !important;
                 padding: 8mm 14mm !important; 
                 overflow: hidden !important;
                 page-break-inside: avoid !important;
+                page-break-before: avoid !important;
                 page-break-after: avoid !important;
+                break-inside: avoid !important;
+                break-before: avoid !important;
+                break-after: avoid !important;
                 border: 2px solid #000 !important;
             }
             .editable-field {
@@ -293,6 +298,19 @@ if ($person) {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+        }
+
+        .canonical-sheet.pdf-generation {
+            margin: 0 auto !important;
+            box-shadow: none !important;
+            width: 794px !important;
+            min-width: 794px !important;
+            max-width: 794px !important;
+            height: 1120px !important;
+            min-height: 1120px !important;
+            max-height: 1120px !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
         }
 
         /* Header Layout */
@@ -997,14 +1015,37 @@ if ($person) {
     <script>
         function downloadPDF() {
             const element = document.getElementById('print-sheet');
+            if (!element) return;
+            element.classList.add('pdf-generation');
+            <?php 
+                $safe_title = trim($full_name ?: 'Diocese_of_Hwange_Canonical_Certificate');
+                $pdf_inq_filename = 'Status_Certificate_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $safe_title) . '.pdf';
+            ?>
             const opt = {
                 margin:       0,
-                filename:     'Diocese_of_Hwange_Canonical_Certificate.pdf',
+                filename:     <?php echo json_encode($pdf_inq_filename); ?>,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollY: 0, 
+                    scrollX: 0,
+                    width: 794,
+                    height: 1120,
+                    windowWidth: 794
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
+                while (pdf.internal.getNumberOfPages() > 1) {
+                    pdf.deletePage(pdf.internal.getNumberOfPages());
+                }
+            }).save().then(() => {
+                element.classList.remove('pdf-generation');
+            }).catch((err) => {
+                console.error('PDF generation error:', err);
+                element.classList.remove('pdf-generation');
+            });
         }
     </script>
 </body>
