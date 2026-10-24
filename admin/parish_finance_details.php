@@ -365,17 +365,24 @@ $header_subtitle = "Detailed assessment, monthly remittances, and payment ledger
                                                 <?php endif; ?>
                                             </td>
                                             <td>
-                                                <form action="../actions/verify_financial_submission.php" method="POST" style="display: inline-flex; align-items: center; gap: 4px;">
-                                                    <input type="hidden" name="submission_id" value="<?php echo $sub['submission_id']; ?>">
-                                                    <input type="hidden" name="parish_id" value="<?php echo $parish_id; ?>">
-                                                    <input type="hidden" name="year" value="<?php echo $year; ?>">
-                                                    <select name="status" onchange="this.form.submit()" class="input-field" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 6px; width: auto;">
-                                                        <option value="Submitted" <?php echo $sub['status'] == 'Submitted' ? 'selected' : ''; ?>>Submitted</option>
-                                                        <option value="Verified" <?php echo $sub['status'] == 'Verified' ? 'selected' : ''; ?>>Verified</option>
-                                                        <option value="Reconciled" <?php echo $sub['status'] == 'Reconciled' ? 'selected' : ''; ?>>Reconciled</option>
-                                                        <option value="Disputed" <?php echo $sub['status'] == 'Disputed' ? 'selected' : ''; ?>>Disputed</option>
-                                                    </select>
-                                                </form>
+                                                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                                    <form action="../actions/verify_financial_submission.php" method="POST" style="display: inline-flex; align-items: center;">
+                                                        <input type="hidden" name="submission_id" value="<?php echo $sub['submission_id']; ?>">
+                                                        <input type="hidden" name="parish_id" value="<?php echo $parish_id; ?>">
+                                                        <input type="hidden" name="year" value="<?php echo $year; ?>">
+                                                        <select name="status" onchange="this.form.submit()" class="input-field" style="padding: 4px 6px; font-size: 0.7rem; border-radius: 6px; width: auto;">
+                                                            <option value="Submitted" <?php echo $sub['status'] == 'Submitted' ? 'selected' : ''; ?>>Submitted</option>
+                                                            <option value="Verified" <?php echo $sub['status'] == 'Verified' ? 'selected' : ''; ?>>Verified</option>
+                                                            <option value="Reconciled" <?php echo $sub['status'] == 'Reconciled' ? 'selected' : ''; ?>>Reconciled</option>
+                                                            <option value="Disputed" <?php echo $sub['status'] == 'Disputed' ? 'selected' : ''; ?>>Disputed</option>
+                                                        </select>
+                                                    </form>
+                                                    <a href="../actions/export_financial_docx.php?submission_id=<?php echo $sub['submission_id']; ?>" 
+                                                       class="btn btn-secondary" style="font-size: 0.65rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 4px;" title="Download Word (.docx)">
+                                                        <ion-icon name="document-text-outline"></ion-icon>
+                                                        <span>.docx</span>
+                                                    </a>
+                                                </div>
                                             </td>
                                         <?php else: ?>
                                             <td colspan="6" style="color: var(--text-muted); font-style: italic;">No submission filed for this month</td>
