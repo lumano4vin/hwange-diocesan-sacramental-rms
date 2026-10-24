@@ -67,13 +67,37 @@ for ($i = 1; $i <= 23; $i++) {
     $expenditure_data[$i] = isset($details['expenditure'][$i]) ? (float)$details['expenditure'][$i] : 0.0;
 }
 
-// Ensure Line 3 (Pledges) & Line 4 (Collections) reflect column data if details wasn't saved yet
+// Ensure Line 3 (Tithe/Unsupo/Mutulo) & Line 4 (Sunday Collection) reflect column data if details wasn't saved yet
 if ($income_data[3] == 0 && !empty($sub['tithe'])) {
     $income_data[3] = (float)$sub['tithe'];
 }
 if ($income_data[4] == 0 && !empty($sub['total_collections'])) {
     $income_data[4] = (float)$sub['total_collections'];
 }
+
+// Map the 8 annual special diocesan collections if present in financial details
+if (!empty($details['special_collections'])) {
+    $sc = $details['special_collections'];
+    if ($income_data[17] == 0 && !empty($sc['holy_land'])) {
+        $income_data[17] = (float)$sc['holy_land'];
+    }
+    if ($income_data[20] == 0 && !empty($sc['lenten_collection'])) {
+        $income_data[20] = (float)$sc['lenten_collection'];
+    }
+    if ($income_data[22] == 0 && !empty($sc['peters_pence'])) {
+        $income_data[22] = (float)$sc['peters_pence'];
+    }
+    if ($expenditure_data[18] == 0 && !empty($sc['holy_land'])) {
+        $expenditure_data[18] = (float)$sc['holy_land'];
+    }
+    if ($expenditure_data[19] == 0 && !empty($sc['missionary_childhood'])) {
+        $expenditure_data[19] = (float)$sc['missionary_childhood'];
+    }
+    if ($expenditure_data[21] == 0 && !empty($sc['mission_sunday'])) {
+        $expenditure_data[21] = (float)$sc['mission_sunday'];
+    }
+}
+
 // Ensure Expenditure Line 4 (Diocesan Levy 10%) is (Line 3 + Line 4) * 0.10
 $income_data[3] = (float)$income_data[3];
 $income_data[4] = (float)$income_data[4];
@@ -142,6 +166,13 @@ for ($i = 1; $i <= 23; $i++) {
         $row = $rows->item($row_idx);
         $cells = $row->getElementsByTagNameNS($ns, 'tc');
         if ($cells->length >= 5) {
+            // Explicitly set terminology for Line 3 & Line 4
+            if ($i === 3) {
+                setWordCellText($cells->item(1), 'Tithe/Unsupo/Mutulo', $ns);
+            } elseif ($i === 4) {
+                setWordCellText($cells->item(1), 'Sunday Collection', $ns);
+            }
+
             // Cell 2 = Income Amount
             $inc_val = $income_data[$i];
             setWordCellText($cells->item(2), 'US$' . number_format($inc_val, 2), $ns);

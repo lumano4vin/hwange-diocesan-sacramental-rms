@@ -5,6 +5,7 @@
  */
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/diocesan_financial_categories.php';
 
 require_admin();
 
@@ -50,6 +51,53 @@ $submissions_raw = db_fetchAll("
 $monthly_submissions = [];
 foreach ($submissions_raw as $sub) {
     $monthly_submissions[(int)$sub['fiscal_month']] = $sub;
+}
+
+// 1b. Aggregate Annual Special Diocesan Collections (8 Appeals)
+$special_definitions = get_annual_diocesan_special_collections();
+$special_annual_summary = [];
+$total_special_remitted = 0.0;
+
+foreach ($special_definitions as $s_key => $s_meta) {
+    $special_annual_summary[$s_key] = [
+        'meta' => $s_meta,
+        'total' => 0.0,
+        'months' => [],
+    ];
+}
+
+foreach ($submissions_raw as $sub) {
+    $m_num = (int)$sub['fiscal_month'];
+    $m_name = date('M', mktime(0, 0, 0, $m_num, 1));
+    $det = !empty($sub['financial_details']) ? json_decode($sub['financial_details'], true) : [];
+    $sc = $det['special_collections'] ?? [];
+    $inc = $det['income'] ?? [];
+    $exp = $det['expenditure'] ?? [];
+
+    foreach ($special_definitions as $s_key => $s_meta) {
+        $amount = (float)($sc[$s_key] ?? 0.0);
+
+        // Fallback to 23-line items if not explicitly stored in special_collections map
+        if ($amount == 0.0) {
+            if ($s_key === 'holy_land' && !empty($inc[17])) {
+                $amount = (float)$inc[17];
+            } elseif ($s_key === 'lenten_collection' && !empty($inc[20])) {
+                $amount = (float)$inc[20];
+            } elseif ($s_key === 'peters_pence' && !empty($inc[22])) {
+                $amount = (float)$inc[22];
+            } elseif ($s_key === 'missionary_childhood' && !empty($exp[19])) {
+                $amount = (float)$exp[19];
+            } elseif ($s_key === 'mission_sunday' && !empty($exp[21])) {
+                $amount = (float)$exp[21];
+            }
+        }
+
+        if ($amount > 0) {
+            $special_annual_summary[$s_key]['total'] += $amount;
+            $special_annual_summary[$s_key]['months'][] = $m_name . " ($" . number_format($amount, 2) . ")";
+            $total_special_remitted += $amount;
+        }
+    }
 }
 
 // 2. Fetch Payments Ledger for this year
@@ -252,7 +300,7 @@ $header_subtitle = "Detailed assessment, monthly remittances, and payment ledger
                         <span class="stat-label">Assessable Base (Coll + Tithe)</span>
                         <span class="stat-value" style="color: var(--accent); font-size: 1.35rem;">$<?php echo number_format($total_assessable, 2); ?></span>
                         <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
-                            Coll: $<?php echo number_format($total_collections, 2); ?> | Tithe: $<?php echo number_format($total_tithe, 2); ?>
+                            Sunday Coll: $<?php echo number_format($total_collections, 2); ?> | Tithe/Unsupo/Mutulo: $<?php echo number_format($total_tithe, 2); ?>
                         </div>
                     </div>
 
@@ -260,7 +308,7 @@ $header_subtitle = "Detailed assessment, monthly remittances, and payment ledger
                         <span class="stat-label">Diocesan Levy Target (10%)</span>
                         <span class="stat-value" style="color: #38bdf8; font-size: 1.35rem;">$<?php echo number_format($target_levy, 2); ?></span>
                         <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
-                            10% of (Collections + Tithe) only
+                            10% of (Sunday Coll. + Tithe/Unsupo/Mutulo) only
                         </div>
                     </div>
 
@@ -297,7 +345,7 @@ $header_subtitle = "Detailed assessment, monthly remittances, and payment ledger
                         <div>
                             <h3 style="font-family: 'Outfit'; color: white; margin: 0; font-size: 1.15rem;">Monthly Remittance Schedule (FY <?php echo $year; ?>)</h3>
                             <p style="font-size: 0.75rem; color: var(--text-muted); margin: 2px 0 0 0;">
-                                Note: 10% Diocesan Levy applies exclusively to <strong>Sunday Collections</strong> & <strong>Tithe</strong>. Stole fees & other incomes are retained by the parish.
+                                Note: 10% Diocesan Levy applies exclusively to <strong>Sunday Collections</strong> & <strong>Tithe/Unsupo/Mutulo</strong>. Parish/Mission collections, stole fees & other local incomes are 100% retained by the parish.
                             </p>
                         </div>
                         <span style="font-size: 0.75rem; color: var(--accent); font-weight: 700;"><?php echo count($submissions_raw); ?> of 12 Months Submitted</span>
@@ -308,8 +356,8 @@ $header_subtitle = "Detailed assessment, monthly remittances, and payment ledger
                             <thead>
                                 <tr>
                                     <th>Month</th>
-                                    <th>Sunday Coll.</th>
-                                    <th>Tithe</th>
+                                    <th>Sunday Collection</th>
+                                    <th>Tithe/Unsupo/Mutulo</th>
                                     <th>Assessable Base</th>
                                     <th>10% Levy</th>
                                     <th>Stole Fees (Retained)</th>
@@ -393,6 +441,83 @@ $header_subtitle = "Detailed assessment, monthly remittances, and payment ledger
                                         <?php endif; ?>
                                     </tr>
                                 <?php endfor; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Annual Special Diocesan Collections (8 Appeals) -->
+                <div class="audit-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <h3 style="font-family: 'Outfit'; color: #38bdf8; margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                                <ion-icon name="globe-outline"></ion-icon>
+                                <span>Annual Special Diocesan Collections (8 Appeals for FY <?php echo $year; ?>)</span>
+                            </h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 2px 0 0 0;">
+                                These 8 Pontifical and Diocesan collections occur <strong>once a year</strong>. 100% of receipts are remitted to Chancery / Holy See (0% diocesan assessment). Parish/mission collections are separate and kept locally.
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Total Remitted: </span>
+                            <span style="font-size: 1.1rem; font-weight: 800; color: #38bdf8;">$<?php echo number_format($total_special_remitted, 2); ?></span>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Appeal / Collection</th>
+                                    <th>Canonical Season</th>
+                                    <th>Canonical Beneficiary</th>
+                                    <th>FY <?php echo $year; ?> Remitted</th>
+                                    <th>Remittance Month(s)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($special_annual_summary as $s_key => $s_data): ?>
+                                    <?php 
+                                        $meta = $s_data['meta'];
+                                        $tot = $s_data['total'];
+                                        $has_remitted = $tot > 0;
+                                    ?>
+                                    <tr>
+                                        <td style="font-weight: 700; color: #fff;">
+                                            <?php echo h($meta['title']); ?>
+                                        </td>
+                                        <td style="color: #38bdf8; font-size: 0.75rem;">
+                                            <?php echo h($meta['season']); ?>
+                                        </td>
+                                        <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 250px;">
+                                            <?php echo h($meta['canonical_target']); ?>
+                                        </td>
+                                        <td style="font-weight: 800; font-size: 0.95rem; color: <?php echo $has_remitted ? '#10b981' : '#94a3b8'; ?>;">
+                                            $<?php echo number_format($tot, 2); ?>
+                                        </td>
+                                        <td style="font-size: 0.75rem; color: #e2e8f0;">
+                                            <?php if (!empty($s_data['months'])): ?>
+                                                <?php echo implode(', ', $s_data['months']); ?>
+                                            <?php else: ?>
+                                                <span style="color: var(--text-muted); font-style: italic;">Not yet filed</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($has_remitted): ?>
+                                                <span class="badge-status badge-verified" style="display: inline-flex; align-items: center; gap: 4px;">
+                                                    <ion-icon name="checkmark-circle"></ion-icon>
+                                                    <span>Remitted</span>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge-status badge-none" style="display: inline-flex; align-items: center; gap: 4px;">
+                                                    <ion-icon name="time-outline"></ion-icon>
+                                                    <span>Awaiting Season</span>
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>

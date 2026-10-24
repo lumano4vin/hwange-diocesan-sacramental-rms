@@ -25,6 +25,7 @@ $selected_month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
 
 $income_cats = get_diocesan_income_categories();
 $expenditure_cats = get_diocesan_expenditure_categories();
+$annual_spec_cats = get_annual_diocesan_special_collections();
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,19 +35,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $inc_post = $_POST['inc'] ?? [];
     $exp_post = $_POST['exp'] ?? [];
+    $spec_post = $_POST['spec'] ?? [];
 
     $income_values = [];
     $expenditure_values = [];
+    $special_collections = [];
 
     for ($i = 1; $i <= 23; $i++) {
         $income_values[$i] = isset($inc_post[$i]) ? max(0, (float)$inc_post[$i]) : 0.0;
         $expenditure_values[$i] = isset($exp_post[$i]) ? max(0, (float)$exp_post[$i]) : 0.0;
     }
 
-    // Canonical Diocesan Rule: 10% Levy is strictly applied to Line 3 (Pledges) & Line 4 (Collections) ONLY
-    $pledges = $income_values[3];
-    $collections = $income_values[4];
-    $calculated_levy = ($pledges + $collections) * 0.10;
+    // Capture the 8 Annual Special Diocesan Collections (occur once a year)
+    foreach ($annual_spec_cats as $s_key => $s_meta) {
+        $special_collections[$s_key] = isset($spec_post[$s_key]) ? max(0, (float)$spec_post[$s_key]) : 0.0;
+    }
+
+    // Sync specific special collections with corresponding cashbook rows if provided
+    if (!empty($special_collections['holy_land'])) {
+        $income_values[17] = $special_collections['holy_land'];
+        $expenditure_values[18] = $special_collections['holy_land'];
+    }
+    if (!empty($special_collections['lenten_collection'])) {
+        $income_values[20] = $special_collections['lenten_collection'];
+    }
+    if (!empty($special_collections['peters_pence'])) {
+        $income_values[22] = $special_collections['peters_pence'];
+    }
+    if (!empty($special_collections['missionary_childhood'])) {
+        $expenditure_values[19] = $special_collections['missionary_childhood'];
+    }
+
+    // Canonical Diocesan Rule: 10% Levy is strictly applied to Line 3 (Tithe/Unsupo/Mutulo) & Line 4 (Sunday Collection) ONLY
+    $tithe_val = $income_values[3];
+    $sunday_collection_val = $income_values[4];
+    $calculated_levy = ($tithe_val + $sunday_collection_val) * 0.10;
     $expenditure_values[4] = $calculated_levy; // Override expenditure line 4 with exact 10%
 
     $total_income = array_sum($income_values);
@@ -63,11 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // First-class columns for fast Chancery analytics
     $sacramental_offerings = $income_values[14] ?? 0.0; // Repository / Sacramental goods
-    $other_income = $total_income - ($pledges + $collections);
+    $other_income = $total_income - ($tithe_val + $sunday_collection_val);
 
     $financial_details_json = json_encode([
         'income' => $income_values,
         'expenditure' => $expenditure_values,
+        'special_collections' => $special_collections,
         'opening_balance' => $opening_balance,
         'closing_balance' => $closing_balance,
         'cash_at_hand' => $cash_at_hand,
@@ -90,17 +114,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     financial_details = ?, currency = ?, status = 'Submitted', submitted_by = ?, created_at = CURRENT_TIMESTAMP
                 WHERE submission_id = ?";
         db_query($sql, [
-            $collections, $pledges, $sacramental_offerings, $other_income, $calculated_levy,
+            $sunday_collection_val, $tithe_val, $sacramental_offerings, $other_income, $calculated_levy,
             $total_income, $total_expenditure, $opening_balance, $closing_balance,
             $cash_at_hand, $cash_in_bank, $savings, $investments,
             $financial_details_json, $currency, $_SESSION['user_id'], $existing['submission_id']
         ]);
 
         log_audit($_SESSION['user_id'], 'UPDATE', 'parish_financial_submissions', $existing['submission_id'], 
-            "Updated 23-line financial statement for $fiscal_month/$fiscal_year (Income: $currency " . number_format($total_income, 2) . ", Levy: $currency " . number_format($calculated_levy, 2) . ")");
+            "Updated 23-line return for $fiscal_month/$fiscal_year (Tithe/Unsupo/Mutulo: $currency " . number_format($tithe_val, 2) . ", Sunday Coll: $currency " . number_format($sunday_collection_val, 2) . ", 10% Levy: $currency " . number_format($calculated_levy, 2) . ")");
 
         set_flash("Diocesan financial statement for " . date('F Y', mktime(0,0,0,$fiscal_month,1,$fiscal_year)) . " updated successfully.", "success");
-        $target_sub_id = $existing['submission_id'];
     } else {
         $sql = "INSERT INTO parish_financial_submissions 
                 (parish_id, fiscal_year, fiscal_month, total_collections, tithe, sacramental_offerings, other_income, calculated_levy,
@@ -108,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  financial_details, currency, status, submitted_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Submitted', ?)";
         db_query($sql, [
-            $collections, $pledges, $sacramental_offerings, $other_income, $calculated_levy,
+            $sunday_collection_val, $tithe_val, $sacramental_offerings, $other_income, $calculated_levy,
             $total_income, $total_expenditure, $opening_balance, $closing_balance,
             $cash_at_hand, $cash_in_bank, $savings, $investments,
             $financial_details_json, $currency, $_SESSION['user_id']
@@ -116,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $target_sub_id = db_last_insert_id();
 
         log_audit($_SESSION['user_id'], 'CREATE', 'parish_financial_submissions', $target_sub_id, 
-            "Submitted 23-line financial statement for $fiscal_month/$fiscal_year (Income: $currency " . number_format($total_income, 2) . ", Levy: $currency " . number_format($calculated_levy, 2) . ")");
+            "Submitted 23-line return for $fiscal_month/$fiscal_year (Tithe/Unsupo/Mutulo: $currency " . number_format($tithe_val, 2) . ", Sunday Coll: $currency " . number_format($sunday_collection_val, 2) . ", 10% Levy: $currency " . number_format($calculated_levy, 2) . ")");
 
         set_flash("Diocesan financial statement for " . date('F Y', mktime(0,0,0,$fiscal_month,1,$fiscal_year)) . " submitted successfully.", "success");
     }
@@ -132,6 +155,7 @@ $current_sub = db_fetch("
 ", [$parish_id, $selected_year, $selected_month]);
 
 $current_details = !empty($current_sub['financial_details']) ? json_decode($current_sub['financial_details'], true) : [];
+$saved_special = $current_details['special_collections'] ?? [];
 
 // Auto-lookup previous month's closing balance to pre-fill opening balance if new
 $default_opening = 0.0;
@@ -181,6 +205,26 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
             border: 1px solid rgba(255,255,255,0.06);
             margin-bottom: 2rem;
         }
+        .diocesan-notice-banner {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            border-left: 4px solid var(--accent);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.75rem;
+        }
+        .notice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 10px;
+        }
+        .notice-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
         .ledger-columns {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -208,7 +252,7 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
         }
         .ledger-row {
             display: grid;
-            grid-template-columns: 35px 1fr 120px;
+            grid-template-columns: 35px 1fr 125px;
             gap: 8px;
             align-items: center;
             padding: 4px 0;
@@ -217,14 +261,14 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
         }
         .ledger-row:hover { background: rgba(255,255,255,0.02); }
         .ledger-row.highlight-levy {
-            background: rgba(251, 191, 36, 0.06);
+            background: rgba(251, 191, 36, 0.08);
             border-left: 3px solid var(--accent);
-            padding-left: 4px;
+            padding-left: 6px;
         }
         .ledger-row.highlight-auto {
             background: rgba(16, 185, 129, 0.08);
             border-left: 3px solid #10b981;
-            padding-left: 4px;
+            padding-left: 6px;
         }
         .num-col { color: var(--text-muted); font-weight: 700; font-size: 0.75rem; text-align: center; }
         .label-col { color: #e2e8f0; }
@@ -279,13 +323,14 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
             border-top: 2px solid rgba(255,255,255,0.1);
         }
         .badge-assess {
-            font-size: 0.6rem;
-            background: rgba(251, 191, 36, 0.15);
+            font-size: 0.65rem;
+            background: rgba(251, 191, 36, 0.2);
             color: var(--accent);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            padding: 1px 5px;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            padding: 1px 6px;
             border-radius: 4px;
             margin-left: 6px;
+            font-weight: 700;
         }
         .badge-status {
             display: inline-block;
@@ -298,6 +343,28 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
         .badge-verified { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .badge-reconciled { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
         .badge-pending { background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px dashed rgba(148, 163, 184, 0.3); }
+        .special-collection-card {
+            background: rgba(56, 189, 248, 0.03);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .special-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+            margin-top: 1rem;
+        }
+        .special-item {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body class="dashboard-body">
@@ -347,6 +414,34 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                     </div>
                 </div>
 
+                <!-- Diocesan Financial Governance Notice -->
+                <div class="diocesan-notice-banner">
+                    <div style="display: flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 800; font-size: 0.85rem;">
+                        <ion-icon name="shield-checkmark" style="font-size: 1.2rem;"></ion-icon>
+                        <span>DIOCESAN CANONICAL COLLECTION & ASSESSMENT GUIDELINES</span>
+                    </div>
+                    <div class="notice-grid">
+                        <div class="notice-card" style="border-left: 3px solid var(--accent);">
+                            <strong style="color: var(--accent); font-size: 0.75rem;">1. Diocesan Operating Quota (10% Levy)</strong>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 3px 0 0 0;">
+                                The 10% diocesan assessment is calculated <strong>exclusively</strong> on <strong>Sunday Collection</strong> and <strong>Tithe/Unsupo/Mutulo</strong>.
+                            </p>
+                        </div>
+                        <div class="notice-card" style="border-left: 3px solid #10b981;">
+                            <strong style="color: #10b981; font-size: 0.75rem;">2. Parish / Mission Incomes (100% Local Retained)</strong>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 3px 0 0 0;">
+                                Local parish collections, projects, stolen fees, farm/garden, and donations belong 100% to the parish/mission and are <strong>NOT</strong> part of diocesan collections.
+                            </p>
+                        </div>
+                        <div class="notice-card" style="border-left: 3px solid #38bdf8;">
+                            <strong style="color: #38bdf8; font-size: 0.75rem;">3. Annual Special Diocesan Collections (100% Remitted)</strong>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin: 3px 0 0 0;">
+                                The 8 annual Pontifical & Diocesan appeals occur <strong>once a year</strong> during their designated seasons. 100% is remitted to the Chancery (0% levy).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Main Cashbook Form -->
                 <div class="cashbook-container">
                     <form method="POST" id="cashbook-form">
@@ -364,7 +459,7 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                                         Reporting Period: <?php echo strtoupper(date('F Y', mktime(0,0,0,$selected_month,1,$selected_year))); ?>
                                     </div>
                                     <div style="font-size: 0.7rem; color: var(--text-muted);">
-                                        Rule: 10% Diocesan Levy is auto-computed on <strong>Pledges (#3)</strong> & <strong>Collections (#4)</strong> only.
+                                        Assessable items: <strong>#3 Tithe/Unsupo/Mutulo</strong> + <strong>#4 Sunday Collection</strong>.
                                     </div>
                                 </div>
                             </div>
@@ -473,6 +568,49 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                                 </div>
                             </div>
 
+                        </div>
+
+                        <!-- Annual Special Diocesan Collections (8 Appeals) -->
+                        <div class="special-collection-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                <div>
+                                    <h4 style="font-family: 'Outfit'; color: #38bdf8; margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 6px;">
+                                        <ion-icon name="globe-outline"></ion-icon>
+                                        <span>Annual Special Diocesan Collections (Occur Once a Year)</span>
+                                    </h4>
+                                    <p style="font-size: 0.7rem; color: var(--text-muted); margin: 3px 0 0 0;">
+                                        100% of these collections are remitted to the Chancery / Holy See. They are separate from regular parish collections and are <strong>not</strong> subject to the 10% levy.
+                                    </p>
+                                </div>
+                                <span style="font-size: 0.65rem; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 3px 8px; border-radius: 6px; font-weight: 700;">
+                                    8 Pontifical & Diocesan Appeals
+                                </span>
+                            </div>
+
+                            <div class="special-grid">
+                                <?php foreach ($annual_spec_cats as $s_key => $s_meta): ?>
+                                    <?php 
+                                        $s_val = (float)($saved_special[$s_key] ?? 0.0);
+                                    ?>
+                                    <div class="special-item">
+                                        <div>
+                                            <div style="font-weight: 700; color: #fff; font-size: 0.78rem;">
+                                                <?php echo h($s_meta['title']); ?>
+                                            </div>
+                                            <div style="font-size: 0.65rem; color: #38bdf8; margin-top: 2px;">
+                                                Season: <?php echo h($s_meta['season']); ?>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 8px;">
+                                            <input type="number" step="0.01" name="spec[<?php echo $s_key; ?>]" 
+                                                   id="spec-<?php echo $s_key; ?>" 
+                                                   class="input-num calc-special" 
+                                                   placeholder="0.00" 
+                                                   value="<?php echo $s_val > 0 ? number_format($s_val, 2, '.', '') : ''; ?>">
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
 
                         <!-- Bottom Reconciliation Matrix -->
@@ -678,10 +816,10 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                 totalIncome += parseFloat(inp.value || 0);
             });
 
-            // 2. Compute 10% Levy on Line 3 (Pledges) & Line 4 (Collections) ONLY
-            const pledges = parseFloat(document.getElementById('inc-3').value || 0);
-            const collections = parseFloat(document.getElementById('inc-4').value || 0);
-            const assessableBase = pledges + collections;
+            // 2. Compute 10% Levy on Line 3 (Tithe/Unsupo/Mutulo) & Line 4 (Sunday Collection) ONLY
+            const tithe = parseFloat(document.getElementById('inc-3').value || 0);
+            const sundayColl = parseFloat(document.getElementById('inc-4').value || 0);
+            const assessableBase = tithe + sundayColl;
             const diocesanLevy = assessableBase * 0.10;
 
             const levyField = document.getElementById('exp-4');

@@ -2,15 +2,15 @@
 /**
  * Hwange Diocese Records Management System (RMS)
  * Standard Diocesan Financial Categories (23-Line Double-Entry Cashbook)
- * Derived from Official Chancery / Mission Administration Format
+ * Aligned with the Diocesan Chancery Administration Standard
  */
 
 function get_diocesan_income_categories() {
     return [
         1 => ['code' => 'diocese', 'name' => 'Diocese', 'is_assessable' => false],
         2 => ['code' => 'bank_interest', 'name' => 'Bank interest', 'is_assessable' => false],
-        3 => ['code' => 'pledges', 'name' => 'Pledges (isondlo)', 'is_assessable' => true],
-        4 => ['code' => 'collection', 'name' => 'Collection (umnikelo)', 'is_assessable' => true],
+        3 => ['code' => 'pledges', 'name' => 'Tithe/Unsupo/Mutulo', 'is_assessable' => true],
+        4 => ['code' => 'collection', 'name' => 'Sunday Collection', 'is_assessable' => true],
         5 => ['code' => 'donation_abroad', 'name' => 'Donation from abroad', 'is_assessable' => false],
         6 => ['code' => 'local_donation', 'name' => 'Local Donation', 'is_assessable' => false],
         7 => ['code' => 'farm_garden_inc', 'name' => 'Farm/Garden', 'is_assessable' => false],
@@ -58,5 +58,71 @@ function get_diocesan_expenditure_categories() {
         21 => ['code' => 'parish_meetings', 'name' => 'Parish Meetings', 'is_auto_levy' => false],
         22 => ['code' => 'internet_wifi', 'name' => 'Internet/Wifi', 'is_auto_levy' => false],
         23 => ['code' => 'vehicle_service_repair', 'name' => 'Vehicle Service or Repair', 'is_auto_levy' => false],
+    ];
+}
+
+/**
+ * The 8 Mandatory Annual Special Diocesan Collections (Occur once a year)
+ * 100% of these collections are remitted to the Diocesan Chancery / Holy See.
+ * They are NOT subject to the 10% levy and are separate from Parish/Mission collections.
+ */
+function get_annual_diocesan_special_collections() {
+    return [
+        'mission_sunday' => [
+            'key' => 'mission_sunday',
+            'title' => 'Mission Sunday (World Mission Sunday)',
+            'season' => 'October',
+            'canonical_target' => 'Pontifical Mission Societies (Propaganda Fide)',
+            'description' => 'Universal collection supporting mission churches worldwide.'
+        ],
+        'lenten_collection' => [
+            'key' => 'lenten_collection',
+            'title' => 'Lenten Collection (Lenten Self-Denial / Sacrifice)',
+            'season' => 'Lent (Ash Wednesday to Holy Week)',
+            'canonical_target' => 'Diocesan Lenten Appeal',
+            'description' => 'Solidarity fund for poor communities and diocesan social works.'
+        ],
+        'holy_land' => [
+            'key' => 'holy_land',
+            'title' => 'Holy Land Collection (Good Friday)',
+            'season' => 'Good Friday',
+            'canonical_target' => 'Custody of the Holy Land (Pro Terra Sancta)',
+            'description' => 'Pontifical collection for the preservation of Christian holy sites and communities in the Middle East.'
+        ],
+        'social_communications' => [
+            'key' => 'social_communications',
+            'title' => 'Social Communications Collection',
+            'season' => 'Ascension Sunday (World Communications Day)',
+            'canonical_target' => 'Diocesan Communications Secretariat',
+            'description' => 'Support for Catholic radio, publications, and media evangelisation.'
+        ],
+        'missionary_childhood' => [
+            'key' => 'missionary_childhood',
+            'title' => 'Missionary Childhood Collections (MCA)',
+            'season' => 'Epiphany / National Children\'s Day',
+            'canonical_target' => 'Pontifical Society of Missionary Childhood',
+            'description' => 'Children helping children initiatives across mission territories.'
+        ],
+        'peters_pence' => [
+            'key' => 'peters_pence',
+            'title' => "Peter's Pence (Denarius Sancti Petri)",
+            'season' => 'June (Feast of Sts. Peter & Paul)',
+            'canonical_target' => 'Holy See (Apostolic Works of the Holy Father)',
+            'description' => 'Universal collection for the Pope\'s charitable initiatives worldwide.'
+        ],
+        'seminary_collection' => [
+            'key' => 'seminary_collection',
+            'title' => 'Seminary Collection (Seminary Fund)',
+            'season' => 'Good Shepherd Sunday (4th Sunday of Easter)',
+            'canonical_target' => 'Diocesan Major Seminarians Formation Fund',
+            'description' => 'Upkeep and theological/philosophical studies for diocesan seminarians.'
+        ],
+        'caritas' => [
+            'key' => 'caritas',
+            'title' => 'Caritas Collection',
+            'season' => 'Designated Charity Sunday / Advent',
+            'canonical_target' => 'Caritas Hwange (Catholic Development Commission)',
+            'description' => 'Disaster relief, food security, and humanitarian assistance in the Diocese.'
+        ],
     ];
 }

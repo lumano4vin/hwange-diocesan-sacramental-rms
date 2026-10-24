@@ -5,6 +5,7 @@
  */
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/diocesan_financial_categories.php';
 
 require_admin();
 
@@ -12,6 +13,56 @@ $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
 
 $year_payment = db_year_sql('payment_date');
 $year_baptism = db_year_sql('date_of_baptism');
+
+// Aggregate 8 Annual Special Diocesan Collections across the entire Diocese
+$special_definitions = get_annual_diocesan_special_collections();
+$diocesan_specials = [];
+$total_special_all_parishes = 0.0;
+
+foreach ($special_definitions as $s_key => $s_meta) {
+    $diocesan_specials[$s_key] = [
+        'meta' => $s_meta,
+        'total' => 0.0,
+        'parish_count' => 0
+    ];
+}
+
+$all_year_submissions = db_fetchAll("
+    SELECT parish_id, financial_details 
+    FROM parish_financial_submissions 
+    WHERE fiscal_year = ?
+", [$year]);
+
+foreach ($all_year_submissions as $sub_item) {
+    if (empty($sub_item['financial_details'])) continue;
+    $det = json_decode($sub_item['financial_details'], true);
+    if (!$det) continue;
+    $sc = $det['special_collections'] ?? [];
+    $inc = $det['income'] ?? [];
+    $exp = $det['expenditure'] ?? [];
+
+    foreach ($special_definitions as $s_key => $s_meta) {
+        $amount = (float)($sc[$s_key] ?? 0.0);
+        if ($amount == 0.0) {
+            if ($s_key === 'holy_land' && !empty($inc[17])) {
+                $amount = (float)$inc[17];
+            } elseif ($s_key === 'lenten_collection' && !empty($inc[20])) {
+                $amount = (float)$inc[20];
+            } elseif ($s_key === 'peters_pence' && !empty($inc[22])) {
+                $amount = (float)$inc[22];
+            } elseif ($s_key === 'missionary_childhood' && !empty($exp[19])) {
+                $amount = (float)$exp[19];
+            } elseif ($s_key === 'mission_sunday' && !empty($exp[21])) {
+                $amount = (float)$exp[21];
+            }
+        }
+        if ($amount > 0) {
+            $diocesan_specials[$s_key]['total'] += $amount;
+            $diocesan_specials[$s_key]['parish_count']++;
+            $total_special_all_parishes += $amount;
+        }
+    }
+}
 
 // Fetch Parish Financial Health
 $finance_data = db_fetchAll("
@@ -116,17 +167,65 @@ $header_subtitle = "Oversight of Diocesan Levies and Parish Financial Assessment
                             $total = array_sum(array_column($finance_data, 'target_levy'));
                             echo number_format($total, 2);
                         ?></span>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
+                            10% of (Sunday Collection + Tithe/Unsupo/Mutulo)
+                        </div>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-label">Collected to Date</span>
+                        <span class="stat-label">Levy Remitted to Date</span>
                         <span class="stat-value" style="color: #10b981;">$<?php 
                             $paid = array_sum(array_column($finance_data, 'paid_levy'));
                             echo number_format($paid, 2);
                         ?></span>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
+                            Across all parishes in <?php echo $year; ?>
+                        </div>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-label">Collection Rate</span>
-                        <span class="stat-value"><?php echo $total > 0 ? round(($paid / $total) * 100) : 0; ?>%</span>
+                        <span class="stat-label">Special Collections Remitted</span>
+                        <span class="stat-value" style="color: #38bdf8;">$<?php echo number_format($total_special_all_parishes, 2); ?></span>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
+                            8 Pontifical & Diocesan Appeals (100% pass-through)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8 Annual Special Diocesan Collections Summary Card -->
+                <div style="background: var(--card-bg); border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(56, 189, 248, 0.2); margin-bottom: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1rem;">
+                        <div>
+                            <h3 style="font-family: 'Outfit'; color: #38bdf8; margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                                <ion-icon name="globe-outline"></ion-icon>
+                                <span>Annual Special Diocesan Collections (8 Appeals for FY <?php echo $year; ?>)</span>
+                            </h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 3px 0 0 0;">
+                                These 8 canonical appeals occur <strong>once a year</strong> and are 100% remitted to Chancery / Holy See (0% levy). Parish/mission collections are separate and kept 100% locally.
+                            </p>
+                        </div>
+                        <span style="font-size: 0.75rem; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 10px; border-radius: 8px; font-weight: 700;">
+                            Diocesan Total: $<?php echo number_format($total_special_all_parishes, 2); ?>
+                        </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;">
+                        <?php foreach ($diocesan_specials as $s_key => $s_item): ?>
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 6px;">
+                                    <div>
+                                        <div style="font-weight: 700; color: #fff; font-size: 0.8rem;"><?php echo h($s_item['meta']['title']); ?></div>
+                                        <div style="font-size: 0.65rem; color: #38bdf8; margin-top: 2px;">Season: <?php echo h($s_item['meta']['season']); ?></div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 800; font-size: 0.95rem; color: <?php echo $s_item['total'] > 0 ? '#10b981' : '#94a3b8'; ?>;">
+                                            $<?php echo number_format($s_item['total'], 2); ?>
+                                        </div>
+                                        <div style="font-size: 0.65rem; color: var(--text-muted);">
+                                            <?php echo $s_item['parish_count']; ?> parish<?php echo $s_item['parish_count'] == 1 ? '' : 'es'; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
 
@@ -148,7 +247,7 @@ $header_subtitle = "Oversight of Diocesan Levies and Parish Financial Assessment
                             </div>
 
                             <div class="metric-row">
-                                <span class="metric-label">Levy Target (10% of Coll + Tithe)</span>
+                                <span class="metric-label">Levy Target (10% of Sunday Coll. + Tithe/Unsupo/Mutulo)</span>
                                 <span class="metric-value">$<?php echo number_format($target, 2); ?></span>
                             </div>
                             <div class="metric-row">
