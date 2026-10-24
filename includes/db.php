@@ -396,7 +396,7 @@ function db_add_column_if_missing($pdo, $table, $column_def) {
 
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
 // Wrapped in a function and gated by PRAGMA user_version so it does not lock SQLite on every page load
-if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 7);
+if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 8);
 
 function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS receptions (
@@ -580,6 +580,13 @@ function run_schema_migrations($pdo) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
+
+    db_add_column_if_missing($pdo, 'financial_payments', 'recorded_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'financial_payments', "currency VARCHAR(10) DEFAULT 'USD'");
+    db_add_column_if_missing($pdo, 'parish_financial_submissions', 'tithe DECIMAL(10,2) DEFAULT 0');
+    db_add_column_if_missing($pdo, 'parish_financial_submissions', 'verified_by INTEGER DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'parish_financial_submissions', 'verified_at DATETIME DEFAULT NULL');
+    db_add_column_if_missing($pdo, 'parish_financial_submissions', "currency VARCHAR(10) DEFAULT 'USD'");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
         session_id VARCHAR(128) PRIMARY KEY,

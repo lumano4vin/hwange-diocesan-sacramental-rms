@@ -200,6 +200,7 @@ try {
             fiscal_year INT NOT NULL,
             fiscal_month INT NOT NULL,
             total_collections DECIMAL(10,2) DEFAULT 0,
+            tithe DECIMAL(10,2) DEFAULT 0,
             sacramental_offerings DECIMAL(10,2) DEFAULT 0,
             other_income DECIMAL(10,2) DEFAULT 0,
             assessment_rate DECIMAL(5,2) DEFAULT 10.00,

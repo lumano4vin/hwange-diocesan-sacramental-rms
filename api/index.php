@@ -25,9 +25,19 @@ if ($path === '/Hwange_Diocesan_Sacramental_RMS_Manual.pdf' || $path === '/manua
     exit();
 }
 
-// If it's a directory, look for index.php inside it
-if (file_exists($file) && is_dir($file)) {
-    $file = rtrim($file, '/') . '/index.php';
+// 1. Root route: map / or empty to index.php
+if ($path === '/' || $path === '') {
+    $file = $base_dir . '/index.php';
+} elseif (file_exists($file) && is_dir($file)) {
+    // 2. Directory route: check for index.php inside directory, or matching .php file (e.g. /sacraments -> sacraments.php)
+    if (file_exists(rtrim($file, '/') . '/index.php')) {
+        $file = rtrim($file, '/') . '/index.php';
+    } elseif (file_exists(rtrim($file, '/') . '.php')) {
+        $file = rtrim($file, '/') . '.php';
+    }
+} elseif (!file_exists($file) && file_exists($file . '.php')) {
+    // 3. Extensionless route: /dashboard/settings -> /dashboard/settings.php
+    $file = $file . '.php';
 }
 
 if (file_exists($file) && is_file($file)) {
@@ -59,16 +69,6 @@ if (file_exists($file) && is_file($file)) {
         exit();
     }
 } else {
-    // Check if the route is for index.php at root
-    if ($path === '/' || $path === '') {
-        $index_file = $base_dir . '/index.php';
-        if (file_exists($index_file)) {
-            chdir($base_dir);
-            require $index_file;
-            exit();
-        }
-    }
-    
     http_response_code(404);
     echo "404 Not Found";
     exit();
