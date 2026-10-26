@@ -146,7 +146,7 @@ $base = get_base_url();
             <div class="glass-dropdown" id="profile-dropdown">
                 <div class="dropdown-header">
                     <h5>Account Overview</h5>
-                    <p><?php echo h($_SESSION['username']); ?></p>
+                    <p><?php echo h($_SESSION['username'] ?? $_SESSION['email'] ?? 'User'); ?></p>
                 </div>
                 
                 <a href="<?php echo $base; ?>dashboard/profile.php" class="dropdown-link">

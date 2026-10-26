@@ -62,7 +62,7 @@ if (!empty($search_q)) {
 }
 
 $entries = db_fetchAll("
-    SELECT l.*, u.full_name as submitter_name, o.name as outstation_name
+    SELECT l.*, u.full_name as submitter_name, o.outstation_name
     FROM parish_daily_ledger l
     LEFT JOIN users u ON l.recorded_by = u.user_id
     LEFT JOIN parish_outstations o ON l.outstation_id = o.outstation_id
@@ -81,7 +81,7 @@ $today_expenditure = (float)(db_fetch("SELECT SUM(amount) as s FROM parish_daily
 // Get structured categories for dropdowns
 $categories_grouped = get_all_daily_ledger_categories($parish_id);
 $custom_categories = get_parish_custom_categories($parish_id);
-$outstations = db_fetchAll("SELECT outstation_id, name, location FROM parish_outstations WHERE parish_id = ? ORDER BY name ASC", [$parish_id]);
+$outstations = db_fetchAll("SELECT outstation_id, outstation_name, patron_saint FROM parish_outstations WHERE parish_id = ? ORDER BY outstation_name ASC", [$parish_id]);
 
 $header_title = h($parish['parish_name']) . " — Daily Ledger";
 $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(0,0,0,$selected_month,1,$selected_year)) . ".";
@@ -650,7 +650,7 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
                         <option value="">-- Main Parish Church / General --</option>
                         <?php foreach ($outstations as $ost): ?>
                             <option value="<?php echo $ost['outstation_id']; ?>">
-                                <?php echo h($ost['name']); ?><?php echo !empty($ost['location']) ? ' (' . h($ost['location']) . ')' : ''; ?>
+                                <?php echo h($ost['outstation_name']); ?><?php echo !empty($ost['patron_saint']) ? ' (' . h($ost['patron_saint']) . ')' : ''; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>

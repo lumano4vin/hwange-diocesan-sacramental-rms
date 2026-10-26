@@ -847,7 +847,7 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                         <!-- Action Buttons -->
                         <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                             <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                Parish Priest: <strong><?php echo h($parish['priest_name'] ?: 'Parish Priest'); ?></strong>
+                                Parish Priest: <strong><?php echo h($parish['priest_name'] ?? 'Parish Priest'); ?></strong>
                             </div>
 
                             <div style="display: flex; gap: 12px; align-items: center;">
