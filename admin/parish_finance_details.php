@@ -286,6 +286,13 @@ $header_subtitle = "Detailed assessment, monthly remittances, and payment ledger
                             </select>
                         </form>
 
+                        <!-- Inspect Daily Ledger Button -->
+                        <a href="../dashboard/daily_ledger.php?parish_id=<?php echo $parish_id; ?>&year=<?php echo $year; ?>" 
+                           class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.82rem; padding: 0.65rem 1rem;">
+                            <ion-icon name="journal-outline" style="color: #38bdf8;"></ion-icon>
+                            <span>Inspect Daily Ledger</span>
+                        </a>
+
                         <!-- Open Record Payment Modal -->
                         <button onclick="openPaymentModal()" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 0.65rem 1.25rem;">
                             <ion-icon name="add-circle-outline" style="font-size: 1.1rem;"></ion-icon>

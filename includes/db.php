@@ -396,7 +396,7 @@ function db_add_column_if_missing($pdo, $table, $column_def) {
 
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
 // Wrapped in a function and gated by PRAGMA user_version so it does not lock SQLite on every page load
-if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 9);
+if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 10);
 
 function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS receptions (
@@ -597,6 +597,42 @@ function run_schema_migrations($pdo) {
     db_add_column_if_missing($pdo, 'parish_financial_submissions', 'verified_at DATETIME DEFAULT NULL');
     db_add_column_if_missing($pdo, 'parish_financial_submissions', "currency VARCHAR(10) DEFAULT 'USD'");
 
+    // 13b. Custom Financial Categories & Parish Daily Cash Ledger
+    $pdo->exec("CREATE TABLE IF NOT EXISTS parish_financial_custom_categories (
+        category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NULL,
+        category_type VARCHAR(20) NOT NULL,
+        category_name VARCHAR(150) NOT NULL,
+        is_assessable INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        created_by INTEGER NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS parish_daily_ledger (
+        entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        entry_date DATE NOT NULL,
+        entry_type VARCHAR(20) NOT NULL,
+        category_code VARCHAR(100) NOT NULL,
+        category_name VARCHAR(150) NOT NULL,
+        description TEXT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        currency VARCHAR(10) DEFAULT 'USD',
+        payment_method VARCHAR(50) DEFAULT 'Cash',
+        account_type VARCHAR(30) DEFAULT 'cash_at_hand',
+        reference_number VARCHAR(100),
+        recorded_by INTEGER NOT NULL,
+        receipt_path VARCHAR(255) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parish_id) REFERENCES parishes(parish_id),
+        FOREIGN KEY (recorded_by) REFERENCES users(user_id)
+    )");
+
+    db_add_column_if_missing($pdo, 'parish_daily_ledger', 'receipt_path VARCHAR(255) NULL');
+    db_add_column_if_missing($pdo, 'parish_daily_ledger', "account_type VARCHAR(30) DEFAULT 'cash_at_hand'");
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
         session_id VARCHAR(128) PRIMARY KEY,
         session_data TEXT,
@@ -786,6 +822,12 @@ function db_lastInsertId() {
     return $pdo->lastInsertId();
 }
 
+if (!function_exists('db_last_insert_id')) {
+    function db_last_insert_id() {
+        return db_lastInsertId();
+    }
+}
+
 /**
  * Helper to generate database-agnostic Year extraction SQL
  */
@@ -796,6 +838,19 @@ function db_year_sql($column) {
         return "YEAR($column)";
     } else {
         return "strftime('%Y', $column)";
+    }
+}
+
+/**
+ * Helper to generate database-agnostic Month extraction SQL (1-12 as integer)
+ */
+function db_month_sql($column) {
+    global $pdo;
+    $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    if ($driver === 'mysql') {
+        return "MONTH($column)";
+    } else {
+        return "CAST(strftime('%m', $column) AS INTEGER)";
     }
 }
 

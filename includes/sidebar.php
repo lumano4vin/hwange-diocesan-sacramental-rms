@@ -125,6 +125,12 @@ require_once 'version.php';
                     <span>Financial Remittance</span>
                 </a>
             </li>
+            <li class="<?php echo $current_page == 'daily_ledger.php' ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/daily_ledger.php">
+                    <ion-icon name="journal-outline" style="color: #38bdf8;"></ion-icon>
+                    <span>Daily Cash Ledger</span>
+                </a>
+            </li>
             <li class="<?php echo $current_page == 'parish_reports.php' ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>dashboard/parish_reports.php">
                     <ion-icon name="document-text-outline" style="color: var(--accent);"></ion-icon>

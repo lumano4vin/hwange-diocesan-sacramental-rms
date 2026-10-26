@@ -103,8 +103,16 @@ $income_data[3] = (float)$income_data[3];
 $income_data[4] = (float)$income_data[4];
 $expenditure_data[4] = ($income_data[3] + $income_data[4]) * 0.10;
 
-$total_inc = array_sum($income_data);
-$total_exp = array_sum($expenditure_data);
+$total_inc = !empty($sub['total_income']) ? (float)$sub['total_income'] : array_sum($income_data);
+$total_exp = !empty($sub['total_expenditure']) ? (float)$sub['total_expenditure'] : array_sum($expenditure_data);
+
+if (empty($sub['total_income']) && !empty($details['custom_income'])) {
+    $total_inc += array_sum($details['custom_income']);
+}
+if (empty($sub['total_expenditure']) && !empty($details['custom_expenditure'])) {
+    $total_exp += array_sum($details['custom_expenditure']);
+}
+
 $net_surplus_deficit = $total_inc - $total_exp;
 $opening_bal = isset($details['opening_balance']) ? (float)$details['opening_balance'] : (float)($sub['opening_balance'] ?? 0);
 $closing_bal = $net_surplus_deficit + $opening_bal;

@@ -126,3 +126,227 @@ function get_annual_diocesan_special_collections() {
         ],
     ];
 }
+
+/**
+ * Fetch Custom Financial Categories for a parish (plus any global diocesan ones)
+ */
+function get_parish_custom_categories($parish_id = null, $type = null) {
+    global $pdo;
+    if (!$pdo) return [];
+
+    $sql = "SELECT * FROM parish_financial_custom_categories WHERE is_active = 1";
+    $params = [];
+
+    if ($parish_id !== null) {
+        $sql .= " AND (parish_id = ? OR parish_id IS NULL)";
+        $params[] = (int)$parish_id;
+    }
+
+    if ($type !== null) {
+        $sql .= " AND category_type = ?";
+        $params[] = strtolower($type);
+    }
+
+    $sql .= " ORDER BY category_type ASC, category_name ASC";
+
+    try {
+        return db_fetchAll($sql, $params);
+    } catch (Exception $e) {
+        return [];
+    }
+}
+
+/**
+ * Get structured categories dictionary for Daily Ledger entry dropdown
+ */
+function get_all_daily_ledger_categories($parish_id = null) {
+    $inc_cats = get_diocesan_income_categories();
+    $exp_cats = get_diocesan_expenditure_categories();
+    $spec_cats = get_annual_diocesan_special_collections();
+    $custom_cats = get_parish_custom_categories($parish_id);
+
+    $grouped = [
+        'income' => [],
+        'expenditure' => [],
+        'special' => []
+    ];
+
+    // 1. Standard 23 Income Lines
+    foreach ($inc_cats as $num => $cat) {
+        $grouped['income'][] = [
+            'code' => 'inc_' . $num,
+            'line_num' => $num,
+            'name' => '#' . $num . ' ' . $cat['name'],
+            'raw_name' => $cat['name'],
+            'is_assessable' => $cat['is_assessable'] ?? false,
+            'is_custom' => false
+        ];
+    }
+
+    // Custom Incomes
+    foreach ($custom_cats as $cc) {
+        if ($cc['category_type'] === 'income') {
+            $grouped['income'][] = [
+                'code' => 'custom_inc_' . $cc['category_id'],
+                'line_num' => null,
+                'name' => '[Custom] ' . $cc['category_name'],
+                'raw_name' => $cc['category_name'],
+                'is_assessable' => (bool)$cc['is_assessable'],
+                'is_custom' => true,
+                'category_id' => $cc['category_id']
+            ];
+        }
+    }
+
+    // 2. Standard 23 Expenditure Lines
+    foreach ($exp_cats as $num => $cat) {
+        $grouped['expenditure'][] = [
+            'code' => 'exp_' . $num,
+            'line_num' => $num,
+            'name' => '#' . $num . ' ' . $cat['name'],
+            'raw_name' => $cat['name'],
+            'is_auto_levy' => $cat['is_auto_levy'] ?? false,
+            'is_custom' => false
+        ];
+    }
+
+    // Custom Expenditures
+    foreach ($custom_cats as $cc) {
+        if ($cc['category_type'] === 'expenditure') {
+            $grouped['expenditure'][] = [
+                'code' => 'custom_exp_' . $cc['category_id'],
+                'line_num' => null,
+                'name' => '[Custom] ' . $cc['category_name'],
+                'raw_name' => $cc['category_name'],
+                'is_custom' => true,
+                'category_id' => $cc['category_id']
+            ];
+        }
+    }
+
+    // 3. 8 Annual Special Diocesan Collections
+    foreach ($spec_cats as $s_key => $s_meta) {
+        $grouped['special'][] = [
+            'code' => 'spec_' . $s_key,
+            'key' => $s_key,
+            'name' => '[Diocesan Appeal] ' . $s_meta['title'],
+            'season' => $s_meta['season'],
+            'raw_name' => $s_meta['title']
+        ];
+    }
+
+    return $grouped;
+}
+
+/**
+ * Sync & Aggregate Daily Ledger Transactions into Monthly 23-line Cashbook
+ */
+function sync_daily_ledger_to_monthly_return($parish_id, $year, $month) {
+    $year_sql = db_year_sql('entry_date');
+    $month_sql = db_month_sql('entry_date');
+
+    $entries = db_fetchAll("
+        SELECT * FROM parish_daily_ledger
+        WHERE parish_id = ? AND {$year_sql} = ? AND {$month_sql} = ?
+        ORDER BY entry_date ASC, entry_id ASC
+    ", [$parish_id, $year, $month]);
+
+    $result = [
+        'income' => array_fill(1, 23, 0.0),
+        'expenditure' => array_fill(1, 23, 0.0),
+        'special_collections' => [],
+        'custom_income' => [],
+        'custom_expenditure' => [],
+        'cash_at_hand_receipts' => 0.0,
+        'cash_at_hand_payments' => 0.0,
+        'cash_in_bank_receipts' => 0.0,
+        'cash_in_bank_payments' => 0.0,
+        'total_income' => 0.0,
+        'total_expenditure' => 0.0,
+        'entry_count' => count($entries)
+    ];
+
+    foreach ($entries as $e) {
+        $amt = (float)$e['amount'];
+        $type = $e['entry_type']; // 'income' or 'expenditure'
+        $code = $e['category_code'];
+        $acct = $e['account_type'] ?: 'cash_at_hand';
+
+        // Track cash and bank inflows / outflows
+        if ($type === 'income') {
+            if ($acct === 'cash_in_bank') {
+                $result['cash_in_bank_receipts'] += $amt;
+            } else {
+                $result['cash_at_hand_receipts'] += $amt;
+            }
+            $result['total_income'] += $amt;
+        } else {
+            if ($acct === 'cash_in_bank') {
+                $result['cash_in_bank_payments'] += $amt;
+            } else {
+                $result['cash_at_hand_payments'] += $amt;
+            }
+            $result['total_expenditure'] += $amt;
+        }
+
+        // Map Category Codes
+        if (strpos($code, 'inc_') === 0) {
+            $line_num = (int)substr($code, 4);
+            if ($line_num >= 1 && $line_num <= 23) {
+                $result['income'][$line_num] += $amt;
+            }
+        } elseif (strpos($code, 'exp_') === 0) {
+            $line_num = (int)substr($code, 4);
+            if ($line_num >= 1 && $line_num <= 23) {
+                $result['expenditure'][$line_num] += $amt;
+            }
+        } elseif (strpos($code, 'spec_') === 0) {
+            $spec_key = substr($code, 5);
+            if (!isset($result['special_collections'][$spec_key])) {
+                $result['special_collections'][$spec_key] = 0.0;
+            }
+            $result['special_collections'][$spec_key] += $amt;
+
+            // Also mirror standard lines if applicable (Holy Land, MCA, Mission Sunday, Lenten, Peters Pence)
+            if ($spec_key === 'holy_land') {
+                $result['income'][17] += $amt;
+                $result['expenditure'][18] += $amt;
+            } elseif ($spec_key === 'lenten_collection') {
+                $result['income'][20] += $amt;
+            } elseif ($spec_key === 'peters_pence') {
+                $result['income'][22] += $amt;
+            } elseif ($spec_key === 'missionary_childhood') {
+                $result['expenditure'][19] += $amt;
+            } elseif ($spec_key === 'mission_sunday') {
+                $result['expenditure'][21] += $amt;
+            }
+        } elseif (strpos($code, 'custom_inc_') === 0) {
+            $c_id = (int)substr($code, 11);
+            if (!isset($result['custom_income'][$c_id])) {
+                $result['custom_income'][$c_id] = 0.0;
+            }
+            $result['custom_income'][$c_id] += $amt;
+        } elseif (strpos($code, 'custom_exp_') === 0) {
+            $c_id = (int)substr($code, 11);
+            if (!isset($result['custom_expenditure'][$c_id])) {
+                $result['custom_expenditure'][$c_id] = 0.0;
+            }
+            $result['custom_expenditure'][$c_id] += $amt;
+        }
+    }
+
+    // Calculate 10% Diocesan Levy on Line 3 (Tithe/Unsupo/Mutulo) + Line 4 (Sunday Collection)
+    $tithe = $result['income'][3];
+    $sunday_coll = $result['income'][4];
+    $assessable_base = $tithe + $sunday_coll;
+    $result['calculated_levy'] = $assessable_base * 0.10;
+    $result['expenditure'][4] = $result['calculated_levy'];
+
+    $result['tithe'] = $tithe;
+    $result['sunday_collection'] = $sunday_coll;
+    $result['assessable_base'] = $assessable_base;
+    $result['net_operating'] = $result['total_income'] - $result['total_expenditure'];
+
+    return $result;
+}
+

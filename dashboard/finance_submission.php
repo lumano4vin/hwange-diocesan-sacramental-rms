@@ -26,6 +26,9 @@ $selected_month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
 $income_cats = get_diocesan_income_categories();
 $expenditure_cats = get_diocesan_expenditure_categories();
 $annual_spec_cats = get_annual_diocesan_special_collections();
+$custom_cats = get_parish_custom_categories($parish_id);
+$custom_income_cats = array_filter($custom_cats, function($c) { return $c['category_type'] === 'income'; });
+$custom_expenditure_cats = array_filter($custom_cats, function($c) { return $c['category_type'] === 'expenditure'; });
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,10 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inc_post = $_POST['inc'] ?? [];
     $exp_post = $_POST['exp'] ?? [];
     $spec_post = $_POST['spec'] ?? [];
+    $custom_inc_post = $_POST['custom_inc'] ?? [];
+    $custom_exp_post = $_POST['custom_exp'] ?? [];
 
     $income_values = [];
     $expenditure_values = [];
     $special_collections = [];
+    $custom_income_values = [];
+    $custom_expenditure_values = [];
+    $custom_assessable_sum = 0.0;
 
     for ($i = 1; $i <= 23; $i++) {
         $income_values[$i] = isset($inc_post[$i]) ? max(0, (float)$inc_post[$i]) : 0.0;
@@ -49,6 +57,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Capture the 8 Annual Special Diocesan Collections (occur once a year)
     foreach ($annual_spec_cats as $s_key => $s_meta) {
         $special_collections[$s_key] = isset($spec_post[$s_key]) ? max(0, (float)$spec_post[$s_key]) : 0.0;
+    }
+
+    // Capture Custom Categories
+    foreach ($custom_income_cats as $cc) {
+        $cid = (int)$cc['category_id'];
+        $val = isset($custom_inc_post[$cid]) ? max(0, (float)$custom_inc_post[$cid]) : 0.0;
+        $custom_income_values[$cid] = $val;
+        if (!empty($cc['is_assessable'])) {
+            $custom_assessable_sum += $val;
+        }
+    }
+    foreach ($custom_expenditure_cats as $cc) {
+        $cid = (int)$cc['category_id'];
+        $val = isset($custom_exp_post[$cid]) ? max(0, (float)$custom_exp_post[$cid]) : 0.0;
+        $custom_expenditure_values[$cid] = $val;
     }
 
     // Sync specific special collections with corresponding cashbook rows if provided
@@ -69,11 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Canonical Diocesan Rule: 10% Levy is strictly applied to Line 3 (Tithe/Unsupo/Mutulo) & Line 4 (Sunday Collection) ONLY
     $tithe_val = $income_values[3];
     $sunday_collection_val = $income_values[4];
-    $calculated_levy = ($tithe_val + $sunday_collection_val) * 0.10;
+    $calculated_levy = ($tithe_val + $sunday_collection_val + $custom_assessable_sum) * 0.10;
     $expenditure_values[4] = $calculated_levy; // Override expenditure line 4 with exact 10%
 
-    $total_income = array_sum($income_values);
-    $total_expenditure = array_sum($expenditure_values);
+    $total_income = array_sum($income_values) + array_sum($custom_income_values);
+    $total_expenditure = array_sum($expenditure_values) + array_sum($custom_expenditure_values);
     $net_operating = $total_income - $total_expenditure;
 
     $opening_balance = isset($_POST['opening_balance']) ? (float)$_POST['opening_balance'] : 0.0;
@@ -92,6 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'income' => $income_values,
         'expenditure' => $expenditure_values,
         'special_collections' => $special_collections,
+        'custom_income' => $custom_income_values,
+        'custom_expenditure' => $custom_expenditure_values,
         'opening_balance' => $opening_balance,
         'closing_balance' => $closing_balance,
         'cash_at_hand' => $cash_at_hand,
@@ -156,6 +181,8 @@ $current_sub = db_fetch("
 
 $current_details = !empty($current_sub['financial_details']) ? json_decode($current_sub['financial_details'], true) : [];
 $saved_special = $current_details['special_collections'] ?? [];
+$saved_custom_inc = $current_details['custom_income'] ?? [];
+$saved_custom_exp = $current_details['custom_expenditure'] ?? [];
 
 // Auto-lookup previous month's closing balance to pre-fill opening balance if new
 $default_opening = 0.0;
@@ -403,6 +430,26 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                             </select>
                         </form>
 
+                        <!-- Action Buttons -->
+                        <a href="daily_ledger.php?year=<?php echo $selected_year; ?>&month=<?php echo $selected_month; ?>" 
+                           class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px;">
+                            <ion-icon name="journal-outline" style="color: #38bdf8;"></ion-icon>
+                            <span>Daily Cash Ledger</span>
+                        </a>
+
+                        <button type="button" id="btn-auto-sync" onclick="autoSyncFromDailyLedger()" 
+                                class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;" 
+                                title="Auto-populate this monthly return from your daily transactions">
+                            <ion-icon name="flash-outline"></ion-icon>
+                            <span>Auto-Sync from Daily Ledger</span>
+                        </button>
+
+                        <button type="button" onclick="openCategoryModal('income')" 
+                                class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px;">
+                            <ion-icon name="pricetag-outline"></ion-icon>
+                            <span>+ New Category</span>
+                        </button>
+
                         <!-- Download Word Document Button (if saved) -->
                         <?php if ($current_sub): ?>
                             <a href="../actions/export_financial_docx.php?submission_id=<?php echo $current_sub['submission_id']; ?>" 
@@ -517,6 +564,43 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                                     </div>
                                 <?php endforeach; ?>
 
+                                <!-- Custom / Additional Parish Incomes -->
+                                <div id="custom-income-container" style="margin-top: 10px; border-top: 1px dashed rgba(251, 191, 36, 0.2); padding-top: 8px;">
+                                    <?php if (!empty($custom_income_cats)): ?>
+                                        <div style="font-size: 0.65rem; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                                            Additional / Parish-Specific Incomes
+                                        </div>
+                                        <?php foreach ($custom_income_cats as $cc): ?>
+                                            <?php 
+                                                $cid = (int)$cc['category_id'];
+                                                $val = (float)($saved_custom_inc[$cid] ?? 0.0);
+                                                $is_ass = (bool)$cc['is_assessable'];
+                                            ?>
+                                            <div class="ledger-row" style="background: rgba(56, 189, 248, 0.04);">
+                                                <span class="num-col" style="color: #38bdf8; font-weight: 800;">+</span>
+                                                <span class="label-col">
+                                                    <?php echo h($cc['category_name']); ?>
+                                                    <?php if ($is_ass): ?>
+                                                        <span class="badge-assess">10% Levy</span>
+                                                    <?php else: ?>
+                                                        <span style="font-size: 0.58rem; color: #10b981; font-weight: 600;">(100% Local)</span>
+                                                    <?php endif; ?>
+                                                </span>
+                                                <input type="number" step="0.01" name="custom_inc[<?php echo $cid; ?>]" 
+                                                       id="custom-inc-<?php echo $cid; ?>" 
+                                                       class="input-num calc-income calc-custom-inc <?php echo $is_ass ? 'calc-assessable' : ''; ?>" 
+                                                       value="<?php echo $val > 0 ? number_format($val, 2, '.', '') : ''; ?>"
+                                                       placeholder="0.00">
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                    <div style="text-align: right; margin-top: 6px;">
+                                        <a href="javascript:void(0)" onclick="openCategoryModal('income')" style="font-size: 0.68rem; color: #38bdf8; text-decoration: underline; font-weight: 600;">
+                                            + Add New Income Category
+                                        </a>
+                                    </div>
+                                </div>
+
                                 <!-- Income Total -->
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 2px solid rgba(251, 191, 36, 0.3);">
                                     <strong style="color: var(--accent); font-size: 0.95rem;">TOTAL INCOME</strong>
@@ -560,6 +644,37 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                                                value="<?php echo number_format($val, 2, '.', ''); ?>">
                                     </div>
                                 <?php endforeach; ?>
+
+                                <!-- Custom / Additional Parish Expenditures -->
+                                <div id="custom-expenditure-container" style="margin-top: 10px; border-top: 1px dashed rgba(239, 68, 68, 0.2); padding-top: 8px;">
+                                    <?php if (!empty($custom_expenditure_cats)): ?>
+                                        <div style="font-size: 0.65rem; color: #f87171; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                                            Additional / Parish-Specific Expenditures
+                                        </div>
+                                        <?php foreach ($custom_expenditure_cats as $cc): ?>
+                                            <?php 
+                                                $cid = (int)$cc['category_id'];
+                                                $val = (float)($saved_custom_exp[$cid] ?? 0.0);
+                                            ?>
+                                            <div class="ledger-row" style="background: rgba(239, 68, 68, 0.04);">
+                                                <span class="num-col" style="color: #f87171; font-weight: 800;">-</span>
+                                                <span class="label-col">
+                                                    <?php echo h($cc['category_name']); ?>
+                                                </span>
+                                                <input type="number" step="0.01" name="custom_exp[<?php echo $cid; ?>]" 
+                                                       id="custom-exp-<?php echo $cid; ?>" 
+                                                       class="input-num calc-expenditure calc-custom-exp" 
+                                                       value="<?php echo $val > 0 ? number_format($val, 2, '.', '') : ''; ?>"
+                                                       placeholder="0.00">
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                    <div style="text-align: right; margin-top: 6px;">
+                                        <a href="javascript:void(0)" onclick="openCategoryModal('expenditure')" style="font-size: 0.68rem; color: #f87171; text-decoration: underline; font-weight: 600;">
+                                            + Add New Expenditure Category
+                                        </a>
+                                    </div>
+                                </div>
 
                                 <!-- Expenditure Total -->
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 2px solid rgba(239, 68, 68, 0.3);">
@@ -805,21 +920,76 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
             </div>
         </main>
     </div>
+
+    <!-- Modal: Add New Custom Category -->
+    <div id="categoryModal" class="modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; padding: 1rem;">
+        <div style="background: #1e293b; border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 20px; width: 100%; max-width: 480px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.75rem;">
+                <h3 style="font-family: 'Outfit'; color: #38bdf8; margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 6px;">
+                    <ion-icon name="pricetag-outline"></ion-icon>
+                    <span>Create New Financial Category</span>
+                </h3>
+                <span onclick="closeCategoryModal()" style="font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">&times;</span>
+            </div>
+
+            <form id="new-category-form" onsubmit="submitNewCategory(event)">
+                <input type="hidden" name="parish_id" value="<?php echo $parish_id; ?>">
+                <input type="hidden" name="format" value="json">
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" style="font-size: 0.75rem;">Category Type *</label>
+                    <select name="category_type" id="new_cat_type" class="input-field" required>
+                        <option value="income">Income (Parish Inflow)</option>
+                        <option value="expenditure">Expenditure (Parish Outflow)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" style="font-size: 0.75rem;">Category Name *</label>
+                    <input type="text" name="category_name" id="new_cat_name" class="input-field" required placeholder="e.g. Centenary Chapel Fund, Borehole Repairs, Pig Farm..." autofocus>
+                    <small style="color: var(--text-muted); font-size: 0.68rem; margin-top: 3px; display: block;">
+                        This category will be permanently available for your parish daily ledger and monthly returns.
+                    </small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 10px 12px; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #fff; cursor: pointer;">
+                        <input type="checkbox" name="is_assessable" value="1">
+                        <span>Subject to 10% Diocesan Levy? (Leave unchecked for standard parish funds)</span>
+                    </label>
+                    <small style="color: var(--text-muted); font-size: 0.65rem; display: block; margin-left: 24px; margin-top: 2px;">
+                        Standard diocesan rule: 10% levy only applies to Sunday Collection & Tithe.
+                    </small>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeCategoryModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" id="btn-save-cat" class="btn btn-primary" style="font-weight: 800; padding: 0.65rem 1.25rem;">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="../assets/js/main.js?v=1.6.2"></script>
     <?php include '../includes/privacy_footer.php'; ?>
 
     <script>
         function recalculateCashbook() {
-            // 1. Calculate Total Income
+            // 1. Calculate Total Income (Standard + Custom)
             let totalIncome = 0;
             document.querySelectorAll('.calc-income').forEach(inp => {
                 totalIncome += parseFloat(inp.value || 0);
             });
 
-            // 2. Compute 10% Levy on Line 3 (Tithe/Unsupo/Mutulo) & Line 4 (Sunday Collection) ONLY
+            // 2. Compute 10% Levy on Line 3 (Tithe/Unsupo/Mutulo) & Line 4 (Sunday Collection) + any Custom Assessable
             const tithe = parseFloat(document.getElementById('inc-3').value || 0);
             const sundayColl = parseFloat(document.getElementById('inc-4').value || 0);
-            const assessableBase = tithe + sundayColl;
+            let assessableBase = tithe + sundayColl;
+
+            document.querySelectorAll('.calc-custom-inc.calc-assessable').forEach(inp => {
+                assessableBase += parseFloat(inp.value || 0);
+            });
+
             const diocesanLevy = assessableBase * 0.10;
 
             const levyField = document.getElementById('exp-4');
@@ -827,7 +997,7 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                 levyField.value = diocesanLevy.toFixed(2);
             }
 
-            // 3. Calculate Total Expenditure
+            // 3. Calculate Total Expenditure (Standard + Custom)
             let totalExpenditure = 0;
             document.querySelectorAll('.calc-expenditure').forEach(inp => {
                 totalExpenditure += parseFloat(inp.value || 0);
@@ -875,13 +1045,162 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
             }
         }
 
+        // Auto Sync from Daily Ledger
+        async function autoSyncFromDailyLedger(isAuto = false) {
+            const btn = document.getElementById('btn-auto-sync');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<ion-icon name="sync-outline" style="animation: spin 1s infinite linear;"></ion-icon> <span>Syncing...</span>';
+            }
+
+            try {
+                const resp = await fetch(`../actions/get_daily_ledger_summary.php?year=<?php echo $selected_year; ?>&month=<?php echo $selected_month; ?>&parish_id=<?php echo $parish_id; ?>`);
+                const json = await resp.json();
+
+                if (!json.success) {
+                    if (!isAuto) alert('Could not sync: ' + (json.error || 'Unknown error'));
+                    return;
+                }
+
+                const data = json.data;
+                if (data.entry_count === 0) {
+                    if (!isAuto) {
+                        alert('No daily ledger transactions found for <?php echo date('F Y', mktime(0,0,0,$selected_month,1,$selected_year)); ?>.\n\nYou can use the "Daily Cash Ledger" button to log your day-to-day collections and payments.');
+                    }
+                    return;
+                }
+
+                // 1. Populate Standard Income
+                for (let i = 1; i <= 23; i++) {
+                    const field = document.getElementById('inc-' + i);
+                    if (field) {
+                        field.value = (data.income[i] || 0) > 0 ? parseFloat(data.income[i]).toFixed(2) : '0.00';
+                    }
+                }
+
+                // 2. Populate Standard Expenditure
+                for (let i = 1; i <= 23; i++) {
+                    const field = document.getElementById('exp-' + i);
+                    if (field && i !== 4) {
+                        field.value = (data.expenditure[i] || 0) > 0 ? parseFloat(data.expenditure[i]).toFixed(2) : '0.00';
+                    }
+                }
+
+                // 3. Populate Special Collections
+                if (data.special_collections) {
+                    for (const [key, amt] of Object.entries(data.special_collections)) {
+                        const field = document.getElementById('spec-' + key);
+                        if (field) {
+                            field.value = parseFloat(amt || 0) > 0 ? parseFloat(amt).toFixed(2) : '';
+                        }
+                    }
+                }
+
+                // 4. Populate Custom Categories
+                if (data.custom_income) {
+                    for (const [cid, amt] of Object.entries(data.custom_income)) {
+                        const field = document.getElementById('custom-inc-' + cid);
+                        if (field) {
+                            field.value = parseFloat(amt || 0) > 0 ? parseFloat(amt).toFixed(2) : '';
+                        }
+                    }
+                }
+                if (data.custom_expenditure) {
+                    for (const [cid, amt] of Object.entries(data.custom_expenditure)) {
+                        const field = document.getElementById('custom-exp-' + cid);
+                        if (field) {
+                            field.value = parseFloat(amt || 0) > 0 ? parseFloat(amt).toFixed(2) : '';
+                        }
+                    }
+                }
+
+                recalculateCashbook();
+
+                if (!isAuto) {
+                    alert(`✅ Successfully imported and aggregated ${data.entry_count} daily ledger transactions!\n\n` +
+                          `• Total Income: $${data.total_income.toFixed(2)}\n` +
+                          `• Total Expenditure: $${data.total_expenditure.toFixed(2)}\n` +
+                          `• Assessable Base (Tithe + Sunday Coll): $${data.assessable_base.toFixed(2)}\n` +
+                          `• 10% Diocesan Levy: $${data.calculated_levy.toFixed(2)}`);
+                }
+
+            } catch (err) {
+                if (!isAuto) alert('Connection error while fetching daily ledger data.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<ion-icon name="flash-outline"></ion-icon> <span>Auto-Sync from Daily Ledger</span>';
+                }
+            }
+        }
+
+        // Modal Controls
+        function openCategoryModal(type = 'income') {
+            document.getElementById('new_cat_name').value = '';
+            document.getElementById('new_cat_type').value = type;
+            const modal = document.getElementById('categoryModal');
+            modal.style.display = 'flex';
+            setTimeout(() => document.getElementById('new_cat_name').focus(), 100);
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').style.display = 'none';
+        }
+
+        async function submitNewCategory(e) {
+            e.preventDefault();
+            const form = document.getElementById('new-category-form');
+            const btn = document.getElementById('btn-save-cat');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            const formData = new FormData(form);
+
+            try {
+                const resp = await fetch('../actions/save_custom_category.php', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const res = await resp.json();
+
+                if (res.success) {
+                    closeCategoryModal();
+                    // Reload to render new custom category field cleanly
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (res.error || 'Failed to save category.'));
+                }
+            } catch (err) {
+                alert('Connection error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Category';
+            }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('categoryModal');
+            if (event.target === modal) {
+                closeCategoryModal();
+            }
+        };
+
         // Attach event listeners
         document.querySelectorAll('.calc-income, .calc-expenditure, #input-opening-bal, .calc-position').forEach(inp => {
             inp.addEventListener('input', recalculateCashbook);
         });
 
         // Run calculation on load
-        window.addEventListener('DOMContentLoaded', recalculateCashbook);
+        window.addEventListener('DOMContentLoaded', () => {
+            recalculateCashbook();
+
+            // Check if auto_sync parameter is present in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('auto_sync') === '1') {
+                autoSyncFromDailyLedger(true);
+            }
+        });
     </script>
 </body>
 </html>
