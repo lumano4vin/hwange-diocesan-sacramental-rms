@@ -4,9 +4,9 @@
  * Parish Daily Cash & Bank Ledger
  * Day-to-Day Financial Journal with Direct Sync to the Diocesan 23-Line Return
  */
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
-require_once '../includes/diocesan_financial_categories.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/diocesan_financial_categories.php';
 
 require_login();
 
@@ -36,25 +36,25 @@ $filter_type = trim($_GET['type'] ?? 'all');
 $filter_account = trim($_GET['account'] ?? 'all');
 $search_q = trim($_GET['q'] ?? '');
 
-$year_sql = db_year_sql('entry_date');
-$month_sql = db_month_sql('entry_date');
+$year_sql = db_year_sql('l.entry_date');
+$month_sql = db_month_sql('l.entry_date');
 
 // Build query
-$where = "WHERE parish_id = ? AND {$year_sql} = ? AND {$month_sql} = ?";
+$where = "WHERE l.parish_id = ? AND {$year_sql} = ? AND {$month_sql} = ?";
 $params = [$parish_id, $selected_year, $selected_month];
 
 if ($filter_type === 'income' || $filter_type === 'expenditure') {
-    $where .= " AND entry_type = ?";
+    $where .= " AND l.entry_type = ?";
     $params[] = $filter_type;
 }
 
 if ($filter_account === 'cash_at_hand' || $filter_account === 'cash_in_bank') {
-    $where .= " AND account_type = ?";
+    $where .= " AND l.account_type = ?";
     $params[] = $filter_account;
 }
 
 if (!empty($search_q)) {
-    $where .= " AND (description LIKE ? OR reference_number LIKE ? OR category_name LIKE ?)";
+    $where .= " AND (l.description LIKE ? OR l.reference_number LIKE ? OR l.category_name LIKE ?)";
     $like = "%$search_q%";
     $params[] = $like;
     $params[] = $like;
