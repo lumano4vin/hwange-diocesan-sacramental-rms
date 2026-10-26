@@ -396,7 +396,7 @@ function db_add_column_if_missing($pdo, $table, $column_def) {
 
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
 // Wrapped in a function and gated by PRAGMA user_version so it does not lock SQLite on every page load
-if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 10);
+if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 11);
 
 function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS receptions (
@@ -667,6 +667,58 @@ function run_schema_migrations($pdo) {
         estimated_value DECIMAL(12,2),
         current_status VARCHAR(50) DEFAULT 'Good',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    db_add_column_if_missing($pdo, 'parish_assets', 'serial_or_reg_number VARCHAR(100) NULL');
+    db_add_column_if_missing($pdo, 'parish_assets', 'location_stored VARCHAR(150) NULL');
+    db_add_column_if_missing($pdo, 'parish_assets', "currency VARCHAR(10) DEFAULT 'USD'");
+    db_add_column_if_missing($pdo, 'parish_assets', 'is_sacred INTEGER DEFAULT 0');
+    db_add_column_if_missing($pdo, 'parish_assets', 'photo_path VARCHAR(255) NULL');
+    db_add_column_if_missing($pdo, 'parish_assets', 'recorded_by INTEGER NULL');
+
+    db_add_column_if_missing($pdo, 'parish_daily_ledger', 'outstation_id INTEGER NULL');
+
+    // 16. Outstations & Rural Mass Centres (Parish Outreach Stations)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS parish_outstations (
+        outstation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        outstation_name VARCHAR(150) NOT NULL,
+        patron_saint VARCHAR(100) NULL,
+        distance_km DECIMAL(6,2) NULL,
+        catechist_name VARCHAR(100) NULL,
+        catechist_phone VARCHAR(50) NULL,
+        chairperson_name VARCHAR(100) NULL,
+        chairperson_phone VARCHAR(50) NULL,
+        mass_schedule VARCHAR(100) NULL,
+        active_families_count INTEGER DEFAULT 0,
+        has_church_building INTEGER DEFAULT 1,
+        is_active INTEGER DEFAULT 1,
+        notes TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+    )");
+
+    // 17. Canonical Mass Intentions & Stipends Book (Canons 945-958)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS mass_intentions (
+        intention_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parish_id INTEGER NOT NULL,
+        donor_name VARCHAR(150) NOT NULL,
+        donor_phone VARCHAR(50) NULL,
+        intention_text TEXT NOT NULL,
+        intention_type VARCHAR(50) DEFAULT 'repose',
+        stipend_amount DECIMAL(10,2) DEFAULT 0.00,
+        currency VARCHAR(10) DEFAULT 'USD',
+        payment_method VARCHAR(50) DEFAULT 'Cash',
+        requested_date DATE NULL,
+        celebrated_date DATE NULL,
+        assigned_priest_id INTEGER NULL,
+        status VARCHAR(30) DEFAULT 'pending',
+        notes TEXT NULL,
+        recorded_by INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parish_id) REFERENCES parishes(parish_id),
+        FOREIGN KEY (assigned_priest_id) REFERENCES users(user_id),
+        FOREIGN KEY (recorded_by) REFERENCES users(user_id)
     )");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS meeting_minutes (

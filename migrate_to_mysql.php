@@ -290,6 +290,45 @@ try {
             submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             status VARCHAR(50) DEFAULT 'Final',
             UNIQUE KEY (parish_id, report_year)
+        )",
+        "parish_outstations" => "CREATE TABLE IF NOT EXISTS parish_outstations (
+            outstation_id INT AUTO_INCREMENT PRIMARY KEY,
+            parish_id INT NOT NULL,
+            outstation_name VARCHAR(150) NOT NULL,
+            patron_saint VARCHAR(100) NULL,
+            distance_km DECIMAL(6,2) NULL,
+            catechist_name VARCHAR(100) NULL,
+            catechist_phone VARCHAR(50) NULL,
+            chairperson_name VARCHAR(100) NULL,
+            chairperson_phone VARCHAR(50) NULL,
+            mass_schedule VARCHAR(100) NULL,
+            active_families_count INT DEFAULT 0,
+            has_church_building INT DEFAULT 1,
+            is_active INT DEFAULT 1,
+            notes TEXT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
+        )",
+        "mass_intentions" => "CREATE TABLE IF NOT EXISTS mass_intentions (
+            intention_id INT AUTO_INCREMENT PRIMARY KEY,
+            parish_id INT NOT NULL,
+            donor_name VARCHAR(150) NOT NULL,
+            donor_phone VARCHAR(50) NULL,
+            intention_text TEXT NOT NULL,
+            intention_type VARCHAR(50) DEFAULT 'repose',
+            stipend_amount DECIMAL(10,2) DEFAULT 0.00,
+            currency VARCHAR(10) DEFAULT 'USD',
+            payment_method VARCHAR(50) DEFAULT 'Cash',
+            requested_date DATE NULL,
+            celebrated_date DATE NULL,
+            assigned_priest_id INT NULL,
+            status VARCHAR(30) DEFAULT 'pending',
+            notes TEXT NULL,
+            recorded_by INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (parish_id) REFERENCES parishes(parish_id),
+            FOREIGN KEY (assigned_priest_id) REFERENCES users(user_id),
+            FOREIGN KEY (recorded_by) REFERENCES users(user_id)
         )"
     ];
 

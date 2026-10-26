@@ -62,9 +62,10 @@ if (!empty($search_q)) {
 }
 
 $entries = db_fetchAll("
-    SELECT l.*, u.full_name as submitter_name
+    SELECT l.*, u.full_name as submitter_name, o.name as outstation_name
     FROM parish_daily_ledger l
     LEFT JOIN users u ON l.recorded_by = u.user_id
+    LEFT JOIN parish_outstations o ON l.outstation_id = o.outstation_id
     $where
     ORDER BY l.entry_date DESC, l.entry_id DESC
 ", $params);
@@ -80,6 +81,7 @@ $today_expenditure = (float)(db_fetch("SELECT SUM(amount) as s FROM parish_daily
 // Get structured categories for dropdowns
 $categories_grouped = get_all_daily_ledger_categories($parish_id);
 $custom_categories = get_parish_custom_categories($parish_id);
+$outstations = db_fetchAll("SELECT outstation_id, name, location FROM parish_outstations WHERE parish_id = ? ORDER BY name ASC", [$parish_id]);
 
 $header_title = h($parish['parish_name']) . " — Daily Ledger";
 $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(0,0,0,$selected_month,1,$selected_year)) . ".";
@@ -509,6 +511,13 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
                                             </td>
                                             <td style="max-width: 320px; font-size: 0.78rem;">
                                                 <?php echo h($row['description']); ?>
+                                                <?php if (!empty($row['outstation_name'])): ?>
+                                                    <div style="margin-top: 4px;">
+                                                        <span style="display: inline-flex; align-items: center; gap: 3px; font-size: 0.65rem; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 1px 6px; font-weight: 600;">
+                                                            <ion-icon name="navigate-outline"></ion-icon> <?php echo h($row['outstation_name']); ?>
+                                                        </span>
+                                                    </div>
+                                                <?php endif; ?>
                                             </td>
                                             <td style="font-family: monospace; font-size: 0.75rem; color: var(--accent);">
                                                 <?php echo h($row['reference_number'] ?: '—'); ?>
@@ -628,6 +637,22 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
                                 </option>
                             <?php endforeach; ?>
                         </optgroup>
+                    </select>
+                </div>
+
+                <!-- Optional Outstation / Mission Mass Centre -->
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" style="font-size: 0.75rem; display: flex; justify-content: space-between;">
+                        <span>Mission Outstation / Centre (Optional)</span>
+                        <a href="outstations.php" target="_blank" style="font-size: 0.7rem; color: #10b981; text-decoration: underline;">Manage Outstations</a>
+                    </label>
+                    <select name="outstation_id" id="tx_outstation_id" class="input-field">
+                        <option value="">-- Main Parish Church / General --</option>
+                        <?php foreach ($outstations as $ost): ?>
+                            <option value="<?php echo $ost['outstation_id']; ?>">
+                                <?php echo h($ost['name']); ?><?php echo !empty($ost['location']) ? ' (' . h($ost['location']) . ')' : ''; ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -782,6 +807,7 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
             document.getElementById('tx_description').value = '';
             document.getElementById('tx_reference_number').value = '';
             document.getElementById('tx_receipt_file').value = '';
+            if (document.getElementById('tx_outstation_id')) document.getElementById('tx_outstation_id').value = '';
             document.getElementById('tx_existing_receipt').style.display = 'none';
             document.getElementById('tx_existing_receipt').innerHTML = '';
             document.getElementById('tx_entry_date').value = '<?php echo date('Y-m-d'); ?>';
@@ -803,6 +829,9 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
             document.getElementById('tx_account_type').value = row.account_type || 'cash_at_hand';
             document.getElementById('tx_reference_number').value = row.reference_number || '';
             document.getElementById('tx_description').value = row.description;
+            if (document.getElementById('tx_outstation_id')) {
+                document.getElementById('tx_outstation_id').value = row.outstation_id || '';
+            }
             document.getElementById('tx_receipt_file').value = '';
 
             const existBox = document.getElementById('tx_existing_receipt');

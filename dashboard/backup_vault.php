@@ -34,6 +34,9 @@ $counts = [
     'Parishioners' => db_fetch("SELECT COUNT(*) as c FROM parishioners")['c'] ?? 0,
     'Daily Ledger' => db_fetch("SELECT COUNT(*) as c FROM parish_daily_ledger")['c'] ?? 0,
     'Cashbook Returns' => db_fetch("SELECT COUNT(*) as c FROM parish_financial_submissions")['c'] ?? 0,
+    'Temporal Goods' => db_fetch("SELECT COUNT(*) as c FROM parish_assets")['c'] ?? 0,
+    'Outstations' => db_fetch("SELECT COUNT(*) as c FROM parish_outstations")['c'] ?? 0,
+    'Mass Intentions' => db_fetch("SELECT COUNT(*) as c FROM mass_intentions")['c'] ?? 0,
 ];
 
 ?>
@@ -115,6 +118,18 @@ $counts = [
                         <a href="../actions/export_vault_csv.php?table=parish_financial_submissions" class="export-btn" style="border-color: rgba(251, 191, 36, 0.4);">
                             <ion-icon name="cash-outline" style="color: var(--accent);"></ion-icon>
                             Monthly Returns (<?php echo $counts['Cashbook Returns']; ?>)
+                        </a>
+                        <a href="../actions/export_vault_csv.php?table=parish_outstations" class="export-btn" style="border-color: rgba(16, 185, 129, 0.4);">
+                            <ion-icon name="navigate-outline" style="color: #10b981;"></ion-icon>
+                            Outstations (<?php echo $counts['Outstations']; ?>)
+                        </a>
+                        <a href="../actions/export_vault_csv.php?table=parish_assets" class="export-btn" style="border-color: rgba(245, 158, 11, 0.4);">
+                            <ion-icon name="cube-outline" style="color: #f59e0b;"></ion-icon>
+                            Temporal Goods (<?php echo $counts['Temporal Goods']; ?>)
+                        </a>
+                        <a href="../actions/export_vault_csv.php?table=mass_intentions" class="export-btn" style="border-color: rgba(168, 85, 247, 0.4);">
+                            <ion-icon name="book-outline" style="color: #a855f7;"></ion-icon>
+                            Mass Intentions (<?php echo $counts['Mass Intentions']; ?>)
                         </a>
                     </div>
                 </div>

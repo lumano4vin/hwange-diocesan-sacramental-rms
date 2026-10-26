@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment_method = trim($_POST['payment_method'] ?? 'Cash');
     $account_type = trim($_POST['account_type'] ?? 'cash_at_hand');
     $reference_number = trim($_POST['reference_number'] ?? '');
+    $outstation_id = !empty($_POST['outstation_id']) ? (int)$_POST['outstation_id'] : null;
     $return_to = trim($_POST['return_to'] ?? '');
 
     // Determine Parish ID
@@ -116,12 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql = "UPDATE parish_daily_ledger SET 
                         entry_date = ?, entry_type = ?, category_code = ?, category_name = ?,
                         description = ?, amount = ?, currency = ?, payment_method = ?,
-                        account_type = ?, reference_number = ?, receipt_path = ?
+                        account_type = ?, reference_number = ?, receipt_path = ?, outstation_id = ?
                     WHERE entry_id = ?";
             db_query($sql, [
                 $entry_date, $entry_type, $category_code, $category_name,
                 $description, $amount, $currency, $payment_method,
-                $account_type, $reference_number, $final_receipt, $entry_id
+                $account_type, $reference_number, $final_receipt, $outstation_id, $entry_id
             ]);
 
             log_audit($_SESSION['user_id'], 'UPDATE', 'parish_daily_ledger', $entry_id, 
@@ -131,12 +132,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Insert New Entry
             $sql = "INSERT INTO parish_daily_ledger 
-                    (parish_id, entry_date, entry_type, category_code, category_name, description, amount, currency, payment_method, account_type, reference_number, receipt_path, recorded_by)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    (parish_id, entry_date, entry_type, category_code, category_name, description, amount, currency, payment_method, account_type, reference_number, receipt_path, outstation_id, recorded_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             db_query($sql, [
                 $parish_id, $entry_date, $entry_type, $category_code, $category_name,
                 $description, $amount, $currency, $payment_method,
-                $account_type, $reference_number, $receipt_path, $_SESSION['user_id']
+                $account_type, $reference_number, $receipt_path, $outstation_id, $_SESSION['user_id']
             ]);
 
             $new_entry_id = db_last_insert_id();

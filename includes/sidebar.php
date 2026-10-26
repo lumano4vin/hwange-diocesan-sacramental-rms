@@ -56,6 +56,12 @@ require_once 'version.php';
                     <span>Parishes / Missions</span>
                 </a>
             </li>
+            <li class="<?php echo ($current_page == 'outstations.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/outstations.php">
+                    <ion-icon name="location-outline" style="color: #38bdf8;"></ion-icon>
+                    <span>Outstations & Mass Centres</span>
+                </a>
+            </li>
             <?php if ($is_admin): ?>
             <li class="<?php echo ($current_page == 'clergy_management.php') ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>admin/clergy_management.php">
@@ -114,6 +120,12 @@ require_once 'version.php';
                     <span>Letters of Standing</span>
                 </a>
             </li>
+            <li class="<?php echo ($current_page == 'mass_intentions.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/mass_intentions.php">
+                    <ion-icon name="flame-outline" style="color: #fbbf24;"></ion-icon>
+                    <span>Mass Intentions Book</span>
+                </a>
+            </li>
             <?php endif; ?>
             
             <li class="<?php echo $current_page == 'reports.php' ? 'active' : ''; ?>">
@@ -150,6 +162,12 @@ require_once 'version.php';
                 <a href="<?php echo $base; ?>dashboard/handover_hub.php">
                     <ion-icon name="swap-horizontal-outline" style="color: #38bdf8;"></ion-icon>
                     <span>Mission Transitions</span>
+                </a>
+            </li>
+            <li class="<?php echo ($current_page == 'assets.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $base; ?>dashboard/assets.php">
+                    <ion-icon name="cube-outline" style="color: #cbd5e1;"></ion-icon>
+                    <span>Temporal Goods / Assets</span>
                 </a>
             </li>
 

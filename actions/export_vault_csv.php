@@ -13,7 +13,7 @@ $is_admin = ($user_role === 'admin' || $user_role === 'chancellor');
 $user_parish_id = (int)($_SESSION['parish_id'] ?? 0);
 
 $table = $_GET['table'] ?? '';
-$allowed_tables = ['baptisms', 'marriages', 'confirmations', 'parishioners', 'deaths', 'catechumens', 'parish_daily_ledger', 'parish_financial_submissions'];
+$allowed_tables = ['baptisms', 'marriages', 'confirmations', 'parishioners', 'deaths', 'catechumens', 'parish_daily_ledger', 'parish_financial_submissions', 'parish_assets', 'parish_outstations', 'mass_intentions'];
 
 if (!in_array($table, $allowed_tables)) {
     die("Invalid table specified.");
@@ -27,7 +27,14 @@ if (!$is_admin && $user_parish_id <= 0) {
 // Ensure output is clean
 ob_clean();
 header('Content-Type: text/csv; charset=utf-8');
-$filename_prefix = $table === 'parish_daily_ledger' ? 'Daily_Ledger' : ($table === 'parish_financial_submissions' ? 'Monthly_Cashbook' : ucfirst($table));
+$prefix_map = [
+    'parish_daily_ledger' => 'Daily_Ledger',
+    'parish_financial_submissions' => 'Monthly_Cashbook',
+    'parish_assets' => 'Temporal_Goods_Assets',
+    'parish_outstations' => 'Outstations_MassCentres',
+    'mass_intentions' => 'Mass_Intentions_Book'
+];
+$filename_prefix = $prefix_map[$table] ?? ucfirst($table);
 header('Content-Disposition: attachment; filename=Hwange_' . $filename_prefix . '_Export_' . date('Y-m-d') . '.csv');
 
 $output = fopen('php://output', 'w');
@@ -66,6 +73,50 @@ if ($table === 'parish_daily_ledger') {
                 LEFT JOIN users u ON s.submitted_by = u.user_id
                 WHERE s.parish_id = ?
                 ORDER BY s.fiscal_year DESC, s.fiscal_month DESC";
+        $params[] = $user_parish_id;
+    }
+} elseif ($table === 'parish_assets') {
+    if ($is_admin) {
+        $sql = "SELECT a.id, pr.parish_name, a.item_name, a.category, a.serial_or_reg_number, a.location_stored, a.quantity, a.acquisition_date, a.estimated_value, a.currency, a.current_status, a.is_sacred, a.description, a.created_at
+                FROM parish_assets a
+                LEFT JOIN parishes pr ON a.parish_id = pr.parish_id
+                ORDER BY pr.parish_name ASC, a.category ASC, a.item_name ASC";
+    } else {
+        $sql = "SELECT a.id, pr.parish_name, a.item_name, a.category, a.serial_or_reg_number, a.location_stored, a.quantity, a.acquisition_date, a.estimated_value, a.currency, a.current_status, a.is_sacred, a.description, a.created_at
+                FROM parish_assets a
+                LEFT JOIN parishes pr ON a.parish_id = pr.parish_id
+                WHERE a.parish_id = ?
+                ORDER BY a.category ASC, a.item_name ASC";
+        $params[] = $user_parish_id;
+    }
+} elseif ($table === 'parish_outstations') {
+    if ($is_admin) {
+        $sql = "SELECT o.outstation_id, pr.parish_name, o.outstation_name, o.patron_saint, o.distance_km, o.catechist_name, o.catechist_phone, o.chairperson_name, o.chairperson_phone, o.mass_schedule, o.active_families_count, o.has_church_building, o.notes, o.created_at
+                FROM parish_outstations o
+                LEFT JOIN parishes pr ON o.parish_id = pr.parish_id
+                ORDER BY pr.parish_name ASC, o.outstation_name ASC";
+    } else {
+        $sql = "SELECT o.outstation_id, pr.parish_name, o.outstation_name, o.patron_saint, o.distance_km, o.catechist_name, o.catechist_phone, o.chairperson_name, o.chairperson_phone, o.mass_schedule, o.active_families_count, o.has_church_building, o.notes, o.created_at
+                FROM parish_outstations o
+                LEFT JOIN parishes pr ON o.parish_id = pr.parish_id
+                WHERE o.parish_id = ?
+                ORDER BY o.outstation_name ASC";
+        $params[] = $user_parish_id;
+    }
+} elseif ($table === 'mass_intentions') {
+    if ($is_admin) {
+        $sql = "SELECT m.intention_id, pr.parish_name, m.donor_name, m.donor_phone, m.intention_text, m.intention_type, m.stipend_amount, m.currency, m.requested_date, m.celebrated_date, u.full_name as celebrant, m.status, m.notes, m.created_at
+                FROM mass_intentions m
+                LEFT JOIN parishes pr ON m.parish_id = pr.parish_id
+                LEFT JOIN users u ON m.assigned_priest_id = u.user_id
+                ORDER BY m.requested_date DESC, m.intention_id DESC";
+    } else {
+        $sql = "SELECT m.intention_id, pr.parish_name, m.donor_name, m.donor_phone, m.intention_text, m.intention_type, m.stipend_amount, m.currency, m.requested_date, m.celebrated_date, u.full_name as celebrant, m.status, m.notes, m.created_at
+                FROM mass_intentions m
+                LEFT JOIN parishes pr ON m.parish_id = pr.parish_id
+                LEFT JOIN users u ON m.assigned_priest_id = u.user_id
+                WHERE m.parish_id = ?
+                ORDER BY m.requested_date DESC, m.intention_id DESC";
         $params[] = $user_parish_id;
     }
 } elseif ($table === 'baptisms') {
