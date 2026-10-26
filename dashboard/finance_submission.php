@@ -127,22 +127,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 
     // Check if report already exists for this month
-    $existing = db_fetch("SELECT submission_id FROM parish_financial_submissions WHERE parish_id = ? AND fiscal_year = ? AND fiscal_month = ?", [
+    $existing = db_fetch("SELECT submission_id, status FROM parish_financial_submissions WHERE parish_id = ? AND fiscal_year = ? AND fiscal_month = ?", [
         $parish_id, $fiscal_year, $fiscal_month
     ]);
 
     if ($existing) {
+        if (($existing['status'] ?? '') === 'Verified' && !is_admin()) {
+            set_flash("This monthly statement has been canonically audited and verified by the Chancery. It is locked against further parish modifications.", "error");
+            redirect("dashboard/finance_submission.php?year=$fiscal_year&month=$fiscal_month");
+            exit;
+        }
+
+        $new_status = ($existing['status'] === 'Verified') ? 'Verified' : 'Submitted';
+
         $sql = "UPDATE parish_financial_submissions 
                 SET total_collections = ?, tithe = ?, sacramental_offerings = ?, other_income = ?, calculated_levy = ?, 
                     total_income = ?, total_expenditure = ?, opening_balance = ?, closing_balance = ?,
                     cash_at_hand = ?, cash_in_bank = ?, savings = ?, investments = ?,
-                    financial_details = ?, currency = ?, status = 'Submitted', submitted_by = ?, created_at = CURRENT_TIMESTAMP
+                    financial_details = ?, currency = ?, status = ?, submitted_by = ?, created_at = CURRENT_TIMESTAMP
                 WHERE submission_id = ?";
         db_query($sql, [
             $sunday_collection_val, $tithe_val, $sacramental_offerings, $other_income, $calculated_levy,
             $total_income, $total_expenditure, $opening_balance, $closing_balance,
             $cash_at_hand, $cash_in_bank, $savings, $investments,
-            $financial_details_json, $currency, $_SESSION['user_id'], $existing['submission_id']
+            $financial_details_json, $currency, $new_status, $_SESSION['user_id'], $existing['submission_id']
         ]);
 
         log_audit($_SESSION['user_id'], 'UPDATE', 'parish_financial_submissions', $existing['submission_id'], 
@@ -184,6 +192,7 @@ $current_details = !empty($current_sub['financial_details']) ? json_decode($curr
 $saved_special = $current_details['special_collections'] ?? [];
 $saved_custom_inc = $current_details['custom_income'] ?? [];
 $saved_custom_exp = $current_details['custom_expenditure'] ?? [];
+$is_verified_locked = ($current_sub && ($current_sub['status'] ?? '') === 'Verified' && !is_admin());
 
 // Auto-lookup previous month's closing balance to pre-fill opening balance if new
 $default_opening = 0.0;
@@ -492,6 +501,21 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
 
                 <!-- Main Cashbook Form -->
                 <div class="cashbook-container">
+                    <?php if ($is_verified_locked): ?>
+                        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.35); border-left: 4px solid #10b981; border-radius: 12px; padding: 1.1rem 1.4rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 14px;">
+                            <ion-icon name="shield-checkmark" style="font-size: 2.2rem; color: #10b981; flex-shrink: 0;"></ion-icon>
+                            <div>
+                                <div style="color: #10b981; font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 6px;">
+                                    <span>CANONICALLY AUDITED & VERIFIED BY CHANCERY</span>
+                                    <span style="font-size: 0.7rem; background: #10b981; color: #0f172a; padding: 2px 8px; border-radius: 10px; font-weight: 800;">LOCKED</span>
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 3px; line-height: 1.4;">
+                                    This monthly return has been officially audited, verified, and locked in the Diocesan Financial Archives. Parishes cannot alter figures once verified. If an adjustment is required, contact the Chancellor or Diocesan Finance Office.
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <form method="POST" id="cashbook-form">
                         <input type="hidden" name="fiscal_year" value="<?php echo $selected_year; ?>">
                         <input type="hidden" name="fiscal_month" value="<?php echo $selected_month; ?>">
@@ -514,13 +538,17 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
 
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">CURRENCY:</label>
-                                <select name="currency" class="input-field" style="padding: 4px 8px; font-size: 0.8rem; width: auto;">
+                                <select name="currency" class="input-field" style="padding: 4px 8px; font-size: 0.8rem; width: auto;" <?php echo $is_verified_locked ? 'disabled' : ''; ?>>
                                     <option value="USD" <?php echo ($current_sub['currency'] ?? 'USD') == 'USD' ? 'selected' : ''; ?>>USD ($)</option>
                                     <option value="ZiG" <?php echo ($current_sub['currency'] ?? '') == 'ZiG' ? 'selected' : ''; ?>>ZiG</option>
                                     <option value="ZAR" <?php echo ($current_sub['currency'] ?? '') == 'ZAR' ? 'selected' : ''; ?>>ZAR (R)</option>
                                 </select>
                                 <?php if ($current_sub): ?>
-                                    <span class="badge-status badge-submitted" style="font-size: 0.75rem;">Status: <?php echo h($current_sub['status']); ?></span>
+                                    <?php $is_v = ($current_sub['status'] === 'Verified'); ?>
+                                    <span class="badge-status <?php echo $is_v ? 'badge-verified' : 'badge-submitted'; ?>" style="font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;">
+                                        <ion-icon name="<?php echo $is_v ? 'shield-checkmark' : 'time-outline'; ?>"></ion-icon>
+                                        <span>Status: <?php echo h($current_sub['status']); ?></span>
+                                    </span>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -822,7 +850,7 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                                 Parish Priest: <strong><?php echo h($parish['priest_name'] ?: 'Parish Priest'); ?></strong>
                             </div>
 
-                            <div style="display: flex; gap: 12px;">
+                            <div style="display: flex; gap: 12px; align-items: center;">
                                 <?php if ($current_sub): ?>
                                     <a href="../actions/export_financial_docx.php?submission_id=<?php echo $current_sub['submission_id']; ?>" 
                                        class="btn btn-secondary" style="font-weight: 700; padding: 0.85rem 1.25rem;">
@@ -830,10 +858,18 @@ $header_subtitle = "Official Hwange Diocesan 23-Line Double-Entry Cashbook for "
                                         <span>Export Word (.docx)</span>
                                     </a>
                                 <?php endif; ?>
-                                <button type="submit" class="btn btn-primary" style="font-weight: 800; padding: 0.85rem 2rem;">
-                                    <ion-icon name="cloud-upload-outline"></ion-icon>
-                                    <span><?php echo $current_sub ? 'Update Financial Return' : 'Commit Monthly Return'; ?></span>
-                                </button>
+
+                                <?php if ($is_verified_locked): ?>
+                                    <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; padding: 0.85rem 1.5rem; border-radius: 12px; font-weight: 800; font-size: 0.85rem;">
+                                        <ion-icon name="lock-closed" style="font-size: 1.15rem;"></ion-icon>
+                                        <span>Locked (Canonically Verified)</span>
+                                    </div>
+                                <?php else: ?>
+                                    <button type="submit" class="btn btn-primary" style="font-weight: 800; padding: 0.85rem 2rem;">
+                                        <ion-icon name="cloud-upload-outline"></ion-icon>
+                                        <span><?php echo $current_sub ? 'Update Financial Return' : 'Commit Monthly Return'; ?></span>
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </form>

@@ -106,6 +106,7 @@ $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY pa
                                 <option value="priest">Priest-in-Charge (Parish Rights)</option>
                                 <option value="deacon">Deacon (Parish Entry Rights)</option>
                                 <option value="secretary">Parish Secretary (Parish Entry Rights)</option>
+                                <option value="bookkeeper">Parish Bookkeeper / Treasurer (Financial & Daily Ledger)</option>
                             </select>
                         </div>
                         <?php

@@ -72,6 +72,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $category_name = ucwords(str_replace('_', ' ', $category_code));
     }
 
+    // Optional Receipt / Voucher File Upload
+    $receipt_path = null;
+    if (!empty($_FILES['receipt_file']['name']) && $_FILES['receipt_file']['error'] === UPLOAD_ERR_OK) {
+        $allowed_exts = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+        $orig_name = $_FILES['receipt_file']['name'];
+        $ext = strtolower(pathinfo($orig_name, PATHINFO_EXTENSION));
+        if (in_array($ext, $allowed_exts)) {
+            $max_size = 12 * 1024 * 1024; // 12MB
+            if ($_FILES['receipt_file']['size'] <= $max_size) {
+                $upload_dir = dirname(__DIR__) . '/uploads/receipts';
+                if (!is_dir($upload_dir)) {
+                    @mkdir($upload_dir, 0777, true);
+                }
+                $safe_name = 'rcpt_' . $parish_id . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
+                $dest = $upload_dir . '/' . $safe_name;
+                if (move_uploaded_file($_FILES['receipt_file']['tmp_name'], $dest)) {
+                    $receipt_path = 'uploads/receipts/' . $safe_name;
+                }
+            }
+        }
+    }
+
     try {
         if ($entry_id > 0) {
             // Update Existing Entry
@@ -89,15 +111,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
 
+            $final_receipt = $receipt_path !== null ? $receipt_path : ($existing['receipt_path'] ?? null);
+
             $sql = "UPDATE parish_daily_ledger SET 
                         entry_date = ?, entry_type = ?, category_code = ?, category_name = ?,
                         description = ?, amount = ?, currency = ?, payment_method = ?,
-                        account_type = ?, reference_number = ?
+                        account_type = ?, reference_number = ?, receipt_path = ?
                     WHERE entry_id = ?";
             db_query($sql, [
                 $entry_date, $entry_type, $category_code, $category_name,
                 $description, $amount, $currency, $payment_method,
-                $account_type, $reference_number, $entry_id
+                $account_type, $reference_number, $final_receipt, $entry_id
             ]);
 
             log_audit($_SESSION['user_id'], 'UPDATE', 'parish_daily_ledger', $entry_id, 
@@ -107,12 +131,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Insert New Entry
             $sql = "INSERT INTO parish_daily_ledger 
-                    (parish_id, entry_date, entry_type, category_code, category_name, description, amount, currency, payment_method, account_type, reference_number, recorded_by)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    (parish_id, entry_date, entry_type, category_code, category_name, description, amount, currency, payment_method, account_type, reference_number, receipt_path, recorded_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             db_query($sql, [
                 $parish_id, $entry_date, $entry_type, $category_code, $category_name,
                 $description, $amount, $currency, $payment_method,
-                $account_type, $reference_number, $_SESSION['user_id']
+                $account_type, $reference_number, $receipt_path, $_SESSION['user_id']
             ]);
 
             $new_entry_id = db_last_insert_id();

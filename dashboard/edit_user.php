@@ -89,6 +89,7 @@ $parishes = db_fetchAll("SELECT parish_id, parish_name FROM parishes ORDER BY pa
                                         <option value="priest" <?php echo $user['role'] == 'priest' ? 'selected' : ''; ?>>Priest In Charge</option>
                                         <option value="deacon" <?php echo $user['role'] == 'deacon' ? 'selected' : ''; ?>>Deacon</option>
                                         <option value="secretary" <?php echo $user['role'] == 'secretary' ? 'selected' : ''; ?>>Parish Secretary</option>
+                                        <option value="bookkeeper" <?php echo $user['role'] == 'bookkeeper' ? 'selected' : ''; ?>>Parish Bookkeeper / Treasurer</option>
                                     </select>
                                 </div>
                                 <?php

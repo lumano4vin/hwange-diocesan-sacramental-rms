@@ -261,6 +261,14 @@ function can_edit() {
 }
 
 /**
+ * Check if the current user can manage parish finances
+ */
+function can_manage_finances() {
+    $role = strtolower($_SESSION['role'] ?? '');
+    return in_array($role, ['admin', 'chancellor', 'priest', 'deacon', 'secretary', 'bookkeeper', 'treasurer']);
+}
+
+/**
  * Require editing rights
  */
 function require_editor() {

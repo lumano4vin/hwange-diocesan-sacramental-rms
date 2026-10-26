@@ -10,7 +10,7 @@ require_once '../includes/functions.php';
 // Clergy & Administrators can access the data vault
 require_login();
 $user_role = strtolower($_SESSION['role'] ?? '');
-if (!in_array($user_role, ['admin', 'priest', 'mission_admin', 'chancellor'])) {
+if (!in_array($user_role, ['admin', 'priest', 'mission_admin', 'chancellor', 'bookkeeper'])) {
     die("Access denied. Authorized clergy and administrators only.");
 }
 
@@ -32,6 +32,8 @@ $counts = [
     'Confirmations' => db_fetch("SELECT COUNT(*) as c FROM confirmations")['c'] ?? 0,
     'Marriages' => db_fetch("SELECT COUNT(*) as c FROM marriages")['c'] ?? 0,
     'Parishioners' => db_fetch("SELECT COUNT(*) as c FROM parishioners")['c'] ?? 0,
+    'Daily Ledger' => db_fetch("SELECT COUNT(*) as c FROM parish_daily_ledger")['c'] ?? 0,
+    'Cashbook Returns' => db_fetch("SELECT COUNT(*) as c FROM parish_financial_submissions")['c'] ?? 0,
 ];
 
 ?>
@@ -105,6 +107,14 @@ $counts = [
                         <a href="../actions/export_vault_csv.php?table=parishioners" class="export-btn">
                             <ion-icon name="people-outline"></ion-icon>
                             Parishioners (<?php echo $counts['Parishioners']; ?>)
+                        </a>
+                        <a href="../actions/export_vault_csv.php?table=parish_daily_ledger" class="export-btn" style="border-color: rgba(56, 189, 248, 0.4);">
+                            <ion-icon name="journal-outline" style="color: #38bdf8;"></ion-icon>
+                            Daily Ledger (<?php echo $counts['Daily Ledger']; ?>)
+                        </a>
+                        <a href="../actions/export_vault_csv.php?table=parish_financial_submissions" class="export-btn" style="border-color: rgba(251, 191, 36, 0.4);">
+                            <ion-icon name="cash-outline" style="color: var(--accent);"></ion-icon>
+                            Monthly Returns (<?php echo $counts['Cashbook Returns']; ?>)
                         </a>
                     </div>
                 </div>

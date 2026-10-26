@@ -11,7 +11,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 handle_session_timeout();
 
 $base = get_base_url();
-$is_admin = ($_SESSION['role'] === 'admin');
+$is_admin = (($_SESSION['role'] ?? '') === 'admin');
+$is_bookkeeper = (strtolower($_SESSION['role'] ?? '') === 'bookkeeper');
 ?>
 <?php
 require_once 'version.php';
@@ -63,6 +64,7 @@ require_once 'version.php';
                 </a>
             </li>
             <?php endif; ?>
+            <?php if (!$is_bookkeeper): ?>
             <li class="<?php echo ($current_page == 'parishioners.php' || $current_page == 'add_parishioner.php' || $current_page == 'edit_parishioner.php') ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>parishioners.php">
                     <ion-icon name="people-outline"></ion-icon>
@@ -112,6 +114,7 @@ require_once 'version.php';
                     <span>Letters of Standing</span>
                 </a>
             </li>
+            <?php endif; ?>
             
             <li class="<?php echo $current_page == 'reports.php' ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>dashboard/reports.php">
@@ -181,7 +184,7 @@ require_once 'version.php';
             </li>
             <?php endif; ?>
 
-            <?php if (in_array(strtolower($_SESSION['role']), ['admin', 'priest', 'mission_admin', 'chancellor'])): ?>
+            <?php if (in_array(strtolower($_SESSION['role'] ?? ''), ['admin', 'priest', 'mission_admin', 'chancellor', 'bookkeeper'])): ?>
             <li class="<?php echo $current_page == 'backup_vault.php' ? 'active' : ''; ?>">
                 <a href="<?php echo $base; ?>dashboard/backup_vault.php">
                     <ion-icon name="server-outline" style="color: #38bdf8;"></ion-icon>

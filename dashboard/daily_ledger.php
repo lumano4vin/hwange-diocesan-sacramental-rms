@@ -512,6 +512,13 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
                                             </td>
                                             <td style="font-family: monospace; font-size: 0.75rem; color: var(--accent);">
                                                 <?php echo h($row['reference_number'] ?: '—'); ?>
+                                                <?php if (!empty($row['receipt_path'])): ?>
+                                                    <br>
+                                                    <a href="../<?php echo h($row['receipt_path']); ?>" target="_blank" style="display: inline-flex; align-items: center; gap: 3px; font-size: 0.68rem; color: #38bdf8; text-decoration: none; margin-top: 2px;" title="View attached receipt/voucher">
+                                                        <ion-icon name="document-attach-outline"></ion-icon>
+                                                        <span>Receipt</span>
+                                                    </a>
+                                                <?php endif; ?>
                                             </td>
                                             <td>
                                                 <span class="badge-acct"><?php echo $acct_label; ?></span>
@@ -558,7 +565,7 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
                 <span onclick="closeTransactionModal()" style="font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">&times;</span>
             </div>
 
-            <form action="../actions/save_daily_ledger_entry.php" method="POST" id="tx-form">
+            <form action="../actions/save_daily_ledger_entry.php" method="POST" id="tx-form" enctype="multipart/form-data">
                 <input type="hidden" name="entry_id" id="tx_entry_id" value="0">
                 <input type="hidden" name="parish_id" value="<?php echo $parish_id; ?>">
                 <input type="hidden" name="entry_type" id="tx_entry_type" value="income">
@@ -655,6 +662,15 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
                         <label class="form-label" style="font-size: 0.75rem;">Voucher / Receipt / Ref #</label>
                         <input type="text" name="reference_number" id="tx_reference_number" class="input-field" placeholder="e.g. RCPT-102, PV-08">
                     </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" style="font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Receipt / Voucher / Deposit Slip (Optional)</span>
+                        <span style="font-size: 0.68rem; color: var(--text-muted);">PDF, JPG, PNG up to 12MB</span>
+                    </label>
+                    <input type="file" name="receipt_file" id="tx_receipt_file" class="input-field" accept=".pdf,.jpg,.jpeg,.png,.webp" style="padding: 6px;">
+                    <div id="tx_existing_receipt" style="display: none; margin-top: 4px; font-size: 0.72rem;"></div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -765,6 +781,9 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
             document.getElementById('tx_amount').value = '';
             document.getElementById('tx_description').value = '';
             document.getElementById('tx_reference_number').value = '';
+            document.getElementById('tx_receipt_file').value = '';
+            document.getElementById('tx_existing_receipt').style.display = 'none';
+            document.getElementById('tx_existing_receipt').innerHTML = '';
             document.getElementById('tx_entry_date').value = '<?php echo date('Y-m-d'); ?>';
             setType('income');
             document.getElementById('transactionModal').classList.add('active');
@@ -784,6 +803,16 @@ $header_subtitle = "Day-to-day cash and bank journal for " . date('F Y', mktime(
             document.getElementById('tx_account_type').value = row.account_type || 'cash_at_hand';
             document.getElementById('tx_reference_number').value = row.reference_number || '';
             document.getElementById('tx_description').value = row.description;
+            document.getElementById('tx_receipt_file').value = '';
+
+            const existBox = document.getElementById('tx_existing_receipt');
+            if (row.receipt_path) {
+                existBox.style.display = 'block';
+                existBox.innerHTML = '<span style="color: var(--text-muted);">Current attached file: </span><a href="../' + encodeURI(row.receipt_path) + '" target="_blank" style="color: #38bdf8; text-decoration: underline; font-weight: 600;"><ion-icon name="document-attach-outline"></ion-icon> View Receipt</a>';
+            } else {
+                existBox.style.display = 'none';
+                existBox.innerHTML = '';
+            }
 
             setType(row.entry_type);
             document.getElementById('tx_category_code').value = row.category_code;
