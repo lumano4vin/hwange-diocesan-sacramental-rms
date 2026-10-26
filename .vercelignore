@@ -40,6 +40,7 @@ docs/images/
 docs/*.txt
 docs/*.py
 *.pdf
+!Hwange_Diocesan_Sacramental_RMS_Manual.pdf
 *.zip
 test_dir/
 scratch*/

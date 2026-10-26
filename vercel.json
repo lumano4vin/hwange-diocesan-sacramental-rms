@@ -2,7 +2,7 @@
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.9.0",
-      "includeFiles": "{*.php,admin/**,actions/**,auth/**,dashboard/**,sacraments/**,parishioners/**,includes/**,assets/**,data/**,docs/**,Hwange_Diocesan_Sacramental_RMS_Manual.pdf}"
+      "includeFiles": "**"
     }
   },
   "routes": [
