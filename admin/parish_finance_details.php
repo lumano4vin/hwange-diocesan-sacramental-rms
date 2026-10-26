@@ -3,9 +3,9 @@
  * Hwange Diocese Records Management System (RMS)
  * Parish Financial Audit & Remittance Ledger
  */
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
-require_once '../includes/diocesan_financial_categories.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/diocesan_financial_categories.php';
 
 require_admin();
 

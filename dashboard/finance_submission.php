@@ -4,9 +4,9 @@
  * Parish Monthly Financial Statement (Official 23-Line Double-Entry Cashbook)
  * Aligned with the Diocesan Chancery Administration Standard
  */
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
-require_once '../includes/diocesan_financial_categories.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/diocesan_financial_categories.php';
 
 require_login();
 
@@ -156,6 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  financial_details, currency, status, submitted_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Submitted', ?)";
         db_query($sql, [
+            $parish_id, $fiscal_year, $fiscal_month,
             $sunday_collection_val, $tithe_val, $sacramental_offerings, $other_income, $calculated_levy,
             $total_income, $total_expenditure, $opening_balance, $closing_balance,
             $cash_at_hand, $cash_in_bank, $savings, $investments,
