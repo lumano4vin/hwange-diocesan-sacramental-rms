@@ -10,7 +10,7 @@ require_once 'includes/functions.php';
 require_login();
 
 $header_title = "User Manual & Help";
-$header_subtitle = "A complete guide to using the Hwange Diocesan Sacramental Database System.";
+$header_subtitle = "Official guide for the Catholic Diocese of Hwange Sacramental & Temporal RMS.";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,145 +36,138 @@ $header_subtitle = "A complete guide to using the Hwange Diocesan Sacramental Da
 
             <?php include 'includes/header.php'; ?>
 
-            <div class="content-body" style="padding: 2rem 0; max-width: 860px; margin: 0 auto;">
+            <div class="content-body" style="padding: 2rem 0; max-width: 920px; margin: 0 auto;">
 
                 <!-- Hero Banner -->
-                <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(15,23,42,0.8) 100%); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 1.5rem; padding: 2.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 2rem;">
-                    <div style="font-size: 4rem; color: var(--accent); flex-shrink: 0;">
-                        <ion-icon name="book-outline"></ion-icon>
+                <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(15,23,42,0.85) 100%); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 1.5rem; padding: 2.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div style="font-size: 3.5rem; color: var(--accent); flex-shrink: 0;">
+                            <ion-icon name="book-outline"></ion-icon>
+                        </div>
+                        <div>
+                            <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; color: white; margin-bottom: 0.5rem;">Hwange Diocesan Pastoral & Sacramental RMS</h1>
+                            <p style="color: var(--text-muted); line-height: 1.6; margin: 0; max-width: 580px;">Official operations guide for Parish Priests, Mission Administrators, Chancellors, and Bookkeepers across the Diocese of Hwange.</p>
+                        </div>
                     </div>
                     <div>
-                        <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; color: white; margin-bottom: 0.5rem;">Hwange Diocesan Sacramental Database</h1>
-                        <p style="color: var(--text-muted); line-height: 1.6;">Welcome to the official help documentation. This guide covers all functional steps for accessing and using the system to manage the canonical records of the Catholic Diocese of Hwange - Zimbabwe.</p>
+                        <a href="docs/manual.php" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 0.8rem 1.4rem;">
+                            <ion-icon name="print-outline"></ion-icon> Printable PDF Manual
+                        </a>
                     </div>
                 </div>
 
-                <!-- Section 1: Accessing the System -->
+                <!-- Section 1: Accessing the System & Roles -->
                 <div class="card bg-card" style="margin-bottom: 1.5rem; border-radius: 1.25rem;">
                     <div class="card-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem 1.5rem 1rem;">
                         <div style="width: 40px; height: 40px; background: rgba(56, 189, 248, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 1.25rem; flex-shrink: 0;">
                             <ion-icon name="log-in-outline"></ion-icon>
                         </div>
-                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white;">1. Accessing the System</h2>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white; margin: 0;">1. System Access & User Roles</h2>
                     </div>
                     <div class="card-body" style="padding: 0 1.5rem 1.5rem;">
-                        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Before you can sign in, ensure the system is running by double-clicking <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: var(--accent); font-size: 0.85rem;">LAUNCH_RMS.bat</code>.</p>
                         <h4 style="color: white; margin-bottom: 0.75rem; font-size: 0.95rem;">How to Sign In</h4>
                         <ol style="color: var(--text-muted); padding-left: 1.5rem; line-height: 2;">
-                            <li>Open your browser and navigate to <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: #38bdf8; font-size: 0.85rem;">http://localhost:8000</code></li>
-                            <li>On the <strong style="color: white;">Login</strong> page, enter your assigned <strong style="color: white;">Username</strong> (e.g., your surname, parish identifier, or <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: var(--accent);">bishop_hwange</code> for the Bishop).</li>
-                            <li>Enter your secure <strong style="color: white;">Password</strong> (default temporary password for accounts is <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: var(--accent);">Hwange2026!</code>).</li>
-                            <li>Click <strong style="color: white;">Login</strong>.</li>
+                            <li>Navigate to the system web address (e.g. <code style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: #38bdf8; font-size: 0.85rem;">http://localhost:8000</code> or your cloud deployment URL).</li>
+                            <li>Enter your assigned <strong style="color: white;">Username</strong> and <strong style="color: white;">Password</strong>.</li>
+                            <li>The Bishop of Hwange (<strong style="color: white;">Rt. Rev. Raphael Mabuza Ncube</strong>) is recognized and greeted dynamically by name under the username <code style="color: var(--accent);">bishop_hwange</code>.</li>
                         </ol>
-                        <!-- Note callout -->
-                        <div style="margin-top: 1.25rem; background: rgba(56, 189, 248, 0.07); border-left: 4px solid #38bdf8; border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
-                            <ion-icon name="information-circle-outline" style="color: #38bdf8; font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;"></ion-icon>
-                            <div style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
-                                <p style="margin: 0 0 6px 0;"><strong style="color: white;">Episcopal Access:</strong> The Bishop of Hwange (<strong style="color: white;">Rt. Rev. Raphael Mabuza Ncube</strong>) is dynamically recognized and greeted by name upon entering and leaving the system.</p>
-                                <p style="margin: 0;">If it is your first time logging in, you will be prompted to change your temporary password for security reasons.</p>
+
+                        <h4 style="color: white; margin: 1.25rem 0 0.5rem; font-size: 0.95rem;">Canonical Roles & Protections</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 0.75rem;">
+                            <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                                <strong style="color: #38bdf8; display: block; margin-bottom: 4px;">Bishop / Chancellor</strong>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Diocesan-wide canonical authority, audit logs, chancery financial locks, episcopal visitations.</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                                <strong style="color: #10b981; display: block; margin-bottom: 4px;">Parish Priest / Pastor</strong>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Sacraments, Mass intentions, parishioners, daily cash ledger, monthly returns, temporal assets, handover hub.</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                                <strong style="color: #fbbf24; display: block; margin-bottom: 4px;">Bookkeeper / Treasurer</strong>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Dedicated financial operations. Strictly restricted from private sacramental and matrimonial registers.</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 2: Understanding SSO -->
+                <!-- Section 2: Financial Stewardship & 23-Line Return -->
                 <div class="card bg-card" style="margin-bottom: 1.5rem; border-radius: 1.25rem;">
                     <div class="card-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem 1.5rem 1rem;">
-                        <div style="width: 40px; height: 40px; background: rgba(251, 191, 36, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.25rem; flex-shrink: 0;">
-                            <ion-icon name="key-outline"></ion-icon>
+                        <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 1.25rem; flex-shrink: 0;">
+                            <ion-icon name="cash-outline"></ion-icon>
                         </div>
-                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white;">2. Understanding SSO (Single Sign-On)</h2>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white; margin: 0;">2. Financial Stewardship & 23-Line Cashbook</h2>
                     </div>
                     <div class="card-body" style="padding: 0 1.5rem 1.5rem;">
-                        <h4 style="color: white; margin-bottom: 0.5rem; font-size: 0.95rem;">What is SSO?</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 1.25rem;"><strong style="color: white;">SSO (Single Sign-On)</strong> is an authentication method that allows a user to log in with a single set of credentials to any of several related, yet independent, software systems.</p>
-                        <h4 style="color: white; margin-bottom: 0.75rem; font-size: 0.95rem;">Why use SSO?</h4>
-                        <ul style="color: var(--text-muted); padding-left: 1.5rem; line-height: 2.2;">
-                            <li><strong style="color: white;">Convenience:</strong> You don't need to remember different passwords for every diocesan system.</li>
-                            <li><strong style="color: white;">Security:</strong> It reduces the risk of password fatigue and simplifies account management.</li>
-                            <li><strong style="color: white;">Speed:</strong> Once signed in to one diocesan service, you are often automatically signed into others.</li>
+                        <p style="color: var(--text-muted); margin-bottom: 1rem;">The financial module bridges daily parochial bookkeeping with the official Roman Catholic Diocese of Hwange financial format.</p>
+                        
+                        <h4 style="color: white; margin-bottom: 0.5rem; font-size: 0.95rem;">Daily Cash & Bank Ledger (`dashboard/daily_ledger.php`)</h4>
+                        <ul style="color: var(--text-muted); padding-left: 1.5rem; line-height: 2;">
+                            <li><strong style="color: white;">Dual Accounts:</strong> Log transactions into <span style="color: #38bdf8;">Cash at Hand</span> (parish safe/cash box) or <span style="color: #10b981;">Cash in Bank</span> (commercial bank account).</li>
+                            <li><strong style="color: white;">Line 1 Tithe / Unsupo / Mutulo:</strong> Captures faithful tithes in indigenous and English traditions.</li>
+                            <li><strong style="color: white;">Annual Diocesan Special Collections:</strong> Segregates pass-through collections (Mission Sunday, Seminary, Peter's Pence, Holy Land, Missionary Childhood, Social Communications, Lenten Campaign, Caritas) from parish operational income.</li>
+                            <li><strong style="color: white;">Receipt & Voucher Uploads:</strong> Attach PDF vouchers, bank deposit slips, or camera photos up to 12MB per transaction.</li>
+                            <li><strong style="color: white;">Outstation Attribution:</strong> Tag collections to specific rural outstations.</li>
                         </ul>
-                        <h4 style="color: white; margin: 1.25rem 0 0.5rem; font-size: 0.95rem;">Does the Database System use SSO?</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 0.75rem;">Currently, the system uses a <strong style="color: white;">Local Authentication</strong> system. Your login is managed within the parish records database itself.</p>
-                        <div style="background: rgba(251, 191, 36, 0.07); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
-                            <ion-icon name="time-outline" style="color: var(--accent); font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;"></ion-icon>
-                            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;"><strong style="color: white;">Future Plans:</strong> We are working towards integrating the Database System with the broader Diocesan SSO portal. Once implemented, you will be able to use your official <code style="color: var(--accent);">@hwangediocese.org</code> credentials to log in here.</p>
-                        </div>
+
+                        <h4 style="color: white; margin: 1.25rem 0 0.5rem; font-size: 0.95rem;">Monthly Return & Chancery Lock (`dashboard/finance_submission.php`)</h4>
+                        <p style="color: var(--text-muted); margin-bottom: 0.75rem;">Click <strong style="color: var(--accent);">"Sync from Daily Ledger"</strong> to instantly aggregate the month's receipts and disbursements into the 23 lines. When audited and marked as <span style="color: #10b981; font-weight: 700;">Verified</span> by the Chancery, returns are protected with an anti-tamper lock.</p>
                     </div>
                 </div>
 
-                <!-- Section 3: Canonical Communication Hub -->
+                <!-- Section 3: Parish Temporal Goods & Assets (Canon 1283 §2) -->
                 <div class="card bg-card" style="margin-bottom: 1.5rem; border-radius: 1.25rem;">
                     <div class="card-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem 1.5rem 1rem;">
-                        <div style="width: 40px; height: 40px; background: rgba(251, 191, 36, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.25rem; flex-shrink: 0;">
-                            <ion-icon name="chatbubbles-outline"></ion-icon>
+                        <div style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #f59e0b; font-size: 1.25rem; flex-shrink: 0;">
+                            <ion-icon name="cube-outline"></ion-icon>
                         </div>
-                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white;">3. Canonical Communication Hub</h2>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white; margin: 0;">3. Temporal Goods & Asset Inventory (Canon 1283 §2)</h2>
                     </div>
                     <div class="card-body" style="padding: 0 1.5rem 1.5rem;">
-                        <p style="color: var(--text-muted); margin-bottom: 1.25rem;">The <strong style="color: white;">Communication Hub</strong> is the official digital channel between your Mission and the Diocesan Administration.</p>
-                        <h4 style="color: white; margin-bottom: 0.75rem; font-size: 0.95rem;">How to Send a Query</h4>
-                        <ol style="color: var(--text-muted); padding-left: 1.5rem; line-height: 2;">
-                            <li>Select <strong style="color: white;">Communication Hub</strong> from the sidebar menu.</li>
-                            <li>Choose a <strong style="color: white;">Category</strong> (e.g., Registry Correction, Dispensation Request).</li>
-                            <li>Enter a clear <strong style="color: white;">Subject</strong> and your detailed message.</li>
-                            <li>Click <strong style="color: white;">Send to Chancery</strong>.</li>
-                        </ol>
-                        <div style="margin-top: 1.25rem; background: rgba(16, 185, 129, 0.07); border-left: 4px solid #10b981; border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
-                            <ion-icon name="notifications-outline" style="color: #10b981; font-size: 1.4rem; flex-shrink: 0; margin-top: 2px;"></ion-icon>
-                            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;"><strong style="color: white;">Tracking Responses:</strong> When the Chancery responds, a notification badge will appear on your sidebar and the top notification bell. You can view all past correspondence in the Registry Communication Log.</p>
-                        </div>
+                        <p style="color: var(--text-muted); margin-bottom: 1rem;">Located at <code style="color: #f59e0b;">dashboard/assets.php</code>, this register fulfills the canonical obligation to maintain a signed inventory of parish property:</p>
+                        <ul style="color: var(--text-muted); padding-left: 1.5rem; line-height: 2;">
+                            <li><strong style="color: white;">Sacred Vessels & Vestments:</strong> Chalices, ciboria, monstrances, reliquaries with dedicated reverence badges.</li>
+                            <li><strong style="color: white;">Vehicles & Transport:</strong> Land Cruisers, 4x4 trucks, tractors, motorbikes with registration and engine numbers.</li>
+                            <li><strong style="color: white;">Mission Infrastructure:</strong> Deep boreholes, solar pumping arrays, water storage tanks, buildings.</li>
+                            <li><strong style="color: white;">Handover Inventory Export:</strong> 1-click printable PDF inventory for priest transfers and episcopal visitations.</li>
+                        </ul>
                     </div>
                 </div>
 
-                <!-- Section 4: Troubleshooting -->
+                <!-- Section 4: Outstations Directory & Mass Intentions -->
                 <div class="card bg-card" style="margin-bottom: 1.5rem; border-radius: 1.25rem;">
                     <div class="card-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem 1.5rem 1rem;">
-                        <div style="width: 40px; height: 40px; background: rgba(239, 68, 68, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 1.25rem; flex-shrink: 0;">
-                            <ion-icon name="build-outline"></ion-icon>
+                        <div style="width: 40px; height: 40px; background: rgba(168, 85, 247, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #a855f7; font-size: 1.25rem; flex-shrink: 0;">
+                            <ion-icon name="navigate-outline"></ion-icon>
                         </div>
-                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white;">4. Troubleshooting Login Issues</h2>
-                    </div>
-                    <div class="card-body" style="padding: 0 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-                        <div style="display: flex; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.04);">
-                            <ion-icon name="lock-open-outline" style="color: var(--accent); font-size: 1.4rem; flex-shrink: 0;"></ion-icon>
-                            <div>
-                                <strong style="color: white; display: block; margin-bottom: 4px;">Forgotten Password</strong>
-                                <span style="color: var(--text-muted); font-size: 0.9rem;">Click "Forgot password?" on the login page. You will need access to your registered email address to reset it.</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.04);">
-                            <ion-icon name="shield-half-outline" style="color: #ef4444; font-size: 1.4rem; flex-shrink: 0;"></ion-icon>
-                            <div>
-                                <strong style="color: white; display: block; margin-bottom: 4px;">Account Locked</strong>
-                                <span style="color: var(--text-muted); font-size: 0.9rem;">If you enter the wrong password too many times, your account may be temporarily locked. Please contact your Parish Administrator or the Diocesan Office.</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 1rem; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.04);">
-                            <ion-icon name="alert-circle-outline" style="color: #f59e0b; font-size: 1.4rem; flex-shrink: 0;"></ion-icon>
-                            <div>
-                                <strong style="color: white; display: block; margin-bottom: 4px;">Invalid Credentials</strong>
-                                <span style="color: var(--text-muted); font-size: 0.9rem;">Ensure your Caps Lock is off and that you are using the correct username provided during your onboarding.</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Section 5: Support -->
-                <div class="card bg-card" style="margin-bottom: 1.5rem; border-radius: 1.25rem;">
-                    <div class="card-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem 1.5rem 1rem;">
-                        <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 1.25rem; flex-shrink: 0;">
-                            <ion-icon name="help-buoy-outline"></ion-icon>
-                        </div>
-                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white;">5. Support</h2>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white; margin: 0;">4. Mission Outstations & Canonical Mass Intentions</h2>
                     </div>
                     <div class="card-body" style="padding: 0 1.5rem 1.5rem;">
-                        <p style="color: var(--text-muted);">For canonical or technical assistance, use the <strong style="color: white;">Communication Hub</strong> to send a message directly to the Diocesan Information Office. For urgent technical failures, contact your local Parish System Administrator.</p>
+                        <h4 style="color: white; margin-bottom: 0.5rem; font-size: 0.95rem;">Outstations & Rural Centres (`dashboard/outstations.php`)</h4>
+                        <p style="color: var(--text-muted); margin-bottom: 1rem;">Maintains the geographic network of rural mission stations. Records distance in kilometers, Head Catechist phone numbers, Parish Council Chairperson contacts, Mass celebration frequency, and Catholic household counts.</p>
+
+                        <h4 style="color: white; margin-bottom: 0.5rem; font-size: 0.95rem;">Mass Intentions & Stipends Book (`dashboard/mass_intentions.php`)</h4>
+                        <p style="color: var(--text-muted); margin-bottom: 0.75rem;">Fulfills Canon 958. Classifies intentions (Repose of Soul / Deceased, Thanksgiving, Healing / Sick, Special, and <em>Pro Populo</em>). Tracks celebrant priests and stipend offerings, and provides 1-click status updates for sacristy management.</p>
+                    </div>
+                </div>
+
+                <!-- Section 5: Data Vault & Support -->
+                <div class="card bg-card" style="margin-bottom: 1.5rem; border-radius: 1.25rem;">
+                    <div class="card-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem 1.5rem 1rem;">
+                        <div style="width: 40px; height: 40px; background: rgba(56, 189, 248, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 1.25rem; flex-shrink: 0;">
+                            <ion-icon name="server-outline"></ion-icon>
+                        </div>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; color: white; margin: 0;">5. Data Vault & Diocesan Support</h2>
+                    </div>
+                    <div class="card-body" style="padding: 0 1.5rem 1.5rem;">
+                        <p style="color: var(--text-muted); margin-bottom: 1rem;">The <strong style="color: white;">Data Vault</strong> (<code>dashboard/backup_vault.php</code>) enables one-click CSV spreadsheet exports for all sacramental and temporal records. The encrypted GitHub Cloud Vault guarantees zero record loss across serverless deployments.</p>
+                        
                         <div style="display: flex; gap: 1rem; margin-top: 1.25rem; flex-wrap: wrap;">
-                            <a href="communication_hub.php" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                            <a href="communication_hub.php" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
                                 <ion-icon name="chatbubbles-outline"></ion-icon> Open Communication Hub
                             </a>
-                            <a href="dashboard/settings.php" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
-                                <ion-icon name="settings-outline"></ion-icon> System Settings
+                            <a href="docs/manual.php" target="_blank" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+                                <ion-icon name="document-text-outline"></ion-icon> View Full Print Manual
                             </a>
                         </div>
                     </div>

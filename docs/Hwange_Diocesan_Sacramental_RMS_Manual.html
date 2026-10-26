@@ -435,9 +435,13 @@
             <li class="toc-item"><span class="toc-title">8. Inter-Parish Communications & Pastoral Inquiries</span><span class="toc-page">Ch. 8</span></li>
             <li class="toc-item"><span class="toc-title">9. Parish Transitions & Canonical Handovers <span>(Can. 535 §5)</span></span><span class="toc-page">Ch. 9</span></li>
             <li class="toc-item"><span class="toc-title">10. Annual Register Returns & Episcopal Visitation <span>(Can. 535 §4)</span></span><span class="toc-page">Ch. 10</span></li>
-            <li class="toc-item"><span class="toc-title">11. Data Vault, USB Rectory Backups & Disaster Recovery</span><span class="toc-page">Ch. 11</span></li>
-            <li class="toc-item"><span class="toc-title">12. Rural Mission Guide & Mobile Phone Navigation</span><span class="toc-page">Ch. 12</span></li>
-            <li class="toc-item"><span class="toc-title">13. Troubleshooting & Frequently Asked Questions (FAQ)</span><span class="toc-page">Ch. 13</span></li>
+            <li class="toc-item"><span class="toc-title">11. Financial Stewardship, Daily Ledger & 23-Line Diocesan Cashbook</span><span class="toc-page">Ch. 11</span></li>
+            <li class="toc-item"><span class="toc-title">12. Parish Temporal Goods & Asset Inventory <span>(Can. 1283 §2)</span></span><span class="toc-page">Ch. 12</span></li>
+            <li class="toc-item"><span class="toc-title">13. Mission Outstations & Rural Mass Centres Directory</span><span class="toc-page">Ch. 13</span></li>
+            <li class="toc-item"><span class="toc-title">14. Canonical Mass Intentions & Stipends Book <span>(Can. 945–958)</span></span><span class="toc-page">Ch. 14</span></li>
+            <li class="toc-item"><span class="toc-title">15. Data Vault, USB Rectory Backups & Disaster Recovery</span><span class="toc-page">Ch. 15</span></li>
+            <li class="toc-item"><span class="toc-title">16. Rural Mission Guide & Mobile Phone Navigation</span><span class="toc-page">Ch. 16</span></li>
+            <li class="toc-item"><span class="toc-title">17. Troubleshooting & Frequently Asked Questions (FAQ)</span><span class="toc-page">Ch. 17</span></li>
         </ul>
 
         <div class="callout callout-canon">
@@ -576,6 +580,11 @@
                     <td><strong>Parish Secretary / Admin</strong></td>
                     <td>Assigned Parish / Mission</td>
                     <td>Historical register digitization; parishioner profile entry; draft baptism notices; print verified letters of standing.</td>
+                </tr>
+                <tr>
+                    <td><strong>Bookkeeper / Parish Treasurer</strong></td>
+                    <td>Assigned Parish / Mission</td>
+                    <td>Record daily cashbook transactions; upload receipt vouchers; prepare monthly returns; download financial CSVs. <em>Strictly restricted from confidential sacramental registers.</em></td>
                 </tr>
                 <tr>
                     <td><strong>Observer / Canonical Auditor</strong></td>
@@ -764,23 +773,82 @@
         </ol>
     </div>
 
-    <!-- ==================== CHAPTER 10 & 11 ==================== -->
+    <!-- ==================== CHAPTER 11 & 12 ==================== -->
     <div class="avoid-break page-break">
-        <h1>Chapter 9: Annual Parochial Returns & Episcopal Visitation (Can. 535 §4)</h1>
+        <h1>Chapter 11: Financial Stewardship, Daily Ledger & 23-Line Diocesan Cashbook</h1>
         <p>
-            Pursuant to Canon 535 §4, each parish is required to present its parochial volumes to the Diocesan Bishop during his canonical visitation, and to submit an annual return to the diocesan archives.
+            Parish financial administration is an integral part of pastoral accountability. The Hwange RMS incorporates the official 23-Line Double-Entry Accounting framework mandated by the Diocese of Hwange.
         </p>
 
-        <h2>9.1 Generating the Annual Return</h2>
+        <h2>11.1 Daily Cash & Bank Ledger (<code>dashboard/daily_ledger.php</code>)</h2>
+        <p>
+            Priests, administrators, and parish bookkeepers record all day-to-day cash receipts, bank deposits, and operational expenditures in real-time.
+        </p>
         <ol class="steps">
-            <li>Navigate to <strong>Annual Register Returns</strong> in the sidebar.</li>
-            <li>Select the <strong>Year</strong> (e.g. 2026) and your <strong>Parish / Mission</strong>.</li>
-            <li>The system aggregates all sacramental actions celebrated during the calendar year (Infant Baptisms, Adult Baptisms, Confirmations, First Holy Communions, Marriages, Receptions, and Deaths).</li>
-            <li>Click <strong>"Attest & Transmit Return"</strong>. This closes the annual volume, applies the canonical attestation statement, and marks the return as Transmitted to the Chancery Archives.</li>
-            <li>Print the <strong>Closed Volume Summary</strong> for inclusion in the parish archival vault.</li>
+            <li><strong>Target Accounts:</strong> Choose between <strong>Cash at Hand</strong> (parish cash safe / box) and <strong>Cash in Bank</strong> (commercial account: Stanbic, CBZ, etc.).</li>
+            <li><strong>Line 1 Tithe / Unsupo / Mutulo:</strong> Captures faithful offerings with native appreciation of Nambya, Tonga, and Ndebele parish traditions.</li>
+            <li><strong>Segregated Special Collections:</strong> Annual collections (Seminary, Mission Sunday, Peter's Pence, Holy Land, Missionary Childhood, Social Communications, Lenten Campaign, Caritas) are held as pass-through funds separate from parish operational revenues.</li>
+            <li><strong>Digital Voucher Upload:</strong> Attach scanned receipts, photo slips, or bank deposit slips (PDF, JPG, PNG up to 12MB) directly to each transaction.</li>
+            <li><strong>Outstation Attribution:</strong> Tag collections to specific rural outstations for transparent reporting.</li>
         </ol>
 
-        <h1>Chapter 10: Data Vault, USB Rectory Backups & Disaster Recovery</h1>
+        <h2>11.2 Monthly Returns & Chancery Audit Lock (<code>dashboard/finance_submission.php</code>)</h2>
+        <p>
+            At the close of each month, the system automates preparation of the official diocesan return:
+        </p>
+        <ol class="steps">
+            <li>Click <strong>"Sync from Daily Ledger"</strong> to instantly populate all 23 standard diocesan income and expenditure lines.</li>
+            <li>Confirm multi-currency balances in <strong>USD ($)</strong>, <strong>ZiG</strong>, or <strong>ZAR (R)</strong>.</li>
+            <li>Submit the return to the Chancery. Once audited and marked as <strong>"Verified"</strong> by the Diocesan Finance Office, the return is canonically sealed against unauthorized alteration.</li>
+            <li>Export verified monthly cashbooks to Microsoft Word (<code>.docx</code>) or CSV spreadsheets.</li>
+        </ol>
+
+        <h1>Chapter 12: Parish Temporal Goods & Asset Inventory (Can. 1283 §2)</h1>
+        <p>
+            Canon 1283 §2 requires administrators to draw up an accurate and clear inventory of immovable goods, movable goods, and precious items, with estimated valuations and physical descriptions.
+        </p>
+
+        <h2>12.1 Managing Temporal Goods (<code>dashboard/assets.php</code>)</h2>
+        <ul>
+            <li><strong>Sacred Vessels & Vestments:</strong> Chalices, ciboria, monstrances, and reliquaries are highlighted with reverence badges and tracked for sacred preservation.</li>
+            <li><strong>Transport & Vehicles:</strong> Land Cruisers, 4x4 trucks, motorcycles, and tractors tracked with registration numbers, engine codes, and roadworthiness status.</li>
+            <li><strong>Mission Infrastructure:</strong> Deep boreholes, solar pumping arrays, inverters, storage tanks, rectory buildings, and schools.</li>
+            <li><strong>Condition Tracking:</strong> Items are categorized as <em>Good, Fair, Poor, Under Repair,</em> or <em>Condemned</em> with replacement cost estimates.</li>
+            <li><strong>Handover Inventory Export:</strong> 1-click printable asset inventory for canonical parish transitions.</li>
+        </ul>
+    </div>
+
+    <!-- ==================== CHAPTER 13 & 14 ==================== -->
+    <div class="avoid-break page-break">
+        <h1>Chapter 13: Mission Outstations & Rural Mass Centres Directory</h1>
+        <p>
+            Rural missions across the Diocese of Hwange oversee extensive networks of bush centres spanning vast distances. The <strong>Outstations Directory</strong> (<code>dashboard/outstations.php</code>) centralizes pastoral intelligence:
+        </p>
+        <ul>
+            <li><strong>Geographic Distance:</strong> Tracks road distance in kilometers from the mission centre (e.g. St. Augustine, Binga, Dete, Fatima, Jambezi, Lupane).</li>
+            <li><strong>Pastoral Leadership Directory:</strong> Instant telephone and WhatsApp contacts for the Head Catechist and Parish Pastoral Council Chairperson.</li>
+            <li><strong>Liturgical Schedule:</strong> Mass celebration cadence (e.g. 1st & 3rd Sundays of the month) and patronal feast day celebrations.</li>
+            <li><strong>Household Census:</strong> Active Catholic family counts for pastoral planning and episcopal visitations.</li>
+        </ul>
+
+        <h1>Chapter 14: Canonical Mass Intentions & Stipends Book (Can. 945–958)</h1>
+        <p>
+            In accordance with Canons 945–958, priests must keep an accurate register of Mass intentions received, stipends collected, and celebrations fulfilled.
+        </p>
+
+        <h2>14.1 Intention Management (<code>dashboard/mass_intentions.php</code>)</h2>
+        <ol class="steps">
+            <li><strong>Intention Classification:</strong> Categorized as <em>Repose of the Soul / Deceased</em>, <em>Thanksgiving</em>, <em>Healing / Sick</em>, <em>Special Intention</em>, or <em>Pro Populo</em> (obligatory Pastor's Mass for the People under Canon 534).</li>
+            <li><strong>Stipend Accounting:</strong> Record offering amounts, donor names, contact details, and receipt dates.</li>
+            <li><strong>Celebrant Assignment:</strong> Assign intentions to resident or visiting priests.</li>
+            <li><strong>1-Click Fulfillment:</strong> Mark Masses as <strong>Celebrated</strong> with live celebration dates or <strong>Transferred</strong> to Chancery.</li>
+            <li><strong>Sacristy Printout:</strong> Generates a clean liturgical Mass intention schedule for the sacristy noticeboard.</li>
+        </ol>
+    </div>
+
+    <!-- ==================== CHAPTER 15, 16 & 17 ==================== -->
+    <div class="avoid-break page-break">
+        <h1>Chapter 15: Data Vault, USB Rectory Backups & Disaster Recovery</h1>
         <p>
             Rural mission stations in Hwange Diocese frequently face erratic electricity, cellular network dropouts, or equipment damage. To ensure records are never lost, the RMS implements a <strong>3-2-1 Diocesan Backup Strategy</strong>.
         </p>
@@ -812,18 +880,14 @@
             </tbody>
         </table>
 
-        <h2>10.1 Downloading an Offline Backup</h2>
+        <h2>15.1 Downloading an Offline Backup & CSV Data Exports</h2>
         <ol class="steps">
-            <li>Click <strong>Data Vault (Backups)</strong> in the sidebar (accessible to all priests and administrators).</li>
-            <li>Review the database size and last modified timestamp.</li>
-            <li>Click the blue <strong>"Download Standalone Archive (.sqlite)"</strong> button.</li>
-            <li>Save the downloaded database file to your external USB flash drive. This complete file contains every record, notation, and user profile in your parish.</li>
+            <li>Click <strong>Data Vault (Backups)</strong> in the sidebar (accessible to all priests, bookkeepers, and administrators).</li>
+            <li>Click the blue <strong>"Download Standalone Archive (.sqlite)"</strong> button for full system backup.</li>
+            <li>Use the one-click CSV export grid to download tabular data for <strong>Baptisms</strong>, <strong>Confirmations</strong>, <strong>Marriages</strong>, <strong>Parishioners</strong>, <strong>Daily Ledger</strong>, <strong>Monthly Returns</strong>, <strong>Temporal Goods</strong>, <strong>Outstations</strong>, and <strong>Mass Intentions</strong>.</li>
         </ol>
-    </div>
 
-    <!-- ==================== CHAPTER 12 & 13 ==================== -->
-    <div class="avoid-break page-break">
-        <h1>Chapter 11: Rural Mission Guide & Mobile Phone Usability</h1>
+        <h1>Chapter 16: Rural Mission Guide & Mobile Phone Usability</h1>
         <p>
             When celebrating sacraments in distant outstations (e.g. in Binga or Dete bush parishes), priests often only have a smartphone. The Hwange RMS is fully responsive:
         </p>
@@ -834,7 +898,7 @@
             <li><strong>Table Scrolling:</strong> On small screens, data tables scroll horizontally with smooth finger swipes.</li>
         </ul>
 
-        <h1>Chapter 12: Frequently Asked Questions & Troubleshooting</h1>
+        <h1>Chapter 17: Frequently Asked Questions & Troubleshooting</h1>
 
         <div class="avoid-break" style="margin-bottom: 12px;">
             <h3>Q: A priest forgot his password. Must he wait for the Chancery Admin to reset it?</h3>
