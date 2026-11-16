@@ -294,12 +294,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Page Number *</label>
-                                    <input type="number" name="page_number" min="1" required style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Page Number (Optional)</label>
+                                    <input type="number" name="page_number" min="1" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
                                 </div>
                                 <div class="form-group">
-                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Entry No. *</label>
-                                    <input type="text" name="entry_number" required pattern="^\d{4}/\d+$" title="Use strictly format YYYY/Number (e.g. 2026/045 or 1956/29)" placeholder="e.g. 2026/045" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Entry / Reg No. *</label>
+                                    <input type="text" name="entry_number" list="entry_number_formats" required title="Choose or type your entry number format" placeholder="e.g. 1420 or 2026/045" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+                                    <datalist id="entry_number_formats">
+                                        <option value="1420" label="General Continuous Number (e.g. 1420)">
+                                        <option value="<?php echo date('Y'); ?>/001" label="Annual Notation (e.g. <?php echo date('Y'); ?>/001)">
+                                        <option value="VOL I/14" label="Volume & Entry (e.g. VOL I/14)">
+                                        <option value="REG-085" label="Prefix Notation (e.g. REG-085)">
+                                    </datalist>
+                                    <small style="display: block; margin-top: 4px; font-size: 0.72rem; color: var(--text-muted);">
+                                        💡 Accepts General No. (e.g. <code>1420</code>), Annual (<code><?php echo date('Y'); ?>/045</code>), or Book codes.
+                                    </small>
                                 </div>
                             </div>
                         </div>
