@@ -84,7 +84,7 @@ $counts = [
                     <div class="stat-badge">Size: <?php echo $db_size_mb; ?> MB</div>
                     <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Last Modified: <?php echo $db_last_modified; ?></div>
                     
-                    <a href="../database.sqlite" download="ZCRE_Hwange_Backup_<?php echo date('Y-m-d'); ?>.sqlite" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem; width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                    <a href="../actions/backup.php" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem; width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
                         <ion-icon name="cloud-download-outline"></ion-icon> Download Full SQLite Backup
                     </a>
                 </div>

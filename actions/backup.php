@@ -14,8 +14,8 @@ require_once '../includes/functions.php';
 require_login();
 $user_role = strtolower($_SESSION['role'] ?? '');
 
-// Allow admins, chancellors, and priests to download their mission/diocesan backup
-if (!in_array($user_role, ['admin', 'priest', 'mission_admin', 'chancellor'])) {
+// Allow admins, chancellors, priests, and bookkeepers to download their mission/diocesan backup
+if (!in_array($user_role, ['admin', 'priest', 'mission_admin', 'chancellor', 'bookkeeper'])) {
     set_flash("Unauthorized to perform database backups.", "error");
     redirect('../dashboard/settings.php');
 }
@@ -38,9 +38,12 @@ if (file_exists($db_file) && filesize($db_file) > 0) {
         }
     } catch (Exception $e) {}
 
-    // 3. Audit log
+    // 3. Audit log & clear dashboard cache
     if (function_exists('log_audit')) {
         log_audit($_SESSION['user_id'], 'BACKUP', 'database', 0, "Full system backup downloaded by " . ($_SESSION['full_name'] ?? 'Cleric'));
+    }
+    foreach (glob(sys_get_temp_dir() . '/dash_cache_*.json') ?: [] as $cf) {
+        @unlink($cf);
     }
 
     // 4. Clear all buffers to ensure binary integrity

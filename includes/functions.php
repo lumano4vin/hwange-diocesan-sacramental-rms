@@ -526,6 +526,9 @@ function log_audit($user_id, $action, $table, $record_id, $details = '') {
  * Redirect to a specific page while guaranteeing session & auth cookie persistence
  */
 function redirect($url) {
+    if (preg_match('#^(dashboard|admin|sacraments|actions|auth|parishioners|profile|docs)/#i', $url)) {
+        $url = get_base_url() . $url;
+    }
     if (function_exists('rms_sync_db_to_cloud')) {
         rms_sync_db_to_cloud();
     }

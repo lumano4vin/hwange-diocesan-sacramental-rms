@@ -208,7 +208,7 @@ if (is_dir($backup_dir)) {
         }
     }
 }
-$needs_backup = ($days_since_backup >= 7);
+$needs_backup = false; // Disabled recurring dashboard banner; backups are managed in Data Vault & System Settings
 
 // 3. Today at a Glance Stats
 $today = date('Y-m-d');

@@ -396,7 +396,7 @@ function db_add_column_if_missing($pdo, $table, $column_def) {
 
 // 1.2 Self-Healing Schema Check (Auto-Migrate for Updates)
 // Wrapped in a function and gated by PRAGMA user_version so it does not lock SQLite on every page load
-if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 11);
+if (!defined('RMS_SCHEMA_VERSION')) define('RMS_SCHEMA_VERSION', 12);
 
 function run_schema_migrations($pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS receptions (
@@ -610,6 +610,10 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
 
+    db_add_column_if_missing($pdo, 'parish_financial_custom_categories', 'is_assessable INTEGER DEFAULT 0');
+    db_add_column_if_missing($pdo, 'parish_financial_custom_categories', 'is_active INTEGER DEFAULT 1');
+    db_add_column_if_missing($pdo, 'parish_financial_custom_categories', 'created_by INTEGER NULL');
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS parish_daily_ledger (
         entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
         parish_id INTEGER NOT NULL,
@@ -630,6 +634,9 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (recorded_by) REFERENCES users(user_id)
     )");
 
+    db_add_column_if_missing($pdo, 'parish_daily_ledger', "category_name VARCHAR(150) DEFAULT ''");
+    db_add_column_if_missing($pdo, 'parish_daily_ledger', "currency VARCHAR(10) DEFAULT 'USD'");
+    db_add_column_if_missing($pdo, 'parish_daily_ledger', 'recorded_by INTEGER NULL');
     db_add_column_if_missing($pdo, 'parish_daily_ledger', 'receipt_path VARCHAR(255) NULL');
     db_add_column_if_missing($pdo, 'parish_daily_ledger', "account_type VARCHAR(30) DEFAULT 'cash_at_hand'");
 
@@ -698,6 +705,22 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (parish_id) REFERENCES parishes(parish_id)
     )");
 
+    db_add_column_if_missing($pdo, 'parish_outstations', 'patron_saint VARCHAR(100) NULL');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'distance_km DECIMAL(6,2) NULL');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'catechist_name VARCHAR(100) NULL');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'catechist_phone VARCHAR(50) NULL');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'chairperson_name VARCHAR(100) NULL');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'chairperson_phone VARCHAR(50) NULL');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'mass_schedule VARCHAR(100) NULL');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'active_families_count INTEGER DEFAULT 0');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'has_church_building INTEGER DEFAULT 1');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'is_active INTEGER DEFAULT 1');
+    db_add_column_if_missing($pdo, 'parish_outstations', 'notes TEXT NULL');
+    try {
+        $pdo->exec("UPDATE parish_outstations SET catechist_name = contact_person WHERE (catechist_name IS NULL OR catechist_name = '') AND contact_person IS NOT NULL");
+        $pdo->exec("UPDATE parish_outstations SET catechist_phone = contact_phone WHERE (catechist_phone IS NULL OR catechist_phone = '') AND contact_phone IS NOT NULL");
+    } catch (Exception $e) {}
+
     // 17. Canonical Mass Intentions & Stipends Book (Canons 945-958)
     $pdo->exec("CREATE TABLE IF NOT EXISTS mass_intentions (
         intention_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -720,6 +743,18 @@ function run_schema_migrations($pdo) {
         FOREIGN KEY (assigned_priest_id) REFERENCES users(user_id),
         FOREIGN KEY (recorded_by) REFERENCES users(user_id)
     )");
+
+    db_add_column_if_missing($pdo, 'mass_intentions', "donor_name VARCHAR(150) DEFAULT ''");
+    db_add_column_if_missing($pdo, 'mass_intentions', 'donor_phone VARCHAR(50) NULL');
+    db_add_column_if_missing($pdo, 'mass_intentions', "intention_text TEXT DEFAULT ''");
+    db_add_column_if_missing($pdo, 'mass_intentions', "intention_type VARCHAR(50) DEFAULT 'repose'");
+    db_add_column_if_missing($pdo, 'mass_intentions', "currency VARCHAR(10) DEFAULT 'USD'");
+    db_add_column_if_missing($pdo, 'mass_intentions', "payment_method VARCHAR(50) DEFAULT 'Cash'");
+    db_add_column_if_missing($pdo, 'mass_intentions', 'requested_date DATE NULL');
+    db_add_column_if_missing($pdo, 'mass_intentions', 'celebrated_date DATE NULL');
+    db_add_column_if_missing($pdo, 'mass_intentions', 'assigned_priest_id INTEGER NULL');
+    db_add_column_if_missing($pdo, 'mass_intentions', "status VARCHAR(30) DEFAULT 'pending'");
+    db_add_column_if_missing($pdo, 'mass_intentions', 'recorded_by INTEGER NULL');
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS meeting_minutes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1016,6 +1051,7 @@ if (isset($pdo)) {
             if ($current_ver < RMS_SCHEMA_VERSION) {
                 run_schema_migrations($pdo);
                 $pdo->exec("PRAGMA user_version = " . RMS_SCHEMA_VERSION);
+                $GLOBALS['rms_db_dirty'] = true;
             }
             if (!empty($is_serverless) && !empty($sqlite_file)) {
                 clearstatcache(true, $sqlite_file);

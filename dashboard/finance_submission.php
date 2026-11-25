@@ -11,9 +11,12 @@ require_once __DIR__ . '/../includes/diocesan_financial_categories.php';
 require_login();
 
 $parish_id = $_SESSION['parish_id'] ?? null;
+if (is_admin() && !empty($_GET['parish_id'])) {
+    $parish_id = (int)$_GET['parish_id'];
+}
 if (!$parish_id) {
     if (is_admin()) {
-        redirect("admin/finance_overview.php");
+        redirect("../admin/finance_overview.php");
         exit;
     }
     die("You must be assigned to a parish to submit financial reports.");

@@ -481,5 +481,6 @@ $header_subtitle = "Rural Mass Centres & Outreach Stations";
             document.getElementById('outstationModal').classList.add('active');
         }
     </script>
+    <script src="../assets/js/main.js?v=1.6.2"></script>
 </body>
 </html>
