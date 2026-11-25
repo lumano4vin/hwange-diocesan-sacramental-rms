@@ -480,6 +480,7 @@ $verify_urls = get_certificate_verification_url('burial', $id, $record['verifica
             document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
         }
     </script>
+<?php include __DIR__ . '/../includes/certificate_print_styles.php'; ?>
 </head>
 <body>
     <!-- Theme Selector Top Bar (Hidden on Print) -->
@@ -656,6 +657,7 @@ $verify_urls = get_certificate_verification_url('burial', $id, $record['verifica
         function downloadPDF() {
             const element = document.querySelector('.certificate-container');
             if (!element) return;
+            window.scrollTo(0, 0);
             element.classList.add('pdf-generation');
             <?php 
                 $safe_name = trim(($record['first_name'] ?? '') . '_' . ($record['last_name'] ?? ''));
@@ -668,11 +670,13 @@ $verify_urls = get_certificate_verification_url('burial', $id, $record['verifica
                 html2canvas:  { 
                     scale: 2, 
                     useCORS: true, 
+                    x: 0,
+                    y: 0,
                     scrollY: 0, 
                     scrollX: 0,
-                    width: 794,
-                    height: 1120,
-                    windowWidth: 794
+                    width: 733,
+                    height: 1036,
+                    windowWidth: 733
                 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
