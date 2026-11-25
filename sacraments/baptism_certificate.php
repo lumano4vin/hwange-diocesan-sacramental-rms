@@ -78,7 +78,7 @@ $orders_notation = db_fetch("
 
         @page {
             size: A4 portrait;
-            margin: 0;
+            margin: 10mm;
         }
 
         @media print {
@@ -91,20 +91,19 @@ $orders_notation = db_fetch("
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 210mm !important;
-                height: 297mm !important;
-                max-height: 297mm !important;
-                overflow: hidden !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
             }
             .certificate-container { 
                 margin: 0 auto !important; 
                 box-shadow: none !important; 
-                width: 190mm !important; 
+                width: 100% !important; 
                 max-width: 190mm !important; 
-                height: 280mm !important; 
-                max-height: 280mm !important;
+                height: 273mm !important; 
+                max-height: 273mm !important;
                 box-sizing: border-box !important;
-                padding: 6mm 10mm 4mm 10mm !important; 
+                padding: 6mm 9mm 5mm 9mm !important; 
                 overflow: hidden !important;
                 page-break-inside: avoid !important;
                 page-break-before: avoid !important;
@@ -782,7 +781,7 @@ $orders_notation = db_fetch("
                 $pdf_filename = 'Baptism_Certificate_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $safe_name) . '.pdf';
             ?>
             const opt = {
-                margin:       0,
+                margin:       8,
                 filename:     <?php echo json_encode($pdf_filename); ?>,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { 

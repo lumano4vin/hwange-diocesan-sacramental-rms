@@ -109,20 +109,22 @@ if (!$record) {
         }
 
         @page {
-            size: A4;
-            margin: 0;
+            size: A4 portrait;
+            margin: 10mm;
         }
 
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; margin: 0 !important; padding: 0 !important; }
+            html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: auto !important; }
             .certificate-container { 
-                margin: 0 !important; 
+                margin: 0 auto !important; 
                 box-shadow: none !important; 
-                width: 210mm !important; 
-                height: 297mm !important; 
+                width: 100% !important; 
+                max-width: 190mm !important; 
+                height: auto !important; 
+                min-height: 273mm !important;
                 box-sizing: border-box !important;
-                padding: 15mm 20mm !important; 
+                padding: 8mm 10mm !important; 
                 border: none !important;
                 outline: none !important;
             }
